@@ -56,7 +56,7 @@ const VerificationCallbackPage = () => {
     const run = async () => {
       if (!context) {
         setState("error");
-        setMessage("Verification session not found. / No encontramos la sesión de verificación.");
+        setMessage("Verification session not found.");
         return;
       }
 
@@ -127,7 +127,7 @@ const VerificationCallbackPage = () => {
 
       if (!cancelled) {
         setState("error");
-        setMessage("Verification is still pending. Please try again in a moment. / La verificación sigue pendiente.");
+        setMessage("Verification is still pending. Please try again in a moment.");
       }
     };
 
@@ -159,8 +159,6 @@ const VerificationCallbackPage = () => {
                 </div>
                 <p className="mt-6 text-muted-foreground">
                   Please wait while we confirm your identity and prepare secure checkout.
-                  <br />
-                  Por favor esperá mientras confirmamos tu identidad y preparamos el checkout seguro.
                 </p>
               </>
             ) : null}
@@ -170,8 +168,6 @@ const VerificationCallbackPage = () => {
                 <h1 className="text-display text-4xl mb-4">Verification declined</h1>
                 <p className="text-muted-foreground mb-8">
                   Your verification was declined. You can return to the artwork and contact us for assistance.
-                  <br />
-                  Tu verificación fue rechazada. Podés volver a la obra y contactarnos para ayuda.
                 </p>
               </>
             ) : null}
@@ -181,8 +177,6 @@ const VerificationCallbackPage = () => {
                 <h1 className="text-display text-4xl mb-4">Verification in review</h1>
                 <p className="text-muted-foreground mb-8">
                   Your verification is under manual review. Please try again shortly.
-                  <br />
-                  Tu verificación está en revisión manual. Intentá nuevamente en unos minutos.
                 </p>
               </>
             ) : null}
@@ -192,8 +186,6 @@ const VerificationCallbackPage = () => {
                 <h1 className="text-display text-4xl mb-4">Verification not completed</h1>
                 <p className="text-muted-foreground mb-8">
                   The verification flow was not completed. Please start again from the artwork page.
-                  <br />
-                  El flujo de verificación no se completó. Por favor iniciá nuevamente desde la página de la obra.
                 </p>
               </>
             ) : null}
@@ -202,14 +194,14 @@ const VerificationCallbackPage = () => {
               <>
                 <h1 className="text-display text-4xl mb-4">Could not continue</h1>
                 <p className="text-muted-foreground mb-8">
-                  {message || "Please return to the artwork and try again. / Volvé a la obra e intentá nuevamente."}
+                  {message || "Please return to the artwork and try again."}
                 </p>
               </>
             ) : null}
 
             {state !== "processing" ? (
               <Button variant="acquire" size="xl" asChild>
-                <Link to={backUrl}>Back to artwork / Volver a la obra</Link>
+                <Link to={backUrl}>Back to artwork</Link>
               </Button>
             ) : null}
           </div>

@@ -101,11 +101,17 @@ const ArtworksPage = () => {
     return { min: clampedMin, max: clampedMax };
   }, [works]);
 
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 8000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, Infinity]);
 
   useEffect(() => {
     setPriceRange([priceBounds.min, priceBounds.max]);
   }, [priceBounds.min, priceBounds.max]);
+
+  useEffect(() => {
+    if (priceRange[1] === Infinity && priceBounds.max > 0) {
+      setPriceRange([priceBounds.min, priceBounds.max]);
+    }
+  }, [priceBounds]);
 
   const artistOptions = useMemo(() => {
     const names = Array.from(
@@ -192,18 +198,20 @@ const ArtworksPage = () => {
         });
       case "newest":
         return list.sort((a, b) => {
-          const yaRaw = a.year;
-          const ybRaw = b.year;
-          const ya = typeof yaRaw !== "number" || Number.isNaN(yaRaw) ? 0 : yaRaw;
-          const yb = typeof ybRaw !== "number" || Number.isNaN(ybRaw) ? 0 : ybRaw;
+          const ya = a.year ? parseInt(a.year, 10) : 0;
+          const yb = b.year ? parseInt(b.year, 10) : 0;
+          if (isNaN(ya) && isNaN(yb)) return 0;
+          if (isNaN(ya)) return 1;
+          if (isNaN(yb)) return -1;
           return yb - ya;
         });
       case "oldest":
         return list.sort((a, b) => {
-          const yaRaw = a.year;
-          const ybRaw = b.year;
-          const ya = typeof yaRaw !== "number" || Number.isNaN(yaRaw) ? 0 : yaRaw;
-          const yb = typeof ybRaw !== "number" || Number.isNaN(ybRaw) ? 0 : ybRaw;
+          const ya = a.year ? parseInt(a.year, 10) : 0;
+          const yb = b.year ? parseInt(b.year, 10) : 0;
+          if (isNaN(ya) && isNaN(yb)) return 0;
+          if (isNaN(ya)) return 1;
+          if (isNaN(yb)) return -1;
           return ya - yb;
         });
       case "default":
@@ -245,6 +253,7 @@ const ArtworksPage = () => {
 
   const overlayLabel = (work: WorkFromApi) => {
     if (work.status === "sold") return "Sold";
+  if (work.status === "reserved") return "Reserved";
     return "Private collection";
   };
 
@@ -733,6 +742,15 @@ const ArtworksPage = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : works.length === 0 && !loading ? (
+              <div
+                className="py-24 text-center"
+                style={{ paddingLeft: "clamp(24px, 7vw, 120px)", paddingRight: "clamp(24px, 7vw, 120px)" }}
+              >
+                <p className="text-sm text-muted-foreground" style={{ fontFamily: '"Onest", sans-serif' }}>
+                  Could not load the collection. Please try again later.
+                </p>
               </div>
             ) : sortedWorks.length === 0 ? (
               <div

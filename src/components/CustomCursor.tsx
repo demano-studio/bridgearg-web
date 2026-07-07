@@ -63,7 +63,7 @@ export const CustomCursor = () => {
     <>
       {/* Main cursor dot */}
       <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-[9999] mix-blend-difference"
+        className="fixed top-0 left-0 pointer-events-none z-[990] mix-blend-difference"
         animate={{
           x: mousePosition.x - (isHovering ? 20 : 6),
           y: mousePosition.y - (isHovering ? 20 : 6),
@@ -94,7 +94,7 @@ export const CustomCursor = () => {
 
       {/* Outer ring */}
       <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-[9998]"
+        className="fixed top-0 left-0 pointer-events-none z-[989]"
         animate={{
           x: mousePosition.x - 20,
           y: mousePosition.y - 20,
@@ -126,6 +126,9 @@ export const CustomCursor = () => {
       <style>{`
         @media (hover: hover) and (pointer: fine) {
           * {
+            cursor: none !important;
+          }
+          button, a, [role="button"], input, textarea, select {
             cursor: none !important;
           }
         }

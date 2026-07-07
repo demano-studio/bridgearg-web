@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -9,6 +10,10 @@ import { SEO } from "@/components/SEO";
 const CheckoutSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id");
+
+  useEffect(() => {
+    sessionStorage.removeItem("didit_verification_context");
+  }, []);
 
   return (
     <PageTransition>
