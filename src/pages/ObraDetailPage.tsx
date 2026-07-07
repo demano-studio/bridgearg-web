@@ -406,6 +406,36 @@ const ArtworkDetailPage = () => {
             </div>
           </section>
 
+          {/* Artist bio */}
+          {work.artistBio && (
+            <section className="section-padded border-t border-border">
+              <div className="container mx-auto">
+                <div className="flex flex-col sm:flex-row gap-8 items-start">
+                  {work.artistPhoto && (
+                    <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0 border border-border">
+                      <img
+                        src={work.artistPhoto}
+                        alt={artistName}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-label text-muted-foreground mb-1">About the artist</p>
+                    {work.artistSlug ? (
+                      <Link to={`/artistas/${work.artistSlug}`} className="hover:text-foreground transition-colors">
+                        <h3 className="text-display text-xl font-semibold mb-3">{artistName}</h3>
+                      </Link>
+                    ) : (
+                      <h3 className="text-display text-xl font-semibold mb-3">{artistName}</h3>
+                    )}
+                    <p className="text-sm text-muted-foreground leading-relaxed">{work.artistBio}</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {otherWorks.length > 0 && (
             <section className="section-padded border-t border-border">
               <div className="container mx-auto">
