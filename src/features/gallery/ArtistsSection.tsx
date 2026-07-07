@@ -50,7 +50,7 @@ export function ArtistsSection() {
           A curated selection of Argentine artists whose work carries craft, memory and identity beyond borders.
         </p>
         <Link to="/artists" className="artists-reveal-section__cta">
-          Meet our artists →
+          Meet the artists →
         </Link>
       </div>
       <style>{`
@@ -96,6 +96,11 @@ export function ArtistsSection() {
           padding-bottom: 3px;
           text-decoration: none;
           font-family: "Onest", sans-serif;
+          transition: color 0.3s ease, border-color 0.3s ease;
+        }
+        .artists-reveal-section__cta:hover {
+          color: #7fb2d1;
+          border-bottom-color: #7fb2d1;
         }
       `}</style>
     </section>
