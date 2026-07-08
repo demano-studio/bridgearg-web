@@ -8,16 +8,26 @@ export function ArtistsSection() {
   const isMobile = useIsMobile();
 
   return (
-    <section
-      className="artists-reveal-section"
+    <div
       style={{
-        position: "relative",
-        overflow: "hidden",
-        width: "100%",
-        padding: isMobile ? "3.5rem 1.5rem" : "5.5rem 2rem",
-        textAlign: "center",
+        paddingLeft: isMobile ? "1rem" : "2rem",
+        paddingRight: isMobile ? "1rem" : "2rem",
+        marginBottom: isMobile ? "1.5rem" : "2rem",
       }}
     >
+      <section
+        className="artists-reveal-section"
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          width: "100%",
+          maxWidth: "1200px",
+          margin: "0 auto",
+          borderRadius: 0,
+          padding: isMobile ? "3.5rem 1.5rem" : "5.5rem 2rem",
+          textAlign: "center",
+        }}
+      >
       <div
         className="artists-reveal-section__photo"
         style={{
@@ -103,6 +113,7 @@ export function ArtistsSection() {
           border-bottom-color: #7fb2d1;
         }
       `}</style>
-    </section>
+      </section>
+    </div>
   );
 }

@@ -8,16 +8,27 @@ export function SelectedWorksSection() {
   const isMobile = useIsMobile();
 
   return (
-    <section
-      className="curated-reveal-section"
+    <div
       style={{
-        position: "relative",
-        overflow: "hidden",
-        width: "100%",
-        padding: isMobile ? "3.5rem 1.5rem" : "5.5rem 2rem",
-        textAlign: "center",
+        paddingLeft: isMobile ? "1rem" : "2rem",
+        paddingRight: isMobile ? "1rem" : "2rem",
+        marginTop: isMobile ? "1.5rem" : "2rem",
+        marginBottom: isMobile ? "1.5rem" : "2rem",
       }}
     >
+      <section
+        className="curated-reveal-section"
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          width: "100%",
+          maxWidth: "1200px",
+          margin: "0 auto",
+          borderRadius: 0,
+          padding: isMobile ? "3.5rem 1.5rem" : "5.5rem 2rem",
+          textAlign: "center",
+        }}
+      >
       <div
         className="curated-reveal-section__photo"
         style={{
@@ -103,6 +114,7 @@ export function SelectedWorksSection() {
           border-bottom-color: #7fb2d1;
         }
       `}</style>
-    </section>
+      </section>
+    </div>
   );
 }

@@ -26,7 +26,7 @@ export function BatchStatusSection() {
       className="collector-services-section"
       style={{
         background: "#FAF9EF",
-        padding: isMobile ? "3.5rem 1.5rem" : "5.5rem 2.5rem",
+        padding: isMobile ? "5rem 1.5rem" : "8rem 2.5rem",
         textAlign: "center",
       }}
     >
@@ -54,7 +54,7 @@ export function BatchStatusSection() {
         }
         .collector-services-section__title {
           margin: 0 0 3rem;
-          font-size: ${isMobile ? "1.6rem" : "2rem"};
+          font-size: ${isMobile ? "1.6rem" : "2.6rem"};
           font-weight: 700;
           color: #100e0c;
           line-height: 1.2;
@@ -62,7 +62,7 @@ export function BatchStatusSection() {
         .collector-services-section__grid {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
-          gap: 3rem;
+          gap: 4rem;
         }
         .collector-services-section__item {
           display: flex;
@@ -71,7 +71,7 @@ export function BatchStatusSection() {
         }
         .collector-services-section__name {
           margin: 0;
-          font-size: 0.9rem;
+          font-size: 1.35rem;
           font-weight: 700;
           color: #100e0c;
           letter-spacing: 0.5px;
@@ -79,16 +79,16 @@ export function BatchStatusSection() {
           font-family: "Onest", sans-serif;
         }
         .collector-services-section__divider {
-          width: 1.5rem;
+          width: 2.5rem;
           height: 1px;
           background: #7fb2d1;
-          margin: 0.9rem auto;
+          margin: 1.25rem auto;
         }
         .collector-services-section__description {
           margin: 0;
-          font-size: 0.8rem;
+          font-size: 1rem;
           color: #8c8a82;
-          line-height: 1.6;
+          line-height: 1.75;
           font-family: "Onest", sans-serif;
         }
         @media (max-width: 767px) {
