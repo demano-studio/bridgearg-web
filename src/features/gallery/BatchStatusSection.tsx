@@ -1,25 +1,13 @@
-import { Eye } from "lucide-react";
-import { images } from "@/lib/images";
-import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-const bridgeDividerSrc = encodeURI("/assets/BRIDGEARG - Exportacion logos - PNG-21.png");
-
-const serviceCards = [
+const services = [
   {
     title: "Provenance & Authenticity",
-    imageSrc: images.mockup,
-    imageAlt: "Certificate of authenticity package",
-    imageClassName: "aspect-square",
-    imageFitClassName: "object-contain p-6 md:p-8",
     description:
-      "Every physical masterpiece is accompanied by a Certificate of Authenticity hand-signed by the artist. We guarantee the provenance and unique identity of each work in our vault.",
+      "Every physical masterpiece is accompanied by a Certificate of Authenticity hand-signed by the artist. We guarantee the provenance and unique identity of each work.",
   },
   {
     title: "Specialized Art Handling",
-    imageSrc: images.freePackageBoxMockup,
-    imageAlt: "Museum-grade art shipping tube",
-    imageClassName: "aspect-square",
-    imageFitClassName: "object-contain p-6 md:p-8",
     description:
       "Global white-glove shipping. Our logistics partners specialize in fine art, ensuring your acquisition travels in museum-grade packaging and climate-controlled environments.",
   },
@@ -32,57 +20,84 @@ const serviceCards = [
 
 export function BatchStatusSection() {
   const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
 
   return (
-    <section className="bg-background px-6 py-24 md:px-12 md:py-32 lg:px-24 2xl:py-36">
-      <div className="mx-auto max-w-[1800px]">
-        <div className="mb-14 max-w-2xl md:mb-20">
-          <p className="font-display text-[11px] font-medium uppercase tracking-[0.12em] text-[#1e1517]/65 md:text-xs 2xl:text-sm">
-            Collector Services
-          </p>
-          <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-[#1e1517] sm:text-4xl md:text-5xl">
-            Confidence beyond the acquisition
-          </h2>
-        </div>
-
-        <div
-          className="grid grid-cols-1 gap-14 md:grid-cols-3 md:gap-10 xl:gap-16 2xl:gap-20"
-          style={{ gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "repeat(3, minmax(0, 1fr))", gap: isMobile ? "28px" : undefined }}
-        >
-          {serviceCards.map((card) => (
-            <article key={card.title} className="flex flex-col">
-              {"imageSrc" in card ? (
-                <div className={`overflow-hidden rounded-[22px] bg-[#f3ecdd] ${card.imageClassName}`}>
-                  <img
-                    src={card.imageSrc}
-                    alt={card.imageAlt}
-                    className={`h-full w-full ${card.imageFitClassName}`}
-                  />
-                </div>
-              ) : (
-                <div className="flex aspect-square items-center justify-center rounded-[22px] bg-[#f3ecdd] text-[#1e1517]">
-                  <Eye strokeWidth={1} className="h-16 w-16 md:h-20 md:w-20" aria-hidden="true" />
-                </div>
-              )}
-
-              <div className="pt-7">
-                <img
-                  src={bridgeDividerSrc}
-                  alt=""
-                  className="h-3 w-auto object-contain opacity-60"
-                />
-                <h3 className="mt-5 font-display text-xl font-semibold tracking-tight text-[#1e1517] md:text-2xl">
-                  {card.title}
-                </h3>
-                <p className="mt-4 max-w-[34ch] font-display text-base leading-7 text-[#1e1517]/78 2xl:text-lg 2xl:leading-8">
-                  {card.description}
-                </p>
-              </div>
-            </article>
-          ))}
-        </div>
+    <section
+      className="collector-services-section"
+      style={{
+        background: "#FAF9EF",
+        padding: isMobile ? "3.5rem 1.5rem" : "5.5rem 2.5rem",
+        textAlign: "center",
+      }}
+    >
+      <p className="collector-services-section__eyebrow">Collector Services</p>
+      <h2 className="collector-services-section__title font-display">
+        Confidence beyond the acquisition
+      </h2>
+      <div className="collector-services-section__grid">
+        {services.map((service) => (
+          <article key={service.title} className="collector-services-section__item">
+            <h3 className="collector-services-section__name">{service.title}</h3>
+            <div className="collector-services-section__divider" aria-hidden />
+            <p className="collector-services-section__description">{service.description}</p>
+          </article>
+        ))}
       </div>
+      <style>{`
+        .collector-services-section__eyebrow {
+          margin: 0 0 0.5rem;
+          text-transform: uppercase;
+          letter-spacing: 3px;
+          font-size: 11px;
+          color: #7fb2d1;
+          font-family: "Onest", sans-serif;
+        }
+        .collector-services-section__title {
+          margin: 0 0 3rem;
+          font-size: ${isMobile ? "1.6rem" : "2rem"};
+          font-weight: 700;
+          color: #100e0c;
+          line-height: 1.2;
+        }
+        .collector-services-section__grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 3rem;
+        }
+        .collector-services-section__item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .collector-services-section__name {
+          margin: 0;
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: #100e0c;
+          letter-spacing: 0.5px;
+          line-height: 1.3;
+          font-family: "Onest", sans-serif;
+        }
+        .collector-services-section__divider {
+          width: 1.5rem;
+          height: 1px;
+          background: #7fb2d1;
+          margin: 0.9rem auto;
+        }
+        .collector-services-section__description {
+          margin: 0;
+          font-size: 0.8rem;
+          color: #8c8a82;
+          line-height: 1.6;
+          font-family: "Onest", sans-serif;
+        }
+        @media (max-width: 767px) {
+          .collector-services-section__grid {
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+          }
+        }
+      `}</style>
     </section>
   );
 }

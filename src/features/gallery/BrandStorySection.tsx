@@ -13,7 +13,7 @@ export function BrandStorySection() {
 
   return (
     <>
-      <section className="bg-[#7FB2D1] px-6 py-24 md:px-12 md:py-32 lg:px-24">
+      <section className="bg-[#1e1517] px-6 py-24 md:px-12 md:py-32 lg:px-24">
         <div className="mx-auto grid max-w-[1800px] grid-cols-1 items-center gap-16 md:grid-cols-2 md:gap-24">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -25,11 +25,11 @@ export function BrandStorySection() {
               <img
                 src="/assets/logos/BRIDGEARG - Exportacion logos-09.svg"
                 alt="BridgeArg"
-                style={{ width: "clamp(80px, 11vw, 160px)", height: "clamp(80px, 11vw, 160px)", flexShrink: 0, opacity: 0.9 }}
+                style={{ width: "clamp(80px, 11vw, 160px)", height: "clamp(80px, 11vw, 160px)", flexShrink: 0 }}
               />
               <h2
-                className="font-display text-[#FAF6E9] leading-[1.1] tracking-[-0.02em]"
-                style={{ fontSize: "clamp(28px, 3.5vw, 48px)", fontWeight: 700, color: "#fcf8ea" }}
+                className="font-display leading-[1.1] tracking-[-0.02em]"
+                style={{ fontSize: "clamp(28px, 3.5vw, 48px)", fontWeight: 700, color: "#ffffff" }}
               >
                 We are a bridge.
                 <br />
@@ -40,7 +40,7 @@ export function BrandStorySection() {
                     fontWeight: 400,
                     fontSize: "1.12em",
                     display: "inline",
-                    color: "#1e1517",
+                    color: "#7fb2d1",
                   }}
                 >
                   network.
@@ -54,11 +54,11 @@ export function BrandStorySection() {
             viewport={{ once: true }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.15 }}
           >
-            <p className="font-display text-base leading-relaxed text-[#fcf8ea]/80 md:text-lg">
+            <p className="font-display text-base leading-relaxed md:text-lg" style={{ color: "rgba(255,255,255,0.75)" }}>
               We exist because we deeply believe in Argentine talent — that mix of creativity, craft, design, and
               that certain something the world recognizes even if it can't name it.
             </p>
-            <p className="mt-4 font-display text-base leading-relaxed text-[#fcf8ea]/80 md:text-lg">
+            <p className="mt-4 font-display text-base leading-relaxed md:text-lg" style={{ color: "rgba(255,255,255,0.75)" }}>
               BridgeArg provides a professional and legal framework to work with clients in the United States,
               handling foreign trade, documentation, shipping, and everything needed for each piece to travel safely.
             </p>
@@ -66,8 +66,8 @@ export function BrandStorySection() {
               {attrs.map((attr) => (
                 <span
                   key={attr}
-                  className="font-display text-[11px] uppercase tracking-[1.5px] text-[#1e1517] border px-3.5 py-1.5"
-                  style={{ borderColor: "rgba(30,21,23,0.3)" }}
+                  className="font-display text-[11px] uppercase tracking-[1.5px] border px-3.5 py-1.5"
+                  style={{ border: "1px solid #7fb2d1", color: "#7fb2d1", background: "transparent" }}
                 >
                   {attr}
                 </span>
