@@ -24,7 +24,7 @@ Crea una Stripe Checkout Session a partir de un ítem en la tabla `artworks`.
 
 ## stripe-webhook
 
-Gestiona el evento `checkout.session.completed` de Stripe: verifica la firma, actualiza `artworks.status` a `sold` y envía un email de confirmación con Resend.
+Gestiona el evento `checkout.session.completed` de Stripe: verifica la firma, actualiza `artworks.status` a `sold` (y guarda datos del comprador), envía un email de confirmación al comprador y una notificación de venta a la empresa con Resend.
 
 **Endpoint:** `POST /functions/v1/stripe-webhook`  
 Debe configurarse en Stripe como URL del webhook (con la URL pública de tu proyecto Supabase).
@@ -39,6 +39,7 @@ Debe configurarse en Stripe como URL del webhook (con la URL pública de tu proy
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role para actualizar `artworks` |
 | `RESEND_API_KEY` | API key de Resend |
 | `RESEND_FROM_EMAIL` | (Opcional) Remitente del email. Default: `onboarding@resend.dev` |
+| `RESEND_TO_EMAIL` | Email de la empresa que recibe la notificación de venta |
 
 ### Configurar el webhook en Stripe
 
