@@ -800,7 +800,7 @@ const ContactoPage = () => {
                     Email
                   </span>
                   <a
-                    href="mailto:info@bridgearg.com"
+                    href="mailto:info@bridgearg.net"
                     style={{
                       fontSize: "16px",
                       lineHeight: 1.55,
@@ -809,7 +809,7 @@ const ContactoPage = () => {
                       fontFamily: '"Onest", sans-serif',
                     }}
                   >
-                    info@bridgearg.com
+                    info@bridgearg.net
                   </a>
                 </div>
                 <div style={{ borderTop: "1px solid rgba(30,21,23,0.18)", paddingTop: "22px" }}>
