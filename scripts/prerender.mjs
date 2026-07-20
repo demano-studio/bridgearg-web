@@ -154,7 +154,7 @@ function buildPageMetas({ artists, artworks }) {
       description:
         artist.bio ??
         `Works and biography of ${artist.name}, contemporary Argentine artist.`,
-      image: artist.profile_image_url?.trim() || null,
+      image: artist.image_url?.trim() || null,
       url: path,
     });
   }
