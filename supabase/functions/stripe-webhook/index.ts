@@ -93,6 +93,23 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceRole);
 
+  // Idempotencia: si Stripe reintenta un webhook ya procesado, no repetir update/emails.
+  const { data: existingPurchase, error: existingPurchaseError } = await supabase
+    .from("purchases")
+    .select("id")
+    .eq("stripe_session_id", session.id)
+    .maybeSingle();
+
+  if (existingPurchaseError) {
+    console.error("Failed to check purchases idempotency:", existingPurchaseError);
+  } else if (existingPurchase) {
+    console.log(`Purchase already recorded for session ${session.id}; skipping.`);
+    return new Response(JSON.stringify({ received: true }), {
+      status: 200,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
   const comprador = session.customer_details?.name ?? null;
   const fecha_venta = new Date().toISOString();
   const estado_pago = session.payment_status ?? "paid";
@@ -130,6 +147,45 @@ Deno.serve(async (req) => {
     priceUsd = rawPrice == null ? null : Number(rawPrice);
     if (Number.isNaN(priceUsd)) priceUsd = null;
     imageUrl = (artwork as { image_url?: string }).image_url ?? "";
+  }
+
+  const paymentIntent = session.payment_intent;
+  const stripePaymentIntentId =
+    typeof paymentIntent === "string"
+      ? paymentIntent
+      : paymentIntent && typeof paymentIntent === "object" && "id" in paymentIntent
+        ? String((paymentIntent as { id: string }).id)
+        : null;
+
+  const verificationIdRaw =
+    session.metadata?.verification_id ?? session.metadata?.purchase_verification_id ?? null;
+  const purchaseVerificationId =
+    typeof verificationIdRaw === "string" && verificationIdRaw.trim()
+      ? verificationIdRaw.trim()
+      : null;
+
+  const amountUsd =
+    session.amount_total != null && Number.isFinite(session.amount_total)
+      ? session.amount_total / 100
+      : null;
+
+  const { error: purchaseInsertError } = await supabase.from("purchases").insert({
+    artwork_id: artworkId,
+    purchase_verification_id: purchaseVerificationId,
+    stripe_session_id: session.id,
+    stripe_payment_intent_id: stripePaymentIntentId,
+    buyer_name: session.customer_details?.name ?? null,
+    buyer_email: customerEmail,
+    shipping_address: formatShippingAddress(session.customer_details?.address),
+    amount_usd: amountUsd,
+    currency: session.currency ?? "usd",
+    payment_status: estado_pago,
+  });
+
+  if (purchaseInsertError) {
+    console.error("Failed to insert purchase record:", purchaseInsertError);
+  } else {
+    console.log(`Purchase recorded for session ${session.id}.`);
   }
 
   if (customerEmail && resendApiKey) {

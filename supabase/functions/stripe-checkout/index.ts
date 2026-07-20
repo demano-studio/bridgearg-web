@@ -185,6 +185,7 @@ Deno.serve(async (req) => {
       cancel_url: `${clientUrl}/checkout/cancel`,
       metadata: {
         artwork_id: String(artworkId),
+        verification_id: verificationId.trim(),
       },
       shipping_address_collection: {
         allowed_countries: ["AR", "US", "MX", "CO", "ES", "FR", "DE", "GB", "IT"],
