@@ -8,7 +8,10 @@
     { "source": "/works", "destination": "/artworks", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/checkout/:path*", "destination": "/index.html" },
+    { "source": "/verify/:path*", "destination": "/index.html" },
+    { "source": "/legal", "destination": "/index.html" },
+    { "source": "/admin/:path*", "destination": "/index.html" }
   ],
   "headers": [
     {
