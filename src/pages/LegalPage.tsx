@@ -233,7 +233,7 @@ const LegalPage = () => {
               Questions about our policies?
             </h2>
             <Link
-              to="/contacto"
+              to="/contact"
               className="inline-flex items-center border border-[#fcf8ea] text-[#fcf8ea] transition-colors duration-300 hover:bg-[#fcf8ea] hover:text-[#1e1517]"
               style={{
                 marginTop: "30px",

@@ -39,7 +39,7 @@ const NosotrosPage = () => {
         <SEO
           title="About"
           description="Learn about BridgeArg, the gallery connecting Argentine contemporary art with global collectors."
-          url="/nosotros"
+          url="/about"
         />
         <Header />
         <main>

@@ -46,7 +46,7 @@ const CheckoutSuccessPage = () => {
                 <Link to="/artworks">Continue browsing</Link>
               </Button>
               <Button variant="technical" asChild>
-                <Link to="/contacto">Contact us</Link>
+                <Link to="/contact">Contact us</Link>
               </Button>
             </div>
           </div>

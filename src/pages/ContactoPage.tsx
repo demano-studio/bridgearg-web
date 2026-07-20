@@ -181,7 +181,7 @@ const ContactoPage = () => {
         <SEO
           title="Contact"
           description="Get in touch with BridgeArg for artist inquiries, acquisitions, and more."
-          url="/contacto"
+          url="/contact"
         />
         <Header />
         <main>

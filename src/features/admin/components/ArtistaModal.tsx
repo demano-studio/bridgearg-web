@@ -26,6 +26,7 @@ export function ArtistaModal({ open, onOpenChange, artistId, onSaved }: Props) {
   const [telefono, setTelefono] = React.useState("");
   const [instagram, setInstagram] = React.useState("");
   const [bio, setBio] = React.useState("");
+  const [statement, setStatement] = React.useState("");
   const [comisionBridge, setComisionBridge] = React.useState(30);
   const [comisionArtista, setComisionArtista] = React.useState(70);
 
@@ -49,6 +50,7 @@ export function ArtistaModal({ open, onOpenChange, artistId, onSaved }: Props) {
       setTelefono("");
       setInstagram("");
       setBio("");
+      setStatement("");
       setComisionBridge(30);
       setComisionArtista(70);
       return;
@@ -59,7 +61,7 @@ export function ArtistaModal({ open, onOpenChange, artistId, onSaved }: Props) {
         const sb = getSupabase();
         const { data, error } = await sb
           .from("artists")
-          .select("id,name,slug,bio,photo,profile_image_url,email,telefono,instagram,comision_bridge,comision_artista")
+          .select("id,name,slug,bio,statement,photo,profile_image_url,email,telefono,instagram,comision_bridge,comision_artista")
           .eq("id", artistId)
           .single();
         if (error) throw new Error(error.message);
@@ -69,6 +71,7 @@ export function ArtistaModal({ open, onOpenChange, artistId, onSaved }: Props) {
         setTelefono(row.telefono ?? "");
         setInstagram(row.instagram ?? "");
         setBio(row.bio ?? "");
+        setStatement(row.statement ?? "");
         setComisionBridge(Number(row.comision_bridge ?? 30));
         setComisionArtista(Number(row.comision_artista ?? 70));
       } catch (e) {
@@ -93,6 +96,7 @@ export function ArtistaModal({ open, onOpenChange, artistId, onSaved }: Props) {
         telefono: telefono.trim() || null,
         instagram: instagram.trim() || null,
         bio: bio.trim() || null,
+        statement: statement.trim() || null,
         comision_bridge: comisionBridge,
         comision_artista: comisionArtista,
       };
@@ -156,6 +160,10 @@ export function ArtistaModal({ open, onOpenChange, artistId, onSaved }: Props) {
             <div className="space-y-2">
               <Label>Bio</Label>
               <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={4} className="rounded-none border-bridge-black/20" />
+            </div>
+            <div className="space-y-2">
+              <Label>Statement</Label>
+              <Textarea value={statement} onChange={(e) => setStatement(e.target.value)} rows={3} className="rounded-none border-bridge-black/20" />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

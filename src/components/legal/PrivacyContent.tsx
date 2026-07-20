@@ -844,8 +844,8 @@ const PrivacyContent = () => {
       <p>
         <strong>By email:</strong>
         <br />
-        <a href="mailto:customerservice@bridgearg.net">
-          customerservice@bridgearg.net
+        <a href="mailto:info@bridgearg.net">
+          info@bridgearg.net
         </a>
       </p>
 

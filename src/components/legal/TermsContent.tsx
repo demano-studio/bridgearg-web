@@ -680,7 +680,7 @@ const TermsContent = () => {
         non-receipt, BridgeARG will use commercially reasonable efforts to
         investigate, but Delivery Confirmation shall constitute prima facie
         evidence of delivery. Buyer must notify BridgeARG in writing at
-        customerservice@bridgearg.net of any claim of non-receipt within
+        info@bridgearg.net of any claim of non-receipt within
         forty-eight (48) hours of the Delivery Confirmation date.
       </p>
 
@@ -790,7 +790,7 @@ const TermsContent = () => {
 
       <p>
         <strong>(b) Notice.</strong> To be eligible for a refund, Buyer must
-        notify BridgeARG in writing at customerservice@bridgearg.net within
+        notify BridgeARG in writing at info@bridgearg.net within
         the following periods after Delivery Confirmation (each, a{" "}
         <strong>“Return Request”</strong>), failing which the applicable
         claim shall be deemed waived: (i) Non-arrival, transit damage, wrong
@@ -1008,7 +1008,7 @@ const TermsContent = () => {
         any content on the Platform infringes your copyright, please submit a
         written notice to BridgeARG’s designated Digital Millennium Copyright
         Act (<strong>“DMCA”</strong>) 17 U.S.C. § 512(c)(2) agent at{" "}
-        <a href="mailto:customerservice@bridgearg.net">customerservice@bridgearg.net</a>{" "}
+        <a href="mailto:info@bridgearg.net">info@bridgearg.net</a>{" "}
         or 333 N University Dr, Apt 407, Plantation, Florida 33324, United
         States, including: (i) identification of the copyrighted work and its
         location on the Platform; (ii) your contact information; (iii) a
@@ -1752,7 +1752,7 @@ const TermsContent = () => {
       <p>
         <strong>By email:</strong>
         <br />
-        <a href="mailto:customerservice@bridgearg.net">customerservice@bridgearg.net</a>
+        <a href="mailto:info@bridgearg.net">info@bridgearg.net</a>
       </p>
 
       <p>

@@ -261,7 +261,7 @@ export function Header() {
             );
           })}
           <Link
-            to="/contacto"
+            to="/contact"
             onClick={() => setIsOpen(false)}
             style={{
               fontFamily: '"Onest", sans-serif',

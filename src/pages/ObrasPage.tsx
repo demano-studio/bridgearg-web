@@ -848,7 +848,7 @@ const ArtworksPage = () => {
               complete acquisition process.
             </p>
             <Link
-              to="/contacto"
+              to="/contact"
               style={{
                 border: "1px solid #1e1517",
                 backgroundColor: "transparent",

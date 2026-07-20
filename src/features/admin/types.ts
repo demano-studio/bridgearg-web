@@ -38,6 +38,7 @@ export type AdminArtistRow = {
   name: string;
   slug: string;
   bio: string | null;
+  statement: string | null;
   photo: string | null;
   profile_image_url?: string | null;
   email: string | null;

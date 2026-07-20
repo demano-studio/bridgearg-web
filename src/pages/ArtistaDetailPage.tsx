@@ -692,7 +692,7 @@ const ArtistaDetailPage = () => {
                 BridgeArg handles documentation, packaging and shipping so each piece can travel safely across borders.
               </p>
               <Link
-                to="/contacto"
+                to="/contact"
                 className="inline-flex items-center gap-3 border border-[#1e1517] text-[#1e1517] hover:bg-[#1e1517] hover:text-[#fcf8ea] transition-colors duration-300"
                 style={{
                   padding: "14px 22px",
