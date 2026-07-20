@@ -97,63 +97,65 @@ function outputPathForRoute(routePath) {
 }
 
 async function main() {
-  console.log("Prerender: obteniendo rutas del catálogo…");
-  const { paths, artistCount, artworkCount } = await getCatalogRoutes();
-  console.log(
-    `Prerender: ${paths.length} rutas (${artistCount} artists, ${artworkCount} artworks)`
-  );
-
-  const server = await startStaticServer();
-  console.log(`Prerender: sirviendo ${OUT_DIR} en ${ORIGIN}`);
-
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext();
-  // Evitar que GTM/analytics mantengan la red ocupada y bloqueen networkidle
-  await context.route("**/*", (route) => {
-    const u = route.request().url();
-    if (
-      u.includes("googletagmanager.com") ||
-      u.includes("google-analytics.com") ||
-      u.includes("analytics.google.com") ||
-      u.includes("doubleclick.net")
-    ) {
-      return route.abort();
-    }
-    return route.continue();
-  });
-
-  let ok = 0;
-  let failed = 0;
-
   try {
-    for (const routePath of paths) {
-      const page = await context.newPage();
-      const url = routePath === "/" ? `${ORIGIN}/` : `${ORIGIN}${routePath}`;
-      try {
-        await page.goto(url, { waitUntil: "networkidle", timeout: 90_000 });
-        const html = await page.content();
-        const outFile = outputPathForRoute(routePath);
-        await mkdir(dirname(outFile), { recursive: true });
-        await writeFile(outFile, html, "utf8");
-        ok++;
-        console.log(`ok  ${routePath} → ${outFile.replace(OUT_DIR + sep, "dist/")}`);
-      } catch (e) {
-        failed++;
-        console.error(`FAIL ${routePath}:`, e instanceof Error ? e.message : e);
-      } finally {
-        await page.close();
-      }
-    }
-  } finally {
-    await browser.close();
-    await new Promise((r) => server.close(r));
-  }
+    console.log("Prerender: obteniendo rutas del catálogo…");
+    const { paths, artistCount, artworkCount } = await getCatalogRoutes();
+    console.log(
+      `Prerender: ${paths.length} rutas (${artistCount} artists, ${artworkCount} artworks)`
+    );
 
-  console.log(`\nPrerender listo — OK: ${ok} | Fallidas: ${failed}`);
-  if (failed > 0) process.exit(1);
+    const server = await startStaticServer();
+    console.log(`Prerender: sirviendo ${OUT_DIR} en ${ORIGIN}`);
+
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext();
+    // Evitar que GTM/analytics mantengan la red ocupada y bloqueen networkidle
+    await context.route("**/*", (route) => {
+      const u = route.request().url();
+      if (
+        u.includes("googletagmanager.com") ||
+        u.includes("google-analytics.com") ||
+        u.includes("analytics.google.com") ||
+        u.includes("doubleclick.net")
+      ) {
+        return route.abort();
+      }
+      return route.continue();
+    });
+
+    let ok = 0;
+    let failed = 0;
+
+    try {
+      for (const routePath of paths) {
+        const page = await context.newPage();
+        const url = routePath === "/" ? `${ORIGIN}/` : `${ORIGIN}${routePath}`;
+        try {
+          await page.goto(url, { waitUntil: "networkidle", timeout: 90_000 });
+          const html = await page.content();
+          const outFile = outputPathForRoute(routePath);
+          await mkdir(dirname(outFile), { recursive: true });
+          await writeFile(outFile, html, "utf8");
+          ok++;
+          console.log(`ok  ${routePath} → ${outFile.replace(OUT_DIR + sep, "dist/")}`);
+        } catch (e) {
+          failed++;
+          console.error(`FAIL ${routePath}:`, e instanceof Error ? e.message : e);
+        } finally {
+          await page.close();
+        }
+      }
+    } finally {
+      await browser.close();
+      await new Promise((r) => server.close(r));
+    }
+
+    console.log(`\nPrerender listo — OK: ${ok} | Fallidas: ${failed}`);
+    if (failed > 0) process.exit(1);
+  } catch (e) {
+    console.error("Prerender falló, se sigue con el build sin prerenderizar:", e);
+    process.exit(0);
+  }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+main();

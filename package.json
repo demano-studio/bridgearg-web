@@ -7,7 +7,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "vite build",
-    "postbuild": "node scripts/generate-sitemap.mjs && node scripts/prerender.mjs",
+    "postbuild": "node scripts/generate-sitemap.mjs && (node scripts/prerender.mjs || echo 'Prerender falló, se sigue con el build sin prerenderizar')",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
