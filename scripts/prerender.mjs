@@ -1,93 +1,67 @@
 // scripts/prerender.mjs
-// Prerenderiza las rutas públicas del catálogo con Playwright sobre dist/.
+// Inyecta meta tags SEO en copias estáticas de dist/index.html por cada ruta del catálogo.
 // Corre en postbuild después de generate-sitemap.mjs.
-//
-// Escribe HTML estático en dist/<ruta>/index.html (y dist/index.html para "/").
-// No modifica el código de la app: solo lee el build y escribe HTML adicional.
+// Sin Playwright ni servidor: solo lee la plantilla, reemplaza tags y escribe HTML en dist/.
 
-import { createServer } from "node:http";
-import { createReadStream, existsSync, statSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, extname, join, normalize, resolve, sep } from "node:path";
-import { chromium } from "playwright";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join, resolve, sep } from "node:path";
 import { getCatalogRoutes } from "./get-routes.mjs";
 
 const OUT_DIR = resolve("dist");
-const PORT = Number(process.env.PRERENDER_PORT || 4173);
-const ORIGIN = `http://127.0.0.1:${PORT}`;
+const SITE_NAME = "BRIDGEARG";
+const SITE_URL = "https://www.bridgearg.net";
+const DEFAULT_DESCRIPTION =
+  "Curating and connecting extraordinary Argentine contemporary art with global collectors. From Córdoba to the world.";
+const DEFAULT_OG_IMAGE = "https://www.bridgearg.net/assets/ui/new-hero-bg.jpg";
 
-const MIME = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".json": "application/json",
-  ".svg": "image/svg+xml",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-  ".ico": "image/x-icon",
-  ".txt": "text/plain; charset=utf-8",
-  ".xml": "application/xml",
-  ".map": "application/json",
+/** Mismos title/description que pasan a <SEO> en los componentes React. */
+const STATIC_META = {
+  "/": {
+    title: "Contemporary Argentine Art",
+    description:
+      "Curating and connecting extraordinary Argentine contemporary art with global collectors. From Córdoba to the world.",
+  },
+  "/artworks": {
+    title: "Collection",
+    description: "Explore our collection of works by contemporary Argentine artists.",
+  },
+  "/artists": {
+    title: "Artists",
+    description: "Discover contemporary Argentine artists represented by BridgeArg.",
+  },
+  "/about": {
+    title: "About",
+    description:
+      "Learn about BridgeArg, the gallery connecting Argentine contemporary art with global collectors.",
+  },
+  "/contact": {
+    title: "Contact",
+    description: "Get in touch with BridgeArg for artist inquiries, acquisitions, and more.",
+  },
 };
 
-function isInsideDist(filePath) {
-  const resolved = resolve(filePath);
-  return resolved === OUT_DIR || resolved.startsWith(OUT_DIR + sep);
+function escapeAttr(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
-function startStaticServer() {
-  if (!existsSync(OUT_DIR)) {
-    throw new Error(`No existe ${OUT_DIR}. Corré "vite build" antes del prerender.`);
-  }
+function formatPriceUSD(amountUsd) {
+  return `USD ${Number(amountUsd).toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
+}
 
-  const server = createServer((req, res) => {
-    try {
-      const url = new URL(req.url || "/", ORIGIN);
-      let pathname = decodeURIComponent(url.pathname);
-      if (pathname.includes("\0")) {
-        res.writeHead(400).end("Bad request");
-        return;
-      }
+function fullTitle(title) {
+  return title ? `${title} — ${SITE_NAME}` : SITE_NAME;
+}
 
-      let filePath = join(OUT_DIR, pathname === "/" ? "index.html" : pathname);
-      filePath = normalize(filePath);
-
-      if (!isInsideDist(filePath)) {
-        res.writeHead(403).end("Forbidden");
-        return;
-      }
-
-      if (existsSync(filePath) && statSync(filePath).isDirectory()) {
-        filePath = join(filePath, "index.html");
-      }
-
-      // SPA fallback: rutas de React sin HTML propio aún → dist/index.html
-      if (!existsSync(filePath) || !statSync(filePath).isFile()) {
-        filePath = join(OUT_DIR, "index.html");
-      }
-
-      if (!isInsideDist(filePath) || !existsSync(filePath)) {
-        res.writeHead(404).end("Not found");
-        return;
-      }
-
-      const type = MIME[extname(filePath).toLowerCase()] || "application/octet-stream";
-      res.writeHead(200, { "Content-Type": type });
-      createReadStream(filePath).pipe(res);
-    } catch (e) {
-      console.error("Static server error:", e);
-      res.writeHead(500).end("Server error");
-    }
-  });
-
-  return new Promise((resolveListen, reject) => {
-    server.once("error", reject);
-    server.listen(PORT, "127.0.0.1", () => resolveListen(server));
-  });
+function absoluteUrl(path) {
+  if (path === "/") return SITE_URL;
+  return `${SITE_URL}${path}`;
 }
 
 function outputPathForRoute(routePath) {
@@ -96,62 +70,142 @@ function outputPathForRoute(routePath) {
   return join(OUT_DIR, clean, "index.html");
 }
 
+/** Reemplaza un tag por prefijo exacto (sin regex). Si no existe, lo inserta antes de </head>. */
+function replaceOrInsertTag(html, prefix, newTag) {
+  const start = html.indexOf(prefix);
+  if (start === -1) {
+    const headClose = html.indexOf("</head>");
+    if (headClose === -1) return html + "\n" + newTag;
+    return html.slice(0, headClose) + `    ${newTag}\n  ` + html.slice(headClose);
+  }
+
+  if (prefix === "<title>") {
+    const close = html.indexOf("</title>", start);
+    if (close === -1) return html;
+    return html.slice(0, start) + newTag + html.slice(close + "</title>".length);
+  }
+
+  const end = html.indexOf(">", start);
+  if (end === -1) return html;
+  return html.slice(0, start) + newTag + html.slice(end + 1);
+}
+
+function applyMeta(html, { title, description, image, url }) {
+  const t = fullTitle(title);
+  const desc = description || DEFAULT_DESCRIPTION;
+  const img = image || DEFAULT_OG_IMAGE;
+  const loc = absoluteUrl(url);
+
+  let out = html;
+  out = replaceOrInsertTag(out, "<title>", `<title>${escapeAttr(t)}</title>`);
+  out = replaceOrInsertTag(
+    out,
+    '<meta name="description"',
+    `<meta name="description" content="${escapeAttr(desc)}" />`
+  );
+  out = replaceOrInsertTag(
+    out,
+    '<meta property="og:title"',
+    `<meta property="og:title" content="${escapeAttr(t)}" />`
+  );
+  out = replaceOrInsertTag(
+    out,
+    '<meta property="og:description"',
+    `<meta property="og:description" content="${escapeAttr(desc)}" />`
+  );
+  out = replaceOrInsertTag(
+    out,
+    '<meta property="og:image"',
+    `<meta property="og:image" content="${escapeAttr(img)}" />`
+  );
+  out = replaceOrInsertTag(
+    out,
+    '<meta property="og:url"',
+    `<meta property="og:url" content="${escapeAttr(loc)}" />`
+  );
+  out = replaceOrInsertTag(
+    out,
+    '<meta name="twitter:image"',
+    `<meta name="twitter:image" content="${escapeAttr(img)}" />`
+  );
+  return out;
+}
+
+function buildPageMetas({ artists, artworks }) {
+  /** @type {Array<{ path: string, title: string, description: string, image?: string | null, url: string }>} */
+  const pages = [];
+
+  for (const [path, meta] of Object.entries(STATIC_META)) {
+    pages.push({
+      path,
+      title: meta.title,
+      description: meta.description,
+      image: null,
+      url: path,
+    });
+  }
+
+  for (const artist of artists) {
+    if (!artist.slug) continue;
+    const path = `/artists/${artist.slug}`;
+    pages.push({
+      path,
+      title: artist.name,
+      description:
+        artist.bio ??
+        `Works and biography of ${artist.name}, contemporary Argentine artist.`,
+      image: artist.profile_image_url?.trim() || null,
+      url: path,
+    });
+  }
+
+  for (const work of artworks) {
+    if (work.id == null) continue;
+    const path = `/artworks/${work.id}`;
+    const artistName = work.artists?.name?.trim() || "Unknown artist";
+    const priceDisplay = formatPriceUSD(work.price_usd ?? 0);
+    const yearMedium = [work.year, work.medium].filter(Boolean).join(" · ");
+    pages.push({
+      path,
+      title: work.title,
+      description: `${artistName} · ${yearMedium} · ${priceDisplay}`,
+      image: work.image_url?.startsWith("http") ? work.image_url : null,
+      url: path,
+    });
+  }
+
+  return pages;
+}
+
 async function main() {
   try {
-    console.log("Prerender: obteniendo rutas del catálogo…");
-    const { paths, artistCount, artworkCount } = await getCatalogRoutes();
-    console.log(
-      `Prerender: ${paths.length} rutas (${artistCount} artists, ${artworkCount} artworks)`
-    );
+    console.log("Prerender (meta): leyendo plantilla dist/index.html…");
+    const template = await readFile(join(OUT_DIR, "index.html"), "utf8");
 
-    const server = await startStaticServer();
-    console.log(`Prerender: sirviendo ${OUT_DIR} en ${ORIGIN}`);
-
-    const browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext();
-    // Evitar que GTM/analytics mantengan la red ocupada y bloqueen networkidle
-    await context.route("**/*", (route) => {
-      const u = route.request().url();
-      if (
-        u.includes("googletagmanager.com") ||
-        u.includes("google-analytics.com") ||
-        u.includes("analytics.google.com") ||
-        u.includes("doubleclick.net")
-      ) {
-        return route.abort();
-      }
-      return route.continue();
-    });
+    console.log("Prerender (meta): obteniendo catálogo…");
+    const catalog = await getCatalogRoutes();
+    const pages = buildPageMetas(catalog);
 
     let ok = 0;
     let failed = 0;
 
-    try {
-      for (const routePath of paths) {
-        const page = await context.newPage();
-        const url = routePath === "/" ? `${ORIGIN}/` : `${ORIGIN}${routePath}`;
-        try {
-          await page.goto(url, { waitUntil: "networkidle", timeout: 90_000 });
-          const html = await page.content();
-          const outFile = outputPathForRoute(routePath);
-          await mkdir(dirname(outFile), { recursive: true });
-          await writeFile(outFile, html, "utf8");
-          ok++;
-          console.log(`ok  ${routePath} → ${outFile.replace(OUT_DIR + sep, "dist/")}`);
-        } catch (e) {
-          failed++;
-          console.error(`FAIL ${routePath}:`, e instanceof Error ? e.message : e);
-        } finally {
-          await page.close();
-        }
+    for (const page of pages) {
+      try {
+        const html = applyMeta(template, page);
+        const outFile = outputPathForRoute(page.path);
+        await mkdir(dirname(outFile), { recursive: true });
+        await writeFile(outFile, html, "utf8");
+        ok++;
+        console.log(`ok  ${page.path} → ${outFile.replace(OUT_DIR + sep, "dist" + sep)}`);
+      } catch (e) {
+        failed++;
+        console.error(`FAIL ${page.path}:`, e instanceof Error ? e.message : e);
       }
-    } finally {
-      await browser.close();
-      await new Promise((r) => server.close(r));
     }
 
-    console.log(`\nPrerender listo — OK: ${ok} | Fallidas: ${failed}`);
-    if (failed > 0) process.exit(1);
+    console.log(
+      `\nPrerender (meta) listo — OK: ${ok} | Fallidas: ${failed} (${catalog.artistCount} artists, ${catalog.artworkCount} artworks)`
+    );
   } catch (e) {
     console.error("Prerender falló, se sigue con el build sin prerenderizar:", e);
     process.exit(0);

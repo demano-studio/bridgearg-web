@@ -23,7 +23,13 @@ async function fetchAll(supabase, table, columns) {
 }
 
 /**
- * @returns {Promise<{ paths: string[], artistCount: number, artworkCount: number }>}
+ * @returns {Promise<{
+ *   paths: string[],
+ *   artistCount: number,
+ *   artworkCount: number,
+ *   artists: Array<{ name: string, slug: string, bio: string | null, statement: string | null, profile_image_url: string | null }>,
+ *   artworks: Array<{ id: number, title: string, image_url: string | null, price_usd: number | null, year: string | null, medium: string | null, artists: { name: string } | null }>,
+ * }>}
  */
 export async function getCatalogRoutes() {
   const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
@@ -35,8 +41,16 @@ export async function getCatalogRoutes() {
 
   const supabase = createClient(SUPABASE_URL, ANON_KEY);
   const [artists, artworks] = await Promise.all([
-    fetchAll(supabase, "artists", "slug"),
-    fetchAll(supabase, "artworks", "id"),
+    fetchAll(
+      supabase,
+      "artists",
+      "name,slug,bio,statement,profile_image_url"
+    ),
+    fetchAll(
+      supabase,
+      "artworks",
+      "id,title,image_url,price_usd,year,medium,artists(name)"
+    ),
   ]);
 
   const artistPaths = artists
@@ -53,5 +67,7 @@ export async function getCatalogRoutes() {
     paths: [...STATIC_PATHS, ...artistPaths, ...artworkPaths],
     artistCount: artists.length,
     artworkCount: artworks.length,
+    artists,
+    artworks,
   };
 }

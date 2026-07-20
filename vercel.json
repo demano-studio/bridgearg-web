@@ -1,5 +1,4 @@
 {
-  "installCommand": "npm install && npx playwright install chromium",
   "redirects": [
     { "source": "/collection", "destination": "/artworks", "permanent": true },
     { "source": "/artworks/4", "destination": "/artworks", "permanent": true },
