@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ArtworkStatus {
+  available
+  reserved
+  sold
+}
+
+model Artist {
+  id              Int       @id @default(autoincrement())
+  name            String
+  slug            String    @unique
+  bio             String?
+  photo           String?
+  profileImageUrl String?   @map("profile_image_url")
+  instagram       String?
+  featured        Boolean   @default(false)
+  artworks        Artwork[]
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("artists")
+}
+
+model Artwork {
+  id         Int           @id @default(autoincrement())
+  title      String
+  imageUrl   String        @map("image_url")
+  status     ArtworkStatus @default(available)
+  artistId   Int           @map("artist_id")
+  artist     Artist        @relation(fields: [artistId], references: [id])
+  year       String?
+  medium     String?
+  dimensions String?
+  priceUsd   Decimal?      @map("price_usd") @db.Decimal(12, 2)
+  weightKg   Decimal?      @map("weight_kg") @db.Decimal(10, 3)
+  widthCm    Decimal?      @map("width_cm") @db.Decimal(8, 2)
+  heightCm   Decimal?      @map("height_cm") @db.Decimal(8, 2)
+  depthCm    Decimal?      @map("depth_cm") @db.Decimal(8, 2)
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  @@map("artworks")
+}

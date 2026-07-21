@@ -1,0 +1,518 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Onest";
+  src: url("/fonts/ONEST/Onest-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Onest";
+  src: url("/fonts/ONEST/Onest-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Onest";
+  src: url("/fonts/ONEST/Onest-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Onest";
+  src: url("/fonts/ONEST/Onest-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Onest";
+  src: url("/fonts/ONEST/Onest-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "BestDB";
+  src: url("/fonts/BEST%20DB/best_nrm.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.back-to-artists-link {
+  color: rgba(30, 21, 23, 0.55);
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.back-to-artists-link:hover {
+  color: #7FB2D1;
+  border-bottom-color: #7FB2D1;
+}
+
+/* BridgeARG Design System - Technical Gallery Aesthetic */
+
+@layer base {
+  :root {
+    /* Core Colors - Final Visual Identity */
+    --background: 52 55% 96%;      /* #fcf8ea - Cream background */
+    --foreground: 350 15% 11%;     /* #1e1517 - Warm black */
+    
+    --card: 52 55% 96%;
+    --card-foreground: 350 15% 11%;
+    
+    --popover: 52 55% 96%;
+    --popover-foreground: 350 15% 11%;
+    
+    --primary: 350 15% 11%;        /* Warm black for primary */
+    --primary-foreground: 52 55% 96%;
+    
+    --secondary: 35 15% 88%;       /* Warm gray */
+    --secondary-foreground: 350 15% 11%;
+    
+    --muted: 52 40% 92%;
+    --muted-foreground: 350 10% 35%;
+    
+    --accent: 200 50% 70%;         /* #7fb2d1 - Technical blue */
+    --accent-foreground: 350 15% 11%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 350 10% 80%;         /* Light border */
+    --input: 350 10% 80%;
+    --ring: 200 50% 70%;
+    
+    --radius: 8px;                 /* Rounded corners for organic feel */
+    
+    /* Custom BridgeARG tokens */
+    --bridge-cream: 52 55% 96%;    /* #fcf8ea */
+    --bridge-black: 350 15% 11%;   /* #1e1517 */
+    --bridge-blue: 200 50% 70%;    /* #7fb2d1 */
+    --bridge-white: 0 0% 99%;      /* #fcfcfc */
+    --bridge-border: 350 10% 80%;
+    
+    /* Typography */
+    --font-display: "Onest", sans-serif;
+    --font-mono: "Onest", sans-serif;
+    --font-handwriting: "BestDB", cursive;
+    
+    /* Spacing */
+    --section-padding: clamp(3rem, 8vw, 8rem);
+    
+    /* Sidebar */
+    --sidebar-background: 45 25% 96%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 0 0% 8%;
+    --sidebar-primary-foreground: 45 25% 96%;
+    --sidebar-accent: 35 15% 88%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 0 0% 8%;
+  }
+
+  .dark {
+    --background: 0 0% 6%;
+    --foreground: 45 25% 96%;
+    
+    --card: 0 0% 10%;
+    --card-foreground: 45 25% 96%;
+    
+    --popover: 0 0% 6%;
+    --popover-foreground: 45 25% 96%;
+    
+    --primary: 45 25% 96%;
+    --primary-foreground: 0 0% 6%;
+    
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 45 25% 96%;
+    
+    --muted: 0 0% 15%;
+    --muted-foreground: 45 10% 60%;
+    
+    --accent: 0 0% 18%;
+    --accent-foreground: 45 25% 96%;
+    
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 45 25% 96%;
+    
+    --bridge-cream: 0 0% 6%;
+    --bridge-black: 45 25% 96%;
+    --bridge-warm: 35 10% 30%;
+    --bridge-border: 0 0% 25%;
+    
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 45 25% 96%;
+    --sidebar-primary: 45 25% 96%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 45 25% 96%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 45 25% 96%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  :root {
+    --header-h: 80px;
+  }
+
+  html,
+  body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-display);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  button,
+  input,
+  textarea,
+  select,
+  nav,
+  a {
+    font-family: var(--font-display);
+  }
+}
+
+@layer components {
+  /* Technical Blueprint Boxes */
+  .tech-box {
+    @apply border border-border/70 p-6;
+    position: relative;
+  }
+  
+  .tech-box::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 12px;
+    width: 8px;
+    height: 8px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+  }
+  
+  .tech-box::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    right: 12px;
+    width: 8px;
+    height: 8px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+  }
+  
+  /* Typography Classes */
+  .text-display {
+    font-family: var(--font-display);
+    @apply font-semibold tracking-[-0.03em];
+    line-height: 0.98;
+  }
+  
+  .text-handwriting {
+    font-family: var(--font-handwriting);
+    @apply font-medium;
+    font-style: normal;
+  }
+  
+  .text-technical {
+    font-family: var(--font-mono);
+    @apply text-xs uppercase tracking-[0.1em];
+  }
+  
+  .text-label {
+    font-family: var(--font-display);
+    @apply text-[11px] uppercase tracking-[0.1em] text-muted-foreground;
+  }
+  
+  /* Hero Typography */
+  .hero-title {
+    font-family: var(--font-display);
+    @apply text-[clamp(3rem,15vw,12rem)] font-semibold tracking-[-0.04em] leading-[0.88];
+  }
+  
+  /* Grid System */
+  .art-grid {
+    @apply grid gap-1;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  @media (min-width: 768px) {
+    .art-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .art-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  /* Image Hover Effects */
+  .art-image-container {
+    @apply relative overflow-hidden bg-muted;
+    aspect-ratio: 4/5;
+  }
+  
+  .art-image-container img {
+    @apply w-full h-full object-cover transition-all duration-700 ease-out;
+  }
+  
+  .art-image-container:hover img {
+    @apply scale-105;
+    filter: brightness(0.9);
+  }
+  
+  .art-image-container::after {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(to top, hsla(var(--foreground), 0.6) 0%, transparent 50%);
+  }
+  
+  .art-image-container:hover::after {
+    @apply opacity-100;
+  }
+  
+  /* Border Line Decoration */
+  .border-line {
+    @apply w-full h-px bg-border;
+  }
+  
+  .border-line-vertical {
+    @apply w-px h-full bg-border;
+  }
+  
+  /* Section Layout */
+  .section-padded {
+    padding: var(--section-padding) 0;
+  }
+  
+  /* Mobile Drawer Styles */
+  .mobile-menu-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40;
+  }
+  
+  .mobile-drawer {
+    @apply fixed top-0 right-0 h-full w-80 max-w-[85vw] border-l border-white/10 z-50;
+    background: #1e1517;
+    @apply transform transition-transform duration-300 ease-out;
+  }
+  
+  .mobile-drawer.closed {
+    @apply translate-x-full;
+  }
+  
+  .mobile-drawer.open {
+    @apply translate-x-0;
+  }
+  
+  /* Stamp Frame Styles - Postal stamp effect with serrated edges */
+  
+  
+  /* Scroll reveal animation */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+  
+  .scroll-reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  /* Mobile Stories Style */
+  @media (max-width: 768px) {
+    .stories-card {
+      width: 85vw;
+      height: 85svh;
+      border-radius: 24px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+  }
+
+  .text-handwriting {
+    font-family: "BestDB", cursive;
+    transform: rotate(-7deg);
+    display: inline-block;
+    transform-origin: left center;
+  }
+}
+
+@layer utilities {
+  .shadow-sm,
+  .shadow,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: none !important;
+  }
+
+  /* Animations */
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out forwards;
+    opacity: 0;
+  }
+  
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-stagger-1 { animation-delay: 0.1s; }
+  .animate-stagger-2 { animation-delay: 0.2s; }
+  .animate-stagger-3 { animation-delay: 0.3s; }
+  .animate-stagger-4 { animation-delay: 0.4s; }
+  
+  /* Hover Underline Effect */
+  .hover-underline {
+    position: relative;
+  }
+  
+  .hover-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: currentColor;
+    transition: width 0.3s ease;
+  }
+  
+  .hover-underline:hover::after {
+    width: 100%;
+  }
+  
+  /* Selection Color */
+  ::selection {
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
+  }
+}
+
+/* Price range slider (Obras filter panel) */
+input[type="range"].cream-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 24px;
+}
+
+input[type="range"].cream-slider::-webkit-slider-runnable-track {
+  height: 2px;
+  background: rgba(252, 248, 234, 0.3);
+  border-radius: 0;
+}
+
+input[type="range"].cream-slider::-moz-range-track {
+  height: 2px;
+  background: rgba(252, 248, 234, 0.3);
+  border-radius: 0;
+}
+
+input[type="range"].cream-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #fcf8ea;
+  border-radius: 50%;
+  border: none;
+  margin-top: -6px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(30, 21, 23, 0.2);
+  transition: transform 0.15s ease;
+}
+
+input[type="range"].cream-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"].cream-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #fcf8ea;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(30, 21, 23, 0.2);
+  transition: transform 0.15s ease;
+}
+
+input[type="range"].cream-slider::-moz-range-thumb:hover {
+  transform: scale(1.15);
+}
+
+.prose-legal p {
+  margin: 1em 0;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.prose-legal h3 {
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: #1e1517;
+}
+
+@media (min-width: 768px) {
+  .prose-legal h3 {
+    font-size: 1.5rem;
+  }
+}
+
+.prose-legal a {
+  color: #7FB2D1;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.prose-legal a:hover {
+  border-bottom-color: #7FB2D1;
+}
+

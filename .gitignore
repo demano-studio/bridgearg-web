@@ -1,0 +1,26 @@
+node_modules
+dist
+.env
+server/.env
+server/node_modules
+server/dist
+server/prisma/*.db
+server/prisma/*.db-journal
+supabase/functions/.env.local
+.DS_Store
+**/.DS_Store
+# Cursor / VSCode
+.cursor/
+.vscode/
+
+# Logs
+*.log
+
+
+# Cursor / VSCode
+.cursor/
+.vscode/
+
+# Logs
+*.log
+

@@ -1,0 +1,23 @@
+export const images = {
+  boxes: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/boxes.jpg",
+  collectionsHero:
+    "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/bridgearg-246.jpg",
+  fondoAle: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/fondo_ale_2.jpg",
+  fondoBoyo: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/fondo_boyo_3.jpg",
+  fondoCaro: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/fodo_caro_2.jpg",
+  fondoFabio: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/fondo_fabio_2.jpg",
+  fondoJose: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/fondo_jose_2.png",
+  fondoHora: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/fondo_hora.png",
+  fondoMariano: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/fondo_mariano_2.jpg",
+  fondoRoger: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/fondo_roger_2.jpeg",
+  fondoTulio: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/DSC_0799.jpg",
+  fondoSara: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/berie_06.jpg",
+  freePackageBoxMockup: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/Free_Package_Box_Mockup.png",
+  mockup: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/Mockup.png",
+  newHeroBg: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/new-hero-bg.jpg",
+  theProcess: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/the_process.jpg",
+  fondoArtistas: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/fondo_artists.jpg",
+  objectsHistory: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/objectsHistory2.jpg",
+  cuadroCarmela: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/cuadroCarmela.png",
+  fotoCarmela: "https://wzofuvxsvomntglezygh.supabase.co/storage/v1/object/public/ui-assets/carmela2.jpeg",
+};
