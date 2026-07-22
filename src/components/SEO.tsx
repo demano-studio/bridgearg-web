@@ -12,7 +12,7 @@ const SITE_NAME = "BRIDGEARG";
 const DEFAULT_DESCRIPTION =
   "Curating and connecting extraordinary Argentine contemporary art with global collectors. From Córdoba to the world.";
 const SITE_URL = "https://www.bridgearg.net";
-const DEFAULT_OG_IMAGE = "https://www.bridgearg.net/assets/ui/og-cover.png";
+const DEFAULT_OG_IMAGE = "https://www.bridgearg.net/assets/ui/og-cover.jpg";
 
 export function SEO({ title, description, image, url, type = "website" }: SEOProps) {
   const fullTitle = title ? `${title} — ${SITE_NAME}` : SITE_NAME;
