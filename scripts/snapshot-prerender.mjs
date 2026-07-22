@@ -2,6 +2,7 @@
 // Tras prerender.mjs (metas), levanta dist/, visita cada ruta con Playwright y
 // sobrescribe el HTML con el DOM ya renderizado por React (contenido en #root).
 // Si Chromium no está o algo falla, loggea SKIPPED y sale 0 (deploy sigue con metas).
+// Local: una vez, `npx playwright install chromium`. En Vercel usa @sparticuz/chromium.
 
 import { createServer } from "node:http";
 import { createReadStream, existsSync, statSync } from "node:fs";
@@ -183,9 +184,19 @@ async function main() {
 
     try {
       browser = await chromium.launch({ headless: true });
-    } catch (e) {
-      skip("Chromium no disponible (corré: npx playwright install chromium)", e);
-      return;
+    } catch (primerError) {
+      try {
+        const sparticuz = (await import("@sparticuz/chromium")).default;
+        browser = await chromium.launch({
+          executablePath: await sparticuz.executablePath(),
+          args: sparticuz.args,
+          headless: true,
+        });
+        console.log("[snapshot-prerender] usando Chromium autocontenido (@sparticuz)");
+      } catch (segundoError) {
+        skip("Chromium no disponible ni via @sparticuz (local: npx playwright install chromium)", segundoError);
+        return;
+      }
     }
 
     const context = await browser.newContext();

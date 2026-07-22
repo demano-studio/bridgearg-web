@@ -8,7 +8,6 @@
     "start": "vite",
     "build": "vite build",
     "postbuild": "node scripts/generate-sitemap.mjs && node scripts/prerender.mjs && node scripts/snapshot-prerender.mjs",
-    "postinstall": "playwright install chromium",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
