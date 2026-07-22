@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/PageTransition";
 import { FALLBACK_ARTIST_NAME, getWorks, type WorkFromApi } from "@/lib/api";
 import { getWorkImageUrl } from "@/lib/work-images";
+import { buildSrcSet, isSupabaseStorageObjectUrl, transformUrl } from "@/lib/imageTransform";
 import { images } from "@/lib/images";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
@@ -268,6 +269,13 @@ const ArtworksPage = () => {
       objectFit: "contain",
     };
 
+    const workImageUrl = getWorkImageUrl(work.imagenUrl);
+    const workUsesTransform = isSupabaseStorageObjectUrl(workImageUrl);
+    const workSrc = workUsesTransform
+      ? transformUrl(workImageUrl, { width: 800 })
+      : workImageUrl;
+    const workSrcSet = workUsesTransform ? buildSrcSet(workImageUrl) : undefined;
+
     const mediaBlock = (
       <Link
         to={`/artworks/${work.id}`}
@@ -275,7 +283,9 @@ const ArtworksPage = () => {
       >
         <div className="media relative w-full overflow-hidden" style={{ backgroundColor: "transparent" }}>
           <img
-            src={getWorkImageUrl(work.imagenUrl)}
+            src={workSrc}
+            srcSet={workSrcSet}
+            sizes={workSrcSet ? "(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" : undefined}
             alt={`${work.title} – ${artistName}`}
             loading="lazy"
             decoding="async"

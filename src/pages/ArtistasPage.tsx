@@ -319,6 +319,7 @@ const ArtistasPage = () => {
                       alt={card.artist.name}
                       className="!h-full !w-full"
                       imageClassName={`h-full w-full object-cover ${card.artist.slug === "sara-goldman" ? "object-top" : "object-center"}`}
+                      sizes="(max-width: 767px) 100vw, (max-width: 1000px) 50vw, 33vw"
                       logSrcOnError
                     />
                   </div>

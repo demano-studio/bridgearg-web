@@ -450,6 +450,7 @@ const ArtistaDetailPage = () => {
                           variant="artwork"
                           className="!h-full !w-full"
                           imageClassName="!h-full !w-full !object-contain !object-center transition-[filter] duration-500 ease-out !saturate-[0.86] !contrast-[0.95] group-hover:!saturate-100 group-hover:!contrast-100"
+                          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
                           logSrcOnError
                         />
                       </div>

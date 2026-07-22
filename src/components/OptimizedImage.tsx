@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getWorkImageUrl } from "@/lib/work-images";
+import { buildSrcSet, isSupabaseStorageObjectUrl, transformUrl } from "@/lib/imageTransform";
 
 export interface OptimizedImageProps {
   /** Raw image reference: URL, imported asset, or artworks slug. */
@@ -22,16 +23,20 @@ export interface OptimizedImageProps {
   imageClassName?: string;
   /** Log the resolved src if the image fails to load. */
   logSrcOnError?: boolean;
+  /** CSS sizes attribute for responsive srcset. Default "100vw". */
+  sizes?: string;
+  /** When true (default), attach srcset for Supabase Storage URLs. */
+  responsive?: boolean;
+  /** Prefer eager load (above the fold). */
+  priority?: boolean;
 }
 
 /**
  * Unified, optimized image component with:
  * - Blur placeholder.
  * - Supabase "artworks" bucket support when variant="artwork".
+ * - Responsive srcset via Supabase Image Transformations when applicable.
  * - SEO-friendly alt: "Title – Artist" when both are provided.
- *
- * When migrating to next/image, the internal <img> can be swapped
- * for <Image> here sin tocar el resto del código.
  */
 export function OptimizedImage({
   src,
@@ -42,10 +47,21 @@ export function OptimizedImage({
   className = "",
   imageClassName = "",
   logSrcOnError = false,
+  sizes = "100vw",
+  responsive = true,
+  priority = false,
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false);
 
   const resolvedSrc = variant === "artwork" ? getWorkImageUrl(src) : src;
+  const useTransforms = responsive && isSupabaseStorageObjectUrl(resolvedSrc);
+  const displaySrc = useTransforms
+    ? transformUrl(resolvedSrc, { width: 800 })
+    : resolvedSrc;
+  const srcSet = useTransforms ? buildSrcSet(resolvedSrc) : undefined;
+  const placeholderSrc = useTransforms
+    ? transformUrl(resolvedSrc, { width: 48, quality: 40 })
+    : resolvedSrc;
 
   const resolvedAlt =
     alt ??
@@ -62,7 +78,7 @@ export function OptimizedImage({
         className="absolute inset-0 transition-opacity duration-300"
         style={{
           opacity: loaded ? 0 : 1,
-          backgroundImage: `url(${resolvedSrc})`,
+          backgroundImage: `url(${placeholderSrc})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           filter: "blur(12px)",
@@ -71,20 +87,21 @@ export function OptimizedImage({
         aria-hidden
       />
       <img
-        src={resolvedSrc}
+        src={displaySrc}
+        srcSet={srcSet || undefined}
+        sizes={srcSet ? sizes : undefined}
         alt={resolvedAlt}
-        loading="lazy"
+        loading={priority ? "eager" : "lazy"}
         decoding="async"
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${imageClassName}`}
         style={{ opacity: loaded ? 1 : 0 }}
         onLoad={() => setLoaded(true)}
         onError={() => {
           if (logSrcOnError) {
-            console.log("[OptimizedImage] Failed to load image src:", resolvedSrc);
+            console.log("[OptimizedImage] Failed to load image src:", displaySrc);
           }
         }}
       />
     </div>
   );
 }
-

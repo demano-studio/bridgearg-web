@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getAvailableCount } from "@/lib/api";
 import { images } from "@/lib/images";
+import { transformUrl } from "@/lib/imageTransform";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 
 const heroImages = [
@@ -30,6 +31,13 @@ const heroArtists = [
   "Sara Goldman",
 ];
 const SLIDE_DURATION = 9000; // milisegundos
+const HERO_WIDTH_STEPS = [800, 1200, 1600, 2000] as const;
+
+function heroTransformWidth(): number {
+  if (typeof window === "undefined") return 1600;
+  const cssWidth = window.innerWidth * (window.devicePixelRatio || 1);
+  return HERO_WIDTH_STEPS.find((step) => cssWidth <= step) ?? 2000;
+}
 
 export interface BrandHeroProps {
   logoWidth?: string;
@@ -42,11 +50,17 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [progressRunId, setProgressRunId] = useState(0);
+  /** Índices con backgroundImage aplicado (activo + siguiente + ya visitados) para no pedir los 10 al montar. */
+  const [paintedIndexes, setPaintedIndexes] = useState(() => new Set([0, 1]));
+  const [heroWidth] = useState(() => heroTransformWidth());
   const intervalRef = useRef<number | null>(null);
   const firstTickTimeoutRef = useRef<number | null>(null);
   const progressBarRef = useRef<HTMLSpanElement | null>(null);
   const slideStartedAtRef = useRef<number>(Date.now());
   const elapsedOnCurrentSlideRef = useRef<number>(0);
+  const preloadedSrcsRef = useRef(new Set<string>());
+
+  const heroSrc = (src: string) => transformUrl(src, { width: heroWidth, quality: 75 });
 
   useEffect(() => {
     getAvailableCount()
@@ -111,23 +125,31 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
   }, [isPlaying]);
 
   useEffect(() => {
-    const activeSrc = heroImages[activeImageIndex];
-    if (activeSrc) {
+    const nextIndex = (activeImageIndex + 1) % heroImages.length;
+    setPaintedIndexes((prev) => {
+      if (prev.has(activeImageIndex) && prev.has(nextIndex)) return prev;
+      const next = new Set(prev);
+      next.add(activeImageIndex);
+      next.add(nextIndex);
+      return next;
+    });
+
+    const preloadSrc = (src: string | undefined) => {
+      if (!src || preloadedSrcsRef.current.has(src)) return;
+      preloadedSrcsRef.current.add(src);
       const img = new Image();
-      img.src = activeSrc;
-    }
+      img.src = src;
+    };
+
+    preloadSrc(heroSrc(heroImages[activeImageIndex]));
 
     let cancelled = false;
     let timeoutId: number | null = null;
     let idleId: number | null = null;
 
-    const preloadRest = () => {
+    const preloadNext = () => {
       if (cancelled) return;
-      heroImages.forEach((src, index) => {
-        if (index === activeImageIndex) return;
-        const img = new Image();
-        img.src = src;
-      });
+      preloadSrc(heroSrc(heroImages[nextIndex]));
     };
 
     const schedulePreload = () => {
@@ -137,21 +159,21 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
           cancelIdleCallback?: (handle: number) => void;
         };
         if (typeof win.requestIdleCallback === "function") {
-          idleId = win.requestIdleCallback(() => preloadRest());
+          idleId = win.requestIdleCallback(() => preloadNext());
         } else {
-          timeoutId = window.setTimeout(() => preloadRest(), 1);
+          timeoutId = window.setTimeout(() => preloadNext(), 1);
         }
         return;
       }
 
-      window.addEventListener("load", preloadRest, { once: true });
+      window.addEventListener("load", schedulePreload, { once: true });
     };
 
     schedulePreload();
 
     return () => {
       cancelled = true;
-      window.removeEventListener("load", preloadRest);
+      window.removeEventListener("load", schedulePreload);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
       const win = window as Window & {
         cancelIdleCallback?: (handle: number) => void;
@@ -160,7 +182,7 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
         win.cancelIdleCallback(idleId);
       }
     };
-  }, []);
+  }, [activeImageIndex]);
 
   const resetProgressAnimationFromZero = () => {
     requestAnimationFrame(() => {
@@ -245,7 +267,9 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
               inset: 0,
               width: "100%",
               height: "100%",
-              backgroundImage: `url("${src}")`,
+              backgroundImage: paintedIndexes.has(index)
+                ? `url("${heroSrc(src)}")`
+                : undefined,
               backgroundSize: "cover",
               backgroundPosition: "center",
               opacity: activeImageIndex === index ? 1 : 0,
