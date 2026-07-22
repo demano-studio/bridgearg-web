@@ -5,13 +5,12 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/PageTransition";
 import { FALLBACK_ARTIST_NAME, getWorks, type WorkFromApi } from "@/lib/api";
-import { getWorkImageUrl } from "@/lib/work-images";
-import { buildSrcSet, isSupabaseStorageObjectUrl, transformUrl } from "@/lib/imageTransform";
 import { images } from "@/lib/images";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OptimizedImage } from "@/components/OptimizedImage";
 
 /**
  * TODO - Base de datos:
@@ -258,23 +257,9 @@ const ArtworksPage = () => {
     return "Private collection";
   };
 
-  const renderWorkCard = (work: WorkFromApi) => {
+  const renderWorkCard = (work: WorkFromApi, index: number) => {
     const artistName = work.artistName?.trim() || FALLBACK_ARTIST_NAME;
     const showOverlay = !work.available || work.status === "sold";
-
-    const imgStyle: CSSProperties = {
-      width: "100%",
-      height: "auto",
-      display: "block",
-      objectFit: "contain",
-    };
-
-    const workImageUrl = getWorkImageUrl(work.imagenUrl);
-    const workUsesTransform = isSupabaseStorageObjectUrl(workImageUrl);
-    const workSrc = workUsesTransform
-      ? transformUrl(workImageUrl, { width: 800 })
-      : workImageUrl;
-    const workSrcSet = workUsesTransform ? buildSrcSet(workImageUrl) : undefined;
 
     const mediaBlock = (
       <Link
@@ -282,15 +267,15 @@ const ArtworksPage = () => {
         style={{ display: "block", textDecoration: "none", color: "inherit" }}
       >
         <div className="media relative w-full overflow-hidden" style={{ backgroundColor: "transparent" }}>
-          <img
-            src={workSrc}
-            srcSet={workSrcSet}
-            sizes={workSrcSet ? "(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" : undefined}
-            alt={`${work.title} – ${artistName}`}
-            loading="lazy"
-            decoding="async"
-            style={imgStyle}
-            className="transition-[filter] duration-300 ease-out saturate-[0.92] contrast-[0.97] group-hover:saturate-100 group-hover:contrast-100"
+          <OptimizedImage
+            src={work.imagenUrl}
+            title={work.title}
+            artistName={artistName}
+            variant="artwork"
+            aspectRatio="4/5"
+            priority={index < 6}
+            sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
+            imageClassName="transition-[filter] duration-300 ease-out saturate-[0.92] contrast-[0.97] group-hover:saturate-100 group-hover:contrast-100"
           />
           {showOverlay && (
             <div
@@ -743,7 +728,7 @@ const ArtworksPage = () => {
                     }}
                   >
                     <div className="overflow-hidden border border-[rgba(30,21,23,0.18)] bg-[rgba(252,252,252,0.25)]">
-                      <Skeleton className="aspect-[1/1.15] w-full" />
+                      <Skeleton className="aspect-[4/5] w-full" />
                       <div className="space-y-3 p-6">
                         <Skeleton className="h-3 w-24" />
                         <Skeleton className="h-6 w-[80%]" />
@@ -788,7 +773,7 @@ const ArtworksPage = () => {
                   columnCount: isMobile ? 1 : isTablet ? 2 : 3,
                 }}
               >
-                {sortedWorks.map((work) => renderWorkCard(work))}
+                {sortedWorks.map((work, index) => renderWorkCard(work, index))}
               </div>
             )}
           </section>

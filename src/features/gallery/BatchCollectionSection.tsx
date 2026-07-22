@@ -102,6 +102,7 @@ export function BatchCollectionSection() {
                       variant="artwork"
                       className="h-full w-full"
                       imageClassName="!object-contain !object-center transition-[filter] duration-700 ease-out saturate-[0.86] contrast-[0.95] group-hover:saturate-100 group-hover:contrast-100"
+                      priority={index < 6}
                     />
 
                     <div className="absolute inset-0 bg-black/0 transition-all duration-500 ease-out group-hover:bg-black/60" />

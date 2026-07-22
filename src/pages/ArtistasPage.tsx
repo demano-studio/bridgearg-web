@@ -303,13 +303,12 @@ const ArtistasPage = () => {
                     backgroundColor: "#fcfcfc",
                     padding: "14px",
                     boxShadow: "0 14px 42px rgba(30,21,23,0.05)",
-                    height: "390px",
+                    width: "100%",
                   }}
                 >
                   <div
                     style={{
                       width: "100%",
-                      height: "100%",
                       overflow: "hidden",
                       filter: "saturate(0.93) contrast(0.98)",
                     }}
@@ -317,9 +316,10 @@ const ArtistasPage = () => {
                     <OptimizedImage
                       src={card.artist.imageUrl ?? ""}
                       alt={card.artist.name}
-                      className="!h-full !w-full"
-                      imageClassName={`h-full w-full object-cover ${card.artist.slug === "sara-goldman" ? "object-top" : "object-center"}`}
+                      aspectRatio="4/5"
+                      objectPosition={card.artist.slug === "sara-goldman" ? "top" : "center"}
                       sizes="(max-width: 767px) 100vw, (max-width: 1000px) 50vw, 33vw"
+                      priority={index < 6}
                       logSrcOnError
                     />
                   </div>

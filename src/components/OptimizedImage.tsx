@@ -27,13 +27,21 @@ export interface OptimizedImageProps {
   sizes?: string;
   /** When true (default), attach srcset for Supabase Storage URLs. */
   responsive?: boolean;
-  /** Prefer eager load (above the fold). */
+  /** Prefer eager load + high fetch priority (above the fold). */
   priority?: boolean;
+  /**
+   * CSS aspect-ratio for the outer container (e.g. "4/5").
+   * Reserves height before the image loads to avoid CLS.
+   */
+  aspectRatio?: string;
+  /** CSS object-position for the <img> (and blur placeholder). Default "center". */
+  objectPosition?: string;
 }
 
 /**
  * Unified, optimized image component with:
  * - Blur placeholder.
+ * - Optional aspect-ratio box to reserve layout space (CLS).
  * - Supabase "artworks" bucket support when variant="artwork".
  * - Responsive srcset via Supabase Image Transformations when applicable.
  * - SEO-friendly alt: "Title – Artist" when both are provided.
@@ -50,6 +58,8 @@ export function OptimizedImage({
   sizes = "100vw",
   responsive = true,
   priority = false,
+  aspectRatio,
+  objectPosition = "center",
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false);
 
@@ -72,7 +82,10 @@ export function OptimizedImage({
       : "");
 
   return (
-    <div className={`relative h-full w-full overflow-hidden bg-muted ${className}`}>
+    <div
+      className={`relative w-full overflow-hidden bg-muted ${aspectRatio ? "" : "h-full"} ${className}`}
+      style={aspectRatio ? { aspectRatio } : undefined}
+    >
       {/* Blur placeholder (same image, scaled + blurred) */}
       <div
         className="absolute inset-0 transition-opacity duration-300"
@@ -80,7 +93,7 @@ export function OptimizedImage({
           opacity: loaded ? 0 : 1,
           backgroundImage: `url(${placeholderSrc})`,
           backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundPosition: objectPosition,
           filter: "blur(12px)",
           transform: "scale(1.05)",
         }}
@@ -92,9 +105,10 @@ export function OptimizedImage({
         sizes={srcSet ? sizes : undefined}
         alt={resolvedAlt}
         loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : undefined}
         decoding="async"
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${imageClassName}`}
-        style={{ opacity: loaded ? 1 : 0 }}
+        style={{ opacity: loaded ? 1 : 0, objectPosition }}
         onLoad={() => setLoaded(true)}
         onError={() => {
           if (logSrcOnError) {
