@@ -4,6 +4,7 @@
     { "source": "/artworks/4", "destination": "/artworks", "permanent": true },
     { "source": "/nosotros", "destination": "/about", "permanent": true },
     { "source": "/contacto", "destination": "/contact", "permanent": true },
+    { "source": "/artistas/:slug", "destination": "/artists/:slug", "permanent": true },
     { "source": "/artistas", "destination": "/artists", "permanent": true },
     { "source": "/works", "destination": "/artworks", "permanent": true }
   ],

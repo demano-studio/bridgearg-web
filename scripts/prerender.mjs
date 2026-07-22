@@ -60,7 +60,7 @@ function fullTitle(title) {
 }
 
 function absoluteUrl(path) {
-  if (path === "/") return SITE_URL;
+  if (path === "/") return `${SITE_URL}/`;
   return `${SITE_URL}${path}`;
 }
 
@@ -125,6 +125,16 @@ function applyMeta(html, { title, description, image, url }) {
   );
   out = replaceOrInsertTag(
     out,
+    '<link rel="canonical"',
+    `<link rel="canonical" href="${escapeAttr(loc)}" />`
+  );
+  out = replaceOrInsertTag(
+    out,
+    '<meta name="twitter:card"',
+    '<meta name="twitter:card" content="summary_large_image" />'
+  );
+  out = replaceOrInsertTag(
+    out,
     '<meta name="twitter:image"',
     `<meta name="twitter:image" content="${escapeAttr(img)}" />`
   );
@@ -168,7 +178,7 @@ function buildPageMetas({ artists, artworks }) {
     pages.push({
       path,
       title: work.title,
-      description: `${artistName} · ${yearMedium} · ${priceDisplay}`,
+      description: [artistName, yearMedium, priceDisplay].filter(Boolean).join(" · "),
       image: work.image_url?.startsWith("http") ? work.image_url : null,
       url: path,
     });

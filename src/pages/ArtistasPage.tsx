@@ -6,10 +6,14 @@ import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/PageTransition";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { getArtists, getWorks, type ArtistFromApi, type WorkFromApi } from "@/lib/api";
+import { excerpt } from "@/lib/excerpt";
 import { toast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
 import { images } from "@/lib/images";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
+
+const ARTIST_CARD_FALLBACK =
+  "Working at the crossroads of memory, material and place — pieces that travel beyond their making.";
 
 type ArtistCard = {
   artist: ArtistFromApi;
@@ -404,8 +408,9 @@ const ArtistasPage = () => {
                         fontFamily: '"Onest", sans-serif',
                       }}
                     >
-                      {card.artist.statement ||
-                        "Working at the crossroads of memory, material and place — pieces that travel beyond their making."}
+                      {card.artist.statement?.trim() ||
+                        excerpt(card.artist.bio, 140) ||
+                        ARTIST_CARD_FALLBACK}
                     </p>
                     <span
                       style={{

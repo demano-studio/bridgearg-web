@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
@@ -14,6 +14,11 @@ const VerificationCallbackPage = lazy(() => import("@/pages/VerificationCallback
 const NosotrosPage = lazy(() => import("@/pages/NosotrosPage"));
 const ContactoPage = lazy(() => import("@/pages/ContactoPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+
+function RedirectArtistasSlug() {
+  const { slug } = useParams();
+  return <Navigate to={`/artists/${slug ?? ""}`} replace />;
+}
 
 const routeFallback = (
   <div className="flex min-h-[40vh] items-center justify-center">
@@ -30,7 +35,7 @@ export const AnimatedRoutes = () => {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />
           <Route path="/artistas" element={<Navigate to="/artists" replace />} />
-          <Route path="/artistas/:slug" element={<ArtistaDetailPage />} />
+          <Route path="/artistas/:slug" element={<RedirectArtistasSlug />} />
           <Route path="/artists" element={<ArtistasPage />} />
           <Route path="/artists/:slug" element={<ArtistaDetailPage />} />
           <Route path="/works" element={<Navigate to="/artworks" replace />} />
