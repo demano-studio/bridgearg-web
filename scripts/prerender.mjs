@@ -6,6 +6,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
 import { getCatalogRoutes } from "./get-routes.mjs";
+import { ensureHomeHeroPreload } from "./home-hero-preload.mjs";
 
 const OUT_DIR = resolve("dist");
 const SITE_NAME = "BRIDGEARG";
@@ -201,7 +202,11 @@ async function main() {
 
     for (const page of pages) {
       try {
-        const html = applyMeta(template, page);
+        let html = applyMeta(template, page);
+        // Solo home: preload LCP del primer fondo del carrusel (background-image).
+        if (page.path === "/") {
+          html = ensureHomeHeroPreload(html);
+        }
         const outFile = outputPathForRoute(page.path);
         await mkdir(dirname(outFile), { recursive: true });
         await writeFile(outFile, html, "utf8");

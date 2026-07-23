@@ -9,6 +9,7 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, normalize, resolve, sep } from "node:path";
 import { getCatalogRoutes } from "./get-routes.mjs";
+import { ensureHomeHeroPreload } from "./home-hero-preload.mjs";
 
 const OUT_DIR = resolve("dist");
 const PORT = Number(process.env.SNAPSHOT_PORT || 4174);
@@ -139,7 +140,11 @@ async function snapshotRoute(context, routePath) {
       },
       { timeout: 60_000 },
     );
-    const html = await page.content();
+    let html = await page.content();
+    // Home: reafirmar un solo preload LCP (snapshot no debe pisarlo ni duplicarlo).
+    if (routePath === "/") {
+      html = ensureHomeHeroPreload(html);
+    }
     const checks = metaChecks(html);
     const missing = Object.entries(checks)
       .filter(([, ok]) => !ok)
