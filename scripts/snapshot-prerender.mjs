@@ -113,6 +113,60 @@ function metaChecks(html) {
   };
 }
 
+/** Clave de dedupe para tags SEO que prerender + react-helmet duplican. */
+function headDedupeKey(tag) {
+  if (/^<link\b/i.test(tag) && /\brel=["']canonical["']/i.test(tag)) {
+    return "link:canonical";
+  }
+  if (!/^<meta\b/i.test(tag)) return null;
+
+  const prop = tag.match(/\bproperty=["'](og:[^"']+)["']/i);
+  if (prop) return `meta:property:${prop[1].toLowerCase()}`;
+
+  const name = tag.match(/\bname=["']([^"']+)["']/i);
+  if (!name) return null;
+  const n = name[1].toLowerCase();
+  if (n === "description" || n.startsWith("twitter:")) return `meta:name:${n}`;
+  return null;
+}
+
+/**
+ * En <head>, si canonical / og:* / twitter:* / description aparecen más de una vez,
+ * conserva solo la última (react-helmet).
+ */
+function dedupeHeadMetas(html) {
+  const headOpenMatch = html.match(/<head\b[^>]*>/i);
+  const headCloseIdx = html.search(/<\/head>/i);
+  if (!headOpenMatch || headCloseIdx === -1) return html;
+
+  const openEnd = headOpenMatch.index + headOpenMatch[0].length;
+  if (openEnd > headCloseIdx) return html;
+
+  let headInner = html.slice(openEnd, headCloseIdx);
+  const tagRe = /<(?:link|meta)\b[^>]*>/gi;
+  /** @type {Array<{ key: string, start: number, end: number }>} */
+  const candidates = [];
+  let m;
+  while ((m = tagRe.exec(headInner)) !== null) {
+    const key = headDedupeKey(m[0]);
+    if (key) candidates.push({ key, start: m.index, end: m.index + m[0].length });
+  }
+
+  /** @type {Map<string, { key: string, start: number, end: number }>} */
+  const lastByKey = new Map();
+  for (const c of candidates) lastByKey.set(c.key, c);
+
+  const toRemove = candidates
+    .filter((c) => lastByKey.get(c.key) !== c)
+    .sort((a, b) => b.start - a.start);
+
+  for (const r of toRemove) {
+    headInner = headInner.slice(0, r.start) + headInner.slice(r.end);
+  }
+
+  return html.slice(0, openEnd) + headInner + html.slice(headCloseIdx);
+}
+
 async function mapPool(items, concurrency, worker) {
   const results = [];
   let cursor = 0;
@@ -140,7 +194,7 @@ async function snapshotRoute(context, routePath) {
       },
       { timeout: 60_000 },
     );
-    let html = await page.content();
+    let html = dedupeHeadMetas(await page.content());
     // Home: reafirmar un solo preload LCP (snapshot no debe pisarlo ni duplicarlo).
     if (routePath === "/") {
       html = ensureHomeHeroPreload(html);
