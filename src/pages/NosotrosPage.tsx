@@ -48,7 +48,7 @@ const NosotrosPage = () => {
             className="relative grid"
             style={{
               minHeight: isMobile ? "auto" : "100vh",
-              paddingTop: "80px",
+              paddingTop: isMobile ? "100px" : "clamp(120px, 18vh, 180px)",
               alignItems: "end",
               borderBottom: "1px solid rgba(30,21,23,0.16)",
               overflow: "hidden",

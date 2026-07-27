@@ -189,12 +189,12 @@ const ContactoPage = () => {
           <section
             className="relative grid max-[979px]:grid-cols-1 min-[980px]:grid-cols-[1.05fr_0.95fr]"
             style={{
-              padding: isMobile ? "40px 20px" : "80px clamp(24px, 14vw, 200px) 72px",
+              padding: isMobile ? "40px 20px" : "clamp(120px, 18vh, 180px) clamp(24px, 14vw, 200px) clamp(60px, 10vh, 120px)",
               gap: isMobile ? "24px" : "70px",
               alignItems: "center",
               borderBottom: "1px solid rgba(30,21,23,0.18)",
               overflow: "hidden",
-              minHeight: isMobile ? "auto" : "62vh",
+              minHeight: isMobile ? "auto" : "100vh",
             }}
           >
             <div style={{ position: "relative", zIndex: 2 }}>

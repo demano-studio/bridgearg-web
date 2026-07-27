@@ -433,10 +433,10 @@ const ArtworksPage = () => {
           <section
             className="grid grid-cols-1 min-[1000px]:grid-cols-[1.2fr_0.8fr] min-[1000px]:items-end"
             style={{
-              minHeight: isMobile ? "auto" : "64vh",
+              minHeight: isMobile ? "auto" : "100vh",
               padding: isMobile
                 ? "40px 20px"
-                : "clamp(60px, 10vh, 120px) clamp(24px, 7vw, 120px)",
+                : "clamp(120px, 18vh, 180px) clamp(24px, 7vw, 120px) clamp(60px, 10vh, 120px)",
               borderBottom: "1px solid rgba(30,21,23,0.18)",
               gap: isMobile ? "24px" : "clamp(40px, 6vw, 80px)",
               position: "relative",

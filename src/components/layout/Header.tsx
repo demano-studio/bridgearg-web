@@ -120,15 +120,11 @@ export function Header() {
       <header
         className="fixed left-0 right-0 top-0 z-50 border-b border-white/10"
         style={{
-          backgroundColor: isHome
-            ? scrolled
-              ? "rgba(30,21,23,0.25)"
-              : "transparent"
-            : "rgba(30,21,23,0.55)",
-          backdropFilter: isHome ? (scrolled ? "blur(20px)" : "none") : "blur(16px)",
-          WebkitBackdropFilter: isHome ? (scrolled ? "blur(20px)" : "none") : "blur(16px)",
+          backgroundColor: scrolled ? "rgba(30,21,23,0.25)" : "transparent",
+          backdropFilter: scrolled ? "blur(20px)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(20px)" : "none",
           transition: "background-color 0.4s ease, backdrop-filter 0.4s ease",
-          borderBottomColor: isHome && !scrolled ? "transparent" : "rgba(255,255,255,0.08)",
+          borderBottomColor: scrolled ? "rgba(255,255,255,0.08)" : "transparent",
           height: "var(--header-h)",
         }}
       >
@@ -144,7 +140,7 @@ export function Header() {
               className="block h-auto"
               style={{
                 width: desktopLogoWidth,
-                opacity: isHome ? (scrolled ? 1 : 0) : 1,
+                opacity: 1,
                 transition: "opacity 0.4s ease",
               }}
             />
