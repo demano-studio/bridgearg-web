@@ -132,7 +132,7 @@ export function Header() {
           height: "var(--header-h)",
         }}
       >
-        <div className="flex h-full items-center px-4">
+        <div className="relative flex h-full items-center px-4">
           <Link
             to="/"
             aria-label="BridgeArg home"
@@ -150,7 +150,54 @@ export function Header() {
             />
           </Link>
 
-            <div className="ml-auto flex items-center gap-2">
+          <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+            {navItems.map((item) => {
+              const isActive = item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`flex flex-col items-center font-display text-sm uppercase tracking-[0.12em] transition-colors duration-200 ${
+                    isActive ? "" : "hover:[color:rgba(252,248,234,0.7)]"
+                  }`}
+                  style={{ color: isActive ? "#fcf8ea" : "rgba(252,248,234,0.45)" }}
+                >
+                  {item.label}
+                  {isActive && (
+                    <span
+                      className="rounded-full"
+                      style={{
+                        width: 4,
+                        height: 4,
+                        marginTop: 4,
+                        backgroundColor: "#7FB2D1",
+                      }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              to="/contact"
+              className="hidden md:inline-flex"
+              style={{
+                fontFamily: '"Onest", sans-serif',
+                fontSize: "11px",
+                fontWeight: 700,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: "#7FB2D1",
+                textDecoration: "none",
+                borderBottom: "1px solid #7FB2D1",
+                paddingBottom: "2px",
+              }}
+            >
+              I'm an Artist
+            </Link>
+
             <button
               onClick={() => setIsSearchOpen(true)}
               className="flex h-10 w-10 items-center justify-center"
@@ -162,7 +209,7 @@ export function Header() {
 
             <button
               onClick={() => setIsOpen((prev) => !prev)}
-              className="flex h-10 w-10 items-center justify-center"
+              className="md:hidden flex h-10 w-10 items-center justify-center"
               aria-label={isOpen ? "Close menu" : "Open menu"}
             >
               <span className="relative block h-4 w-6">
@@ -236,7 +283,7 @@ export function Header() {
 
         <nav className="px-8 pt-10">
           {navItems.map((item, index) => {
-            const isActive = location.pathname === item.path;
+            const isActive = item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path);
             return (
               <Link
                 key={item.path}
