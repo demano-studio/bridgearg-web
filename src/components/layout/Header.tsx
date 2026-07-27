@@ -5,10 +5,10 @@ import { getArtists, getWorks, type ArtistFromApi, type WorkFromApi } from "@/li
 
 const navItems = [
   { label: "Home", path: "/" },
-  { label: "Artists", path: "/artistas" },
+  { label: "Artists", path: "/artists" },
   { label: "Collection", path: "/artworks" },
-  { label: "About", path: "/nosotros" },
-  { label: "Contact", path: "/contacto" },
+  { label: "About", path: "/about" },
+  { label: "Contact", path: "/contact" },
 ];
 
 const logoLightSrc = "/assets/logos/BRIDGEARG - Exportacion logos-02.svg";
