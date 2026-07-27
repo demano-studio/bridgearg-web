@@ -92,11 +92,11 @@ const ArtistasPage = () => {
               minHeight: isMobile ? "auto" : "100vh",
               display: "flex",
               flexDirection: "column",
-              justifyContent: "flex-end",
-              paddingTop: isMobile ? "100px" : "clamp(120px, 18vh, 180px)",
-              paddingLeft: isMobile ? "20px" : "clamp(24px, 7vw, 120px)",
-              paddingRight: isMobile ? "20px" : "clamp(24px, 7vw, 120px)",
-              paddingBottom: isMobile ? "40px" : "clamp(60px, 10vh, 120px)",
+              justifyContent: "center",
+              alignItems: "start",
+              padding: isMobile
+                ? "100px 20px 40px"
+                : "clamp(120px, 18vh, 180px) clamp(24px, 7vw, 120px) clamp(60px, 10vh, 120px)",
               borderBottom: "1px solid rgba(30,21,23,0.16)",
               position: "relative",
               overflow: "hidden",

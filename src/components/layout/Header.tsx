@@ -31,6 +31,9 @@ export function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const allDataRef = useRef<SearchResults | null>(null);
   const isHome = location.pathname === "/";
+  const lightHeroPages = ["/about", "/contact"];
+  const isLightHero = lightHeroPages.some((p) => location.pathname.startsWith(p));
+  const useLightNav = isLightHero && !scrolled;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
@@ -140,7 +143,7 @@ export function Header() {
               className="block h-auto"
               style={{
                 width: desktopLogoWidth,
-                opacity: 1,
+                opacity: scrolled ? 1 : 0,
                 transition: "opacity 0.4s ease",
               }}
             />
@@ -153,10 +156,23 @@ export function Header() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex flex-col items-center font-display text-sm uppercase tracking-[0.12em] transition-colors duration-200 ${
-                    isActive ? "" : "hover:[color:rgba(252,248,234,0.7)]"
+                  className={`flex flex-col items-center font-display text-sm uppercase tracking-[0.12em] ${
+                    isActive
+                      ? ""
+                      : useLightNav
+                        ? "hover:[color:rgba(30,21,23,0.7)]"
+                        : "hover:[color:rgba(252,248,234,0.7)]"
                   }`}
-                  style={{ color: isActive ? "#fcf8ea" : "rgba(252,248,234,0.45)" }}
+                  style={{
+                    color: isActive
+                      ? scrolled || !isLightHero
+                        ? "#fcf8ea"
+                        : "#1e1517"
+                      : scrolled || !isLightHero
+                        ? "rgba(252,248,234,0.45)"
+                        : "rgba(30,21,23,0.45)",
+                    transition: "color 0.4s ease",
+                  }}
                 >
                   {item.label}
                   {isActive && (
@@ -198,7 +214,10 @@ export function Header() {
               onClick={() => setIsSearchOpen(true)}
               className="flex h-10 w-10 items-center justify-center"
               aria-label="Open search"
-              style={{ color: "#fcf8ea" }}
+              style={{
+                color: scrolled || !isLightHero ? "#fcf8ea" : "#1e1517",
+                transition: "color 0.4s ease",
+              }}
             >
               <Search size={24} strokeWidth={1.5} />
             </button>
@@ -210,24 +229,24 @@ export function Header() {
             >
               <span className="relative block h-4 w-6">
                 <span
-                  className="absolute left-0 top-0 h-[2px] w-full bg-background"
+                  className={`absolute left-0 top-0 h-[2px] w-full ${useLightNav ? "bg-[#1e1517]" : "bg-background"}`}
                   style={{
                     transform: isOpen ? "translateY(7px) rotate(45deg)" : "none",
-                    transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+                    transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease",
                   }}
                 />
                 <span
-                  className="absolute left-0 top-[7px] h-[2px] w-full bg-background"
+                  className={`absolute left-0 top-[7px] h-[2px] w-full ${useLightNav ? "bg-[#1e1517]" : "bg-background"}`}
                   style={{
                     opacity: isOpen ? 0 : 1,
-                    transition: "opacity 0.2s ease",
+                    transition: "opacity 0.2s ease, background-color 0.4s ease",
                   }}
                 />
                 <span
-                  className="absolute left-0 top-[14px] h-[2px] w-full bg-background"
+                  className={`absolute left-0 top-[14px] h-[2px] w-full ${useLightNav ? "bg-[#1e1517]" : "bg-background"}`}
                   style={{
                     transform: isOpen ? "translateY(-7px) rotate(-45deg)" : "none",
-                    transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+                    transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease",
                   }}
                 />
               </span>
