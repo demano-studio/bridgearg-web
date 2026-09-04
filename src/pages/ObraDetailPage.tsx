@@ -16,7 +16,7 @@ import {
 } from "@/lib/api";
 import { WorkImage } from "@/components/WorkImage";
 import { getWorkImageUrl } from "@/lib/work-images";
-import { HIDE_PRICES_PUBLICLY } from "@/lib/config";
+import { shouldShowPrice } from "@/lib/geoPricing";
 import { formatDimensionsFromString, formatPounds } from "@/lib/units";
 import { toast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
@@ -362,7 +362,7 @@ const ArtworkDetailPage = () => {
 
                   <div className="flex flex-wrap items-baseline gap-4 mb-8">
                     <span className="font-display text-2xl font-semibold text-foreground">
-                      {HIDE_PRICES_PUBLICLY ? "Price on request" : work.priceDisplay}
+                      {shouldShowPrice() ? work.priceDisplay : "Price on request"}
                     </span>
                   </div>
 
@@ -472,9 +472,9 @@ const ArtworkDetailPage = () => {
                           </h3>
                           <p className="mt-1 text-xs text-muted-foreground">
                             {relatedWork.available
-                              ? HIDE_PRICES_PUBLICLY
-                                ? "Price on request"
-                                : relatedWork.priceDisplay
+                              ? shouldShowPrice()
+                                ? relatedWork.priceDisplay
+                                : "Price on request"
                               : "Private collection"}
                           </p>
                         </div>

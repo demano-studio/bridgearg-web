@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/PageTransition";
 import { FALLBACK_ARTIST_NAME, getWorks, type WorkFromApi } from "@/lib/api";
-import { HIDE_PRICES_PUBLICLY } from "@/lib/config";
+import { shouldShowPrice } from "@/lib/geoPricing";
 import { images } from "@/lib/images";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
@@ -359,7 +359,7 @@ const ArtworksPage = () => {
               fontFamily: '"Onest", sans-serif',
             }}
           >
-            {HIDE_PRICES_PUBLICLY ? "Price on request" : work.priceDisplay}
+            {shouldShowPrice() ? work.priceDisplay : "Price on request"}
           </p>
         </div>
         <div
