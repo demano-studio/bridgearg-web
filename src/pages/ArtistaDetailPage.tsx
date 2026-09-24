@@ -109,7 +109,7 @@ const ArtistaDetailPage = () => {
   const metaTags = [artist.origin, artist.discipline].filter(
     (tag): tag is string => Boolean(tag),
   );
-  const featuredWorks = works.slice(0, 3);
+  const featuredWorks = works;
   const studioImageSrc = artist.studioImageUrl ?? artist.imageUrl ?? "";
 
   return (
@@ -483,45 +483,43 @@ const ArtistaDetailPage = () => {
                 })}
               </div>
             )}
-            {works.length > 3 && (
-              <div
+            <div
+              style={{
+                marginTop: "clamp(40px, 6vh, 60px)",
+                display: "flex",
+                justifyContent: "flex-start",
+              }}
+            >
+              <Link
+                to="/artworks"
                 style={{
-                  marginTop: "clamp(40px, 6vh, 60px)",
-                  display: "flex",
-                  justifyContent: "flex-start",
+                  fontFamily: '"Onest", sans-serif',
+                  fontSize: "12px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.18em",
+                  color: "#1e1517",
+                  textDecoration: "none",
+                  borderBottom: "1px solid rgba(30,21,23,0.4)",
+                  paddingBottom: "4px",
+                  transition: "color 0.3s ease, letter-spacing 0.3s ease, border-color 0.3s ease",
+                  display: "inline-block",
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget;
+                  el.style.color = "#7FB2D1";
+                  el.style.borderBottomColor = "#7FB2D1";
+                  el.style.letterSpacing = "0.25em";
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget;
+                  el.style.color = "#1e1517";
+                  el.style.borderBottomColor = "rgba(30,21,23,0.4)";
+                  el.style.letterSpacing = "0.18em";
                 }}
               >
-                <Link
-                  to={`/artworks?artist=${encodeURIComponent(artist.name)}`}
-                  style={{
-                    fontFamily: '"Onest", sans-serif',
-                    fontSize: "12px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.18em",
-                    color: "#1e1517",
-                    textDecoration: "none",
-                    borderBottom: "1px solid rgba(30,21,23,0.4)",
-                    paddingBottom: "4px",
-                    transition: "color 0.3s ease, letter-spacing 0.3s ease, border-color 0.3s ease",
-                    display: "inline-block",
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget;
-                    el.style.color = "#7FB2D1";
-                    el.style.borderBottomColor = "#7FB2D1";
-                    el.style.letterSpacing = "0.25em";
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget;
-                    el.style.color = "#1e1517";
-                    el.style.borderBottomColor = "rgba(30,21,23,0.4)";
-                    el.style.letterSpacing = "0.18em";
-                  }}
-                >
-                  View all works by {artist.name} →
-                </Link>
-              </div>
-            )}
+                Explore the full collection →
+              </Link>
+            </div>
           </section>
 
           {/* 5. PROCESS */}
