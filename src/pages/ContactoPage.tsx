@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/PageTransition";
@@ -51,6 +51,7 @@ const fieldControlStyle: CSSProperties = {
 const ContactoPage = () => {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const obraParam = searchParams.get("obra");
@@ -156,12 +157,7 @@ const ContactoPage = () => {
     setSending(true);
     try {
       await submitContact({ ...formData, subject: formData.subject! });
-      toast({
-        title: "Message sent",
-        description: "Thank you for your inquiry. We will respond shortly.",
-      });
-      setLegalAccepted(false);
-      setFormSent(true);
+      navigate("/contact/success");
     } catch (err) {
       toast({
         title: "Error",

@@ -10,6 +10,7 @@ const ArtworksPage = lazy(() => import("@/pages/ObrasPage"));
 const ArtworkDetailPage = lazy(() => import("@/pages/ObraDetailPage"));
 const CheckoutSuccessPage = lazy(() => import("@/pages/CheckoutSuccessPage"));
 const CheckoutCancelPage = lazy(() => import("@/pages/CheckoutCancelPage"));
+const ContactSuccessPage = lazy(() => import("@/pages/ContactSuccessPage"));
 const VerificationCallbackPage = lazy(() => import("@/pages/VerificationCallbackPage"));
 const NosotrosPage = lazy(() => import("@/pages/NosotrosPage"));
 const ContactoPage = lazy(() => import("@/pages/ContactoPage"));
@@ -49,6 +50,7 @@ export const AnimatedRoutes = () => {
           <Route path="/about" element={<NosotrosPage />} />
           <Route path="/contacto" element={<Navigate to="/contact" replace />} />
           <Route path="/contact" element={<ContactoPage />} />
+          <Route path="/contact/success" element={<ContactSuccessPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
