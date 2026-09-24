@@ -35,6 +35,9 @@ const CheckoutCancelPage = () => {
               <Button variant="technical" asChild>
                 <Link to="/contact">Contact us</Link>
               </Button>
+              <Button variant="technical" asChild>
+                <Link to="/">Back to home</Link>
+              </Button>
             </div>
           </div>
         </main>
