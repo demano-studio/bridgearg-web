@@ -9,6 +9,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { toast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
 import { getArtistBySlug, getWorks } from "@/lib/api";
+import { shouldShowPrice } from "@/lib/geoPricing";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 
 function getBioParagraphs(bio: string | null | undefined): string[] {
@@ -475,7 +476,7 @@ const ArtistaDetailPage = () => {
                             fontStyle: "normal",
                           }}
                         >
-                          {work.priceDisplay}
+                          {shouldShowPrice() ? work.priceDisplay : "Price on request"}
                         </em>
                       </div>
                     </Link>
