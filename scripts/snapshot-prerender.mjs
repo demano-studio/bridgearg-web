@@ -265,7 +265,8 @@ async function main() {
         u.includes("googletagmanager.com") ||
         u.includes("google-analytics.com") ||
         u.includes("analytics.google.com") ||
-        u.includes("doubleclick.net")
+        u.includes("doubleclick.net") ||
+        u.includes("brevo.com")
       ) {
         return route.abort();
       }
