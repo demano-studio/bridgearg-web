@@ -1,26 +1,10 @@
-import { Loader2, Instagram, Linkedin } from "lucide-react";
+import { Instagram, Linkedin } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { NewsletterForm } from "@/components/NewsletterForm";
 
 const logoSrc = encodeURI("/assets/logos/BRIDGEARG - Exportacion logos-05.svg");
 
 export function Footer() {
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterStatus, setNewsletterStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
-
-  // TODO: Conectar con servicio de email real
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newsletterEmail.trim()) return;
-    setNewsletterStatus("loading");
-    // TODO: Conectar con endpoint real de newsletter (ej: Resend, Mailchimp, Supabase)
-    await new Promise((r) => setTimeout(r, 800));
-    setNewsletterStatus("success");
-    setNewsletterEmail("");
-  };
-
   return (
     <footer className="bg-[#1e1517] text-[#fcf8ea]">
       <div className="mx-auto max-w-7xl px-6 pb-12 pt-10 md:px-10 md:pb-14">
@@ -88,44 +72,7 @@ export function Footer() {
             <p className="mb-4 font-display text-xs leading-relaxed text-[#fcf8ea]/60">
               Stay updated on new arrivals and exhibitions.
             </p>
-            {newsletterStatus === "success" ? (
-              <p className="font-display text-xs text-[#fcf8ea]/80">
-                ✓ You're subscribed!
-              </p>
-            ) : (
-              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
-                <label htmlFor="newsletter-email" className="sr-only">
-                  Email address for newsletter
-                </label>
-                <input
-                  id="newsletter-email"
-                  type="email"
-                  name="email"
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="flex-1 border border-[#fcf8ea]/20 bg-transparent px-3 py-2 font-display text-xs text-[#fcf8ea] placeholder-[#fcf8ea]/30 outline-none transition-colors focus:border-[#fcf8ea]/50"
-                />
-                <button
-                  type="submit"
-                  disabled={newsletterStatus === "loading"}
-                  className={`border border-[#fcf8ea]/20 px-4 py-2 font-display text-xs uppercase tracking-[0.12em] text-[#fcf8ea] transition-colors hover:bg-background/10 ${
-                    newsletterStatus === "loading"
-                      ? "cursor-not-allowed opacity-70 hover:bg-transparent"
-                      : ""
-                  }`}
-                >
-                  {newsletterStatus === "loading" ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Subscribing...
-                    </span>
-                  ) : (
-                    "Subscribe"
-                  )}
-                </button>
-              </form>
-            )}
+            <NewsletterForm source="footer" variant="footer" />
           </div>
         </div>
 

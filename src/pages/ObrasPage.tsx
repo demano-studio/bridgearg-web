@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { NewsletterInvite } from "@/components/NewsletterInvite";
 import { PageTransition } from "@/components/PageTransition";
 import { FALLBACK_ARTIST_NAME, getWorks, type WorkFromApi } from "@/lib/api";
 import { shouldShowPrice } from "@/lib/geoPricing";
@@ -706,6 +707,8 @@ const ArtworksPage = () => {
           >
             {sortedWorks.length} works
           </p>
+
+          <NewsletterInvite />
 
           {/* 5. Works (masonry columns) */}
           <section>

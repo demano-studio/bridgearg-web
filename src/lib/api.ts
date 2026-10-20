@@ -603,3 +603,29 @@ export async function submitContact(payload: ContactPayload): Promise<void> {
     throw new Error("Could not send your message");
   }
 }
+
+export async function subscribeNewsletter(
+  email: string,
+  source: string,
+  website = "",
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { getSupabase } = await import("@/lib/supabaseClient");
+  const supabase = getSupabase();
+  const { data, error } = await supabase.functions.invoke("newsletter-subscribe", {
+    body: { email, source, website },
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: await readFunctionError(error, "Could not subscribe"),
+    };
+  }
+
+  const result = (data ?? {}) as { ok?: boolean; error?: string };
+  if (result.error) {
+    return { ok: false, error: String(result.error) };
+  }
+
+  return { ok: true };
+}
