@@ -338,7 +338,7 @@ export async function getWorksTotalCount(): Promise<number | null> {
   if (!isSupabaseConfigured || !supabase) return null;
   const { count, error } = await supabase
     .from("artworks")
-    .select("*", { count: "exact", head: true });
+    .select("id", { count: "exact", head: true });
   if (error) return null;
   return count ?? null;
 }
@@ -432,14 +432,11 @@ export async function getPurchaseVerificationStatus(
 ): Promise<"pending" | "approved" | "declined" | "in_review" | "abandoned" | null> {
   const { getSupabase } = await import("@/lib/supabaseClient");
   const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("purchase_verifications")
-    .select("status")
-    .eq("id", verificationId)
-    .single();
+  // purchase_verifications es solo service_role (guarda datos del KYC): el estado se lee por RPC (migración 014).
+  const { data, error } = await supabase.rpc("get_verification_status", { p_id: verificationId });
 
-  if (error || !data || typeof data.status !== "string") return null;
-  return data.status as "pending" | "approved" | "declined" | "in_review" | "abandoned";
+  if (error || typeof data !== "string") return null;
+  return data as "pending" | "approved" | "declined" | "in_review" | "abandoned";
 }
 
 /** Creates a Checkout Session via the backend API (Express). */
@@ -455,7 +452,7 @@ export async function createCheckoutSession(input: CheckoutInput | number): Prom
   return { url: data.url ?? null };
 }
 
-export type CheckoutErrorKind = "connection" | "stock" | "unknown";
+export type CheckoutErrorKind = "connection" | "stock" | "reserved" | "unknown";
 
 export class CheckoutError extends Error {
   constructor(
@@ -481,6 +478,10 @@ export async function createCheckout(input: CheckoutInput | number): Promise<{ u
       // ⚠️ Asegurate de que STRIPE_SECRET_KEY sea la clave live antes de producción.
       return await createStripeCheckoutViaEdgeFunction(payload);
     } catch (err) {
+      // Obra vendida/no disponible o reservada por otro comprador: no tiene sentido reintentar por Express.
+      if (err instanceof CheckoutError && (err.kind === "stock" || err.kind === "reserved")) {
+        throw err;
+      }
       console.warn("Supabase Edge Function checkout failed, falling back to Express:", err);
       // ⚠️ Asegurate de que STRIPE_SECRET_KEY sea la clave live antes de producción.
       return createCheckoutSession(payload);
@@ -505,9 +506,20 @@ export async function createStripeCheckoutViaEdgeFunction(input: CheckoutInput |
     body: payload,
   });
   if (error) {
-    const msg = error.message ?? "Could not create checkout session";
+    let msg = error.message ?? "Could not create checkout session";
+    // En respuestas 4xx/5xx supabase-js solo trae un mensaje genérico; el motivo real viene en el body.
+    const context = (error as { context?: unknown }).context;
+    if (context && typeof (context as Response).clone === "function") {
+      try {
+        const body = (await (context as Response).clone().json()) as { error?: string };
+        if (body?.error) msg = String(body.error);
+      } catch {
+        /* se conserva el mensaje genérico */
+      }
+    }
     const kind: CheckoutErrorKind =
       /fetch|network|connection|conexión|timeout/i.test(msg) ? "connection"
+      : /reserved/i.test(msg) ? "reserved"
       : /not available|not found|vendida|sold|no longer available|no encontrad/i.test(msg) ? "stock"
       : "unknown";
     throw new CheckoutError(msg, kind);

@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
 
   const { data: verification, error: verificationError } = await supabase
     .from("purchase_verifications")
-    .select("id, artwork_id, status, consumed_at")
+    .select("id, artwork_id, status, consumed_at, stripe_session_id, stripe_session_expires_at, stripe_session_status")
     .eq("id", verificationId.trim())
     .single();
 
@@ -152,6 +152,51 @@ Deno.serve(async (req) => {
       status: 403,
       headers: withCors(req, { "Content-Type": "application/json" }),
     });
+  }
+
+  // --- Carrito abandonado: reutilizar sesión abierta y reservar la obra -----------------------
+  const pv = verification as {
+    stripe_session_id?: string | null;
+    stripe_session_expires_at?: string | null;
+    stripe_session_status?: string | null;
+  };
+
+  // 1) Si esta misma verificación ya tiene una sesión de Stripe abierta, se reutiliza
+  //    (el comprador volvió atrás o recargó): no se crea otra ni se repite nada.
+  if (
+    pv.stripe_session_id &&
+    pv.stripe_session_status === "open" &&
+    pv.stripe_session_expires_at &&
+    new Date(pv.stripe_session_expires_at).getTime() > Date.now()
+  ) {
+    try {
+      const existing = await stripe.checkout.sessions.retrieve(pv.stripe_session_id);
+      if (existing.status === "open" && existing.url) {
+        return new Response(JSON.stringify({ url: existing.url }), {
+          status: 200,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+    } catch (e) {
+      console.warn("stripe-checkout: could not reuse existing session, creating a new one", e);
+    }
+  }
+
+  // 2) Si OTRO comprador tiene la obra reservada (sesión abierta y vigente), se rechaza.
+  const { data: reservedByOther } = await supabase
+    .from("purchase_verifications")
+    .select("id")
+    .eq("artwork_id", artworkId)
+    .eq("stripe_session_status", "open")
+    .gt("stripe_session_expires_at", new Date().toISOString())
+    .neq("id", verificationId.trim())
+    .limit(1);
+
+  if (reservedByOther && reservedByOther.length > 0) {
+    return new Response(
+      JSON.stringify({ error: "This artwork is currently reserved by another collector. Please try again later." }),
+      { status: 409, headers: withCors(req, { "Content-Type": "application/json" }) },
+    );
   }
 
   const priceUsd = Number((artwork as { price_usd?: number }).price_usd ?? 0);
@@ -181,6 +226,8 @@ Deno.serve(async (req) => {
           quantity: 1,
         },
       ],
+      // La sesión (y por lo tanto la reserva de la obra) dura 2 horas. Stripe exige entre 30 min y 24 h.
+      expires_at: Math.floor(Date.now() / 1000) + 2 * 60 * 60,
       success_url: `${clientUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${clientUrl}/checkout/cancel`,
       metadata: {
@@ -192,25 +239,20 @@ Deno.serve(async (req) => {
       },
     });
 
-    const { data: consumeRows, error: consumeError } = await supabase
+    // La verificación YA NO se consume acá: se consume en stripe-webhook cuando el pago se completa.
+    // Acá solo se registra la sesión, que es lo que reserva la obra mientras esté abierta.
+    const { error: reserveError } = await supabase
       .from("purchase_verifications")
-      .update({ consumed_at: new Date().toISOString() })
-      .eq("id", verificationId.trim())
-      .is("consumed_at", null)
-      .select("id");
+      .update({
+        stripe_session_id: session.id,
+        stripe_session_status: "open",
+        stripe_session_expires_at: new Date((session.expires_at ?? 0) * 1000).toISOString(),
+      })
+      .eq("id", verificationId.trim());
 
-    if (consumeError) {
-      return new Response(JSON.stringify({ error: "Failed to consume verification" }), {
-        status: 500,
-        headers: withCors(req, { "Content-Type": "application/json" }),
-      });
-    }
-
-    if (!consumeRows || consumeRows.length === 0) {
-      return new Response(JSON.stringify({ error: "Verification is not valid for checkout" }), {
-        status: 403,
-        headers: withCors(req, { "Content-Type": "application/json" }),
-      });
+    if (reserveError) {
+      // No se bloquea la compra: se loguea y se sigue (en el peor caso la obra no queda reservada).
+      console.error("stripe-checkout: failed to store session reservation:", reserveError);
     }
 
     return new Response(JSON.stringify({ url: session.url ?? null }), {

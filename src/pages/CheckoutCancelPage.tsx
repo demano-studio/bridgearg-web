@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -7,6 +8,16 @@ import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 
 const CheckoutCancelPage = () => {
+  // Si el comprador viene de una verificación aprobada en esta pestaña, puede retomar el pago
+  // sin repetir el KYC (la sesión de Stripe sigue abierta hasta 2 horas).
+  const [canResume] = useState(() => {
+    try {
+      return Boolean(sessionStorage.getItem("didit_verification_context"));
+    } catch {
+      return false;
+    }
+  });
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-background">
@@ -29,6 +40,11 @@ const CheckoutCancelPage = () => {
               to us if you have any questions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {canResume && (
+                <Button variant="technical" asChild>
+                  <Link to="/verify/callback">Resume payment</Link>
+                </Button>
+              )}
               <Button variant="technical" asChild>
                 <Link to="/artworks">Back to Works</Link>
               </Button>

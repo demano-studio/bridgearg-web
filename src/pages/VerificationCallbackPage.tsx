@@ -30,6 +30,15 @@ const VerificationCallbackPage = () => {
 
   const context = useMemo(() => {
     try {
+      // 1) Enlace de recuperación del mail de checkout abandonado: ?resume=<verificationId>&artwork=<id>
+      const params = new URLSearchParams(window.location.search);
+      const resume = params.get("resume");
+      const resumeArtwork = Number(params.get("artwork"));
+      if (resume && /^[0-9a-f-]{36}$/i.test(resume) && Number.isInteger(resumeArtwork) && resumeArtwork > 0) {
+        return { artworkId: resumeArtwork, verificationId: resume };
+      }
+
+      // 2) Flujo normal: contexto guardado en esta pestaña al iniciar la verificación.
       const raw = sessionStorage.getItem("didit_verification_context");
       if (!raw) return null;
       const parsed = JSON.parse(raw) as { artworkId?: unknown; verificationId?: unknown };
