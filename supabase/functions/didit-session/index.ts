@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  let body: { artworkId?: number; email?: string };
+  let body: { artworkId?: number; email?: string; marketing?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -88,6 +88,8 @@ Deno.serve(async (req) => {
       headers: withCors(req, { "Content-Type": "application/json" }),
     });
   }
+
+  const marketing = body.marketing === true;
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -160,6 +162,15 @@ Deno.serve(async (req) => {
       status: 500,
       headers: withCors(req, { "Content-Type": "application/json" }),
     });
+  }
+
+  const { error: subscriberError } = await supabase.rpc("upsert_subscriber", {
+    p_email: email,
+    p_source: "acquire",
+    p_consent: marketing,
+  });
+  if (subscriberError) {
+    console.error("didit-session upsert_subscriber error:", subscriberError);
   }
 
   const verificationId = String(verification.id);

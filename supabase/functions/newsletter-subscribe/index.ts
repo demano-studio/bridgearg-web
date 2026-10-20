@@ -94,13 +94,14 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceRole);
 
-  const { error } = await supabase.from("newsletter_subscribers").upsert(
-    { email, source },
-    { onConflict: "email", ignoreDuplicates: true },
-  );
+  const { error } = await supabase.rpc("upsert_subscriber", {
+    p_email: email,
+    p_source: source,
+    p_consent: true,
+  });
 
   if (error) {
-    console.error("newsletter-subscribe upsert error:", error);
+    console.error("newsletter-subscribe upsert_subscriber error:", error);
     return new Response(JSON.stringify({ error: "Could not subscribe" }), {
       status: 500,
       headers: withCors(req, { "Content-Type": "application/json" }),
