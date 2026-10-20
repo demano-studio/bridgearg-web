@@ -441,7 +441,7 @@ async function handleSessionExpired(session: Stripe.Checkout.Session): Promise<R
 
   const { data: pv } = await supabase
     .from("purchase_verifications")
-    .select("id, stripe_session_id, consumed_at, recovery_email_sent_at")
+    .select("id, stripe_session_id, consumed_at, recovery_email_sent_at, stripe_session_status")
     .eq("id", verificationId)
     .maybeSingle();
 
@@ -449,6 +449,7 @@ async function handleSessionExpired(session: Stripe.Checkout.Session): Promise<R
   if (!pv || pv.stripe_session_id !== session.id) return ok();
   // Ya se pagó: no corresponde vencerla ni avisar.
   if (pv.consumed_at) return ok();
+  if (pv.stripe_session_status === "cancelled") return ok();
 
   await supabase
     .from("purchase_verifications")
@@ -584,7 +585,7 @@ function buildAbandonedInternalHtml(params: {
   <div style="max-width: 560px; margin: 0 auto; background: #fff; padding: 40px;">
     <p style="margin:0 0 8px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #737373;">BridgeArg</p>
     <h1 style="margin: 0 0 20px; font-size: 24px; font-weight: 600; color: #171717;">Abandoned checkout</h1>
-    <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #404040;">A verified collector started the payment for <strong>${escapeHtml(title)}</strong>${artistName ? ` by ${escapeHtml(artistName)}` : ""} but did not complete it within 2 hours. The work is available again.</p>
+    <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: #404040;">A verified collector started the payment for <strong>${escapeHtml(title)}</strong>${artistName ? ` by ${escapeHtml(artistName)}` : ""} but did not complete it before the reservation expired (about 30 minutes). The work is available again.</p>
     <p style="margin: 0 0 16px; font-size: 14px; color: #525252;">Collector email: <strong>${escapeHtml(buyerEmail ?? "not provided (they left before entering it)")}</strong>${buyerEmail ? " — an automatic reminder was sent to them." : ""}</p>
     <p style="margin: 0; font-size: 13px; color: #737373;"><a href="${escapeHtml(artworkUrl)}">Artwork page</a> · <a href="${escapeHtml(resumeUrl)}">Resume link</a></p>
   </div>

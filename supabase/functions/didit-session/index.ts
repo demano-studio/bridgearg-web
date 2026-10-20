@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  let body: { artworkId?: number };
+  let body: { artworkId?: number; email?: string };
   try {
     body = await req.json();
   } catch {
@@ -71,6 +71,19 @@ Deno.serve(async (req) => {
   const { artworkId } = body;
   if (typeof artworkId !== "number" || artworkId < 1) {
     return new Response(JSON.stringify({ error: "artworkId required (number >= 1)" }), {
+      status: 400,
+      headers: withCors(req, { "Content-Type": "application/json" }),
+    });
+  }
+
+  const email =
+    typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  if (
+    !email ||
+    email.length > 254 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  ) {
+    return new Response(JSON.stringify({ error: "A valid email is required" }), {
       status: 400,
       headers: withCors(req, { "Content-Type": "application/json" }),
     });
@@ -119,9 +132,26 @@ Deno.serve(async (req) => {
     });
   }
 
+  const { data: reservedByOther } = await supabase
+    .from("purchase_verifications")
+    .select("id")
+    .eq("artwork_id", artworkId)
+    .eq("stripe_session_status", "open")
+    .gt("stripe_session_expires_at", new Date().toISOString())
+    .limit(1);
+
+  if (reservedByOther && reservedByOther.length > 0) {
+    return new Response(
+      JSON.stringify({
+        error: "This artwork is currently reserved by another collector. Please try again later.",
+      }),
+      { status: 409, headers: withCors(req, { "Content-Type": "application/json" }) },
+    );
+  }
+
   const { data: verification, error: insertError } = await supabase
     .from("purchase_verifications")
-    .insert({ artwork_id: artworkId, status: "pending" })
+    .insert({ artwork_id: artworkId, status: "pending", buyer_email: email })
     .select("id")
     .single();
 

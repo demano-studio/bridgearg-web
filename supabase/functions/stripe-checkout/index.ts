@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
 
   const { data: verification, error: verificationError } = await supabase
     .from("purchase_verifications")
-    .select("id, artwork_id, status, consumed_at, stripe_session_id, stripe_session_expires_at, stripe_session_status")
+    .select("id, artwork_id, status, consumed_at, stripe_session_id, stripe_session_expires_at, stripe_session_status, buyer_email")
     .eq("id", verificationId.trim())
     .single();
 
@@ -159,6 +159,7 @@ Deno.serve(async (req) => {
     stripe_session_id?: string | null;
     stripe_session_expires_at?: string | null;
     stripe_session_status?: string | null;
+    buyer_email?: string | null;
   };
 
   // 1) Si esta misma verificación ya tiene una sesión de Stripe abierta, se reutiliza
@@ -226,10 +227,11 @@ Deno.serve(async (req) => {
           quantity: 1,
         },
       ],
-      // La sesión (y por lo tanto la reserva de la obra) dura 2 horas. Stripe exige entre 30 min y 24 h.
-      expires_at: Math.floor(Date.now() / 1000) + 2 * 60 * 60,
+      // ~30 min de reserva; Stripe exige mínimo 30 min contados desde que él crea la sesión, +1 min de margen por latencia
+      expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
       success_url: `${clientUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${clientUrl}/checkout/cancel`,
+      cancel_url: `${clientUrl}/checkout/cancel?verification=${encodeURIComponent(verificationId.trim())}&artwork=${artworkId}`,
+      customer_email: pv.buyer_email || undefined,
       metadata: {
         artwork_id: String(artworkId),
         verification_id: verificationId.trim(),

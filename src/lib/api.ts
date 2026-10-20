@@ -402,15 +402,28 @@ export interface DiditSessionResult {
   verificationId: string;
 }
 
-export async function createDiditSession(artworkId: number): Promise<DiditSessionResult> {
+async function readFunctionError(error: { message?: string; context?: unknown }, fallback: string): Promise<string> {
+  const context = error.context;
+  if (context && typeof (context as Response).clone === "function") {
+    try {
+      const body = (await (context as Response).clone().json()) as { error?: string };
+      if (body?.error) return String(body.error);
+    } catch {
+      /* se conserva fallback / message */
+    }
+  }
+  return error.message ?? fallback;
+}
+
+export async function createDiditSession(artworkId: number, email: string): Promise<DiditSessionResult> {
   const { getSupabase } = await import("@/lib/supabaseClient");
   const supabase = getSupabase();
   const { data, error } = await supabase.functions.invoke("didit-session", {
-    body: { artworkId },
+    body: { artworkId, email },
   });
 
   if (error) {
-    throw new Error(error.message ?? "Could not create Didit session");
+    throw new Error(await readFunctionError(error, "Could not create Didit session"));
   }
 
   const result = (data ?? {}) as { url?: string | null; verificationId?: string | null; error?: string };
@@ -425,6 +438,37 @@ export async function createDiditSession(artworkId: number): Promise<DiditSessio
     url: result.url,
     verificationId: result.verificationId,
   };
+}
+
+export interface ArtworkReservation {
+  expiresAt: string;
+  mine: boolean;
+}
+
+export async function getArtworkReservation(
+  artworkId: number,
+  verificationId?: string | null,
+): Promise<ArtworkReservation | null> {
+  const { getSupabase } = await import("@/lib/supabaseClient");
+  const supabase = getSupabase();
+  const { data, error } = await supabase.rpc("get_artwork_reservation", {
+    p_artwork_id: artworkId,
+    p_verification_id: verificationId ?? null,
+  });
+
+  if (error || data == null) return null;
+  const row = data as { expires_at?: string; mine?: boolean };
+  if (typeof row.expires_at !== "string") return null;
+  return { expiresAt: row.expires_at, mine: Boolean(row.mine) };
+}
+
+export async function releaseCheckoutReservation(verificationId: string): Promise<boolean> {
+  const { getSupabase } = await import("@/lib/supabaseClient");
+  const supabase = getSupabase();
+  const { error } = await supabase.functions.invoke("checkout-release", {
+    body: { verificationId },
+  });
+  return !error;
 }
 
 export async function getPurchaseVerificationStatus(

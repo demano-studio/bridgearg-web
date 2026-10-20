@@ -5,6 +5,15 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Mail, Package, FileCheck, Share2, Loader2 } from "lucide-react";
 import {
@@ -13,7 +22,15 @@ import {
   type WorkFromApi,
   FALLBACK_ARTIST_NAME,
   createDiditSession,
+  getArtworkReservation,
+  releaseCheckoutReservation,
+  type ArtworkReservation,
 } from "@/lib/api";
+import {
+  clearMyVerification,
+  readMyVerification,
+  saveMyVerification,
+} from "@/lib/reservation";
 import { WorkImage } from "@/components/WorkImage";
 import { getWorkImageUrl } from "@/lib/work-images";
 import { shouldShowPrice } from "@/lib/geoPricing";
@@ -32,6 +49,11 @@ const ArtworkDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [activeImageUrl, setActiveImageUrl] = useState<string | null>(null);
   const [acquireLoading, setAcquireLoading] = useState(false);
+  const [reservation, setReservation] = useState<ArtworkReservation | null>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [releasing, setReleasing] = useState(false);
 
   const { data: relatedWorks = [] } = useQuery({
     queryKey: ["works", work?.artistSlug],
@@ -79,6 +101,31 @@ const ArtworkDetailPage = () => {
     }
   }, [loading, work, navigate]);
 
+  useEffect(() => {
+    if (!work || work.status !== "available") {
+      setReservation(null);
+      return;
+    }
+
+    let cancelled = false;
+    const refresh = () => {
+      getArtworkReservation(work.id, readMyVerification(work.id))
+        .then((data) => {
+          if (!cancelled) setReservation(data);
+        })
+        .catch(() => {
+          if (!cancelled) setReservation(null);
+        });
+    };
+
+    refresh();
+    const intervalId = window.setInterval(refresh, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [work]);
+
   const handleInquire = () => {
     if (!work) return;
     navigate(
@@ -86,11 +133,35 @@ const ArtworkDetailPage = () => {
     );
   };
 
-  const handleAcquire = async () => {
+  const artistName = work?.artistName?.trim() || FALLBACK_ARTIST_NAME;
+
+  const msLeft = reservation ? new Date(reservation.expiresAt).getTime() - Date.now() : 0;
+  const isReserved = msLeft > 0;
+  const isMyReservation = Boolean(isReserved && reservation?.mine);
+  const isReservedByOther = Boolean(isReserved && !isMyReservation);
+  const minutesLeft = Math.max(1, Math.ceil(msLeft / 60000));
+  const myVerificationId = work && isMyReservation ? readMyVerification(work.id) : null;
+
+  const handleAcquire = () => {
     if (!work || acquireLoading) return;
+    setEmailError("");
+    setEmailOpen(true);
+  };
+
+  const handleEmailContinue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!work || acquireLoading) return;
+
+    const trimmed = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailError("Please enter a valid email");
+      return;
+    }
+
+    setEmailError("");
     setAcquireLoading(true);
     try {
-      const session = await createDiditSession(work.id);
+      const session = await createDiditSession(work.id, trimmed);
       sessionStorage.setItem(
         "didit_verification_context",
         JSON.stringify({
@@ -98,6 +169,7 @@ const ArtworkDetailPage = () => {
           verificationId: session.verificationId,
         }),
       );
+      saveMyVerification(work.id, session.verificationId);
       window.location.href = session.url;
     } catch (err) {
       toast({
@@ -109,7 +181,26 @@ const ArtworkDetailPage = () => {
     }
   };
 
-  const artistName = work?.artistName?.trim() || FALLBACK_ARTIST_NAME;
+  const handleReleaseReservation = async () => {
+    if (!work || !myVerificationId || releasing) return;
+    setReleasing(true);
+    try {
+      const ok = await releaseCheckoutReservation(myVerificationId);
+      if (ok) {
+        clearMyVerification();
+        setReservation(null);
+        toast({ title: "Reservation released" });
+      } else {
+        toast({
+          title: "Could not release",
+          description: "Could not release. It will expire on its own in a few minutes.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setReleasing(false);
+    }
+  };
 
   const handleShare = async () => {
     if (!work) return;
@@ -366,48 +457,119 @@ const ArtworkDetailPage = () => {
                     </span>
                   </div>
 
-                  <div className="flex flex-wrap gap-4">
-                    {isAvailable ? (
-                      <>
-                        <Button
-                          variant="acquire"
-                          size="xl"
-                          onClick={handleAcquire}
-                          className="gap-2"
-                          disabled={acquireLoading}
-                          aria-busy={acquireLoading}
-                        >
-                          {acquireLoading ? (
-                            <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-                          ) : null}
-                          {acquireLoading ? "Redirecting..." : "Acquire"}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-wrap gap-4">
+                      {isAvailable ? (
+                        <>
+                          {isMyReservation && myVerificationId ? (
+                            <Button variant="acquire" size="xl" asChild className="gap-2">
+                              <Link
+                                to={`/verify/callback?resume=${encodeURIComponent(myVerificationId)}&artwork=${work.id}`}
+                              >
+                                Resume payment
+                              </Link>
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="acquire"
+                              size="xl"
+                              onClick={handleAcquire}
+                              className="gap-2"
+                              disabled={acquireLoading || isReservedByOther}
+                              aria-busy={acquireLoading}
+                            >
+                              {acquireLoading ? (
+                                <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                              ) : null}
+                              {acquireLoading
+                                ? "Redirecting..."
+                                : isReservedByOther
+                                  ? "Reserved"
+                                  : "Acquire"}
+                            </Button>
+                          )}
+                          <Button
+                            variant="acquire"
+                            size="xl"
+                            onClick={handleInquire}
+                            className="gap-2"
+                          >
+                            <Mail className="h-5 w-5" />
+                            Inquire
+                          </Button>
+                        </>
+                      ) : (
+                        <Button variant="acquire" size="xl" asChild className="gap-2">
+                          <Link
+                            to={`/contacto?obra=${encodeURIComponent(work.title)}&artista=${encodeURIComponent(
+                              artistName,
+                            )}`}
+                          >
+                            Inquire About This Work
+                          </Link>
                         </Button>
-                        <Button
-                          variant="acquire"
-                          size="xl"
-                          onClick={handleInquire}
-                          className="gap-2"
+                      )}
+                    </div>
+                    {isAvailable && isMyReservation && myVerificationId ? (
+                      <p role="status" className="text-sm text-muted-foreground max-w-xl">
+                        You have this work reserved for about {minutesLeft} more minutes. Resume your
+                        payment, or release it for other collectors.{" "}
+                        <button
+                          type="button"
+                          onClick={handleReleaseReservation}
+                          disabled={releasing}
+                          className="underline underline-offset-2 hover:text-foreground disabled:opacity-50"
                         >
-                          <Mail className="h-5 w-5" />
-                          Inquire
-                        </Button>
-                      </>
-                    ) : (
-                      <Button variant="acquire" size="xl" asChild className="gap-2">
-                        <Link
-                          to={`/contacto?obra=${encodeURIComponent(work.title)}&artista=${encodeURIComponent(
-                            artistName,
-                          )}`}
-                        >
-                          Inquire About This Work
-                        </Link>
-                      </Button>
-                    )}
+                          Release reservation
+                        </button>
+                      </p>
+                    ) : null}
+                    {isAvailable && isReservedByOther ? (
+                      <p role="status" className="text-sm text-muted-foreground max-w-xl">
+                        Another collector is completing the acquisition of this work. If it isn't
+                        completed, it becomes available again in about {minutesLeft} minutes.
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </div>
             </div>
           </section>
+
+          <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Before we verify your identity</DialogTitle>
+                <DialogDescription>
+                  Enter your email. We'll use it only for this acquisition: to keep you updated and
+                  to remind you if you don't finish.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleEmailContinue} className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="acquire-email">Email</Label>
+                  <Input
+                    id="acquire-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={acquireLoading}
+                  />
+                  {emailError ? (
+                    <p className="text-sm text-destructive">{emailError}</p>
+                  ) : null}
+                </div>
+                <Button type="submit" variant="acquire" disabled={acquireLoading} aria-busy={acquireLoading}>
+                  {acquireLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : null}
+                  Continue
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
 
           {/* Artist bio */}
           {work.artistBio && (
