@@ -7,6 +7,10 @@ import { XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 
+// El variant "technical" usa texto blanco (pensado para fondos oscuros) y en esta página, de fondo crema,
+// no se veía. Se pinta con el celeste de la marca (--bridge-blue, #7fb2d1) y texto oscuro para que se lea.
+const ctaClass = "!border-bridge-blue !bg-bridge-blue !text-bridge-black hover:!bg-bridge-blue/80";
+
 const CheckoutCancelPage = () => {
   // Si el comprador viene de una verificación aprobada en esta pestaña, puede retomar el pago
   // sin repetir el KYC (la sesión de Stripe sigue abierta hasta 2 horas).
@@ -41,17 +45,17 @@ const CheckoutCancelPage = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {canResume && (
-                <Button variant="technical" asChild>
+                <Button variant="technical" className={ctaClass} asChild>
                   <Link to="/verify/callback">Resume payment</Link>
                 </Button>
               )}
-              <Button variant="technical" asChild>
+              <Button variant="technical" className={ctaClass} asChild>
                 <Link to="/artworks">Back to Works</Link>
               </Button>
-              <Button variant="technical" asChild>
+              <Button variant="technical" className={ctaClass} asChild>
                 <Link to="/contact">Contact us</Link>
               </Button>
-              <Button variant="technical" asChild>
+              <Button variant="technical" className={ctaClass} asChild>
                 <Link to="/">Back to home</Link>
               </Button>
             </div>
