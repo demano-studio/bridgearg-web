@@ -16,6 +16,7 @@ const AdminApp = lazy(() => import("@/features/admin/AdminApp"));
 const AdminObrasPage = lazy(() => import("@/features/admin/pages/ObrasPage"));
 const AdminArtistasPage = lazy(() => import("@/features/admin/pages/ArtistasPage"));
 const AdminResumenPage = lazy(() => import("@/features/admin/pages/ResumenPage"));
+const AdminTradePage = lazy(() => import("@/features/admin/pages/TradeAdminPage"));
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="artistas" element={<AdminArtistasPage />} />
               <Route path="lotes/:id" element={<AdminObrasPage />} />
               <Route path="resumen" element={<AdminResumenPage />} />
+              <Route path="trade" element={<AdminTradePage />} />
               <Route path="*" element={<Navigate to="obras" replace />} />
             </Route>
             <Route path="/legal" element={<LegalPage />} />

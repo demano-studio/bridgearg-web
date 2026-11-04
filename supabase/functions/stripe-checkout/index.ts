@@ -209,10 +209,36 @@ Deno.serve(async (req) => {
   const artistName = ((artwork as { artists?: { name: string } }).artists?.name) ?? "";
   const description = [artistName, medium, year].filter(Boolean).join(" · ");
 
+  // Trade Program: if this buyer has an approved, active Trade client with a Stripe Customer,
+  // attach that customer so their promotion code (customer-restricted) can be applied.
+  // Stripe forbids setting both `customer` and `customer_email`.
+  let tradeCustomerId: string | null = null;
+  const buyerEmail = (pv.buyer_email ?? "").trim().toLowerCase();
+  if (buyerEmail) {
+    // Emails en trade_applications se guardan en minúsculas (trade-apply / trade-admin).
+    const { data: tradeRow, error: tradeLookupError } = await supabase
+      .from("trade_applications")
+      .select("stripe_customer_id")
+      .eq("email", buyerEmail)
+      .eq("status", "approved")
+      .is("deactivated_at", null)
+      .not("stripe_customer_id", "is", null)
+      .order("approved_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (tradeLookupError) {
+      console.warn("stripe-checkout: trade_applications lookup failed:", tradeLookupError);
+    } else if (tradeRow?.stripe_customer_id) {
+      tradeCustomerId = String(tradeRow.stripe_customer_id);
+    }
+  }
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
+      allow_promotion_codes: true,
       line_items: [
         {
           price_data: {
@@ -231,7 +257,9 @@ Deno.serve(async (req) => {
       expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
       success_url: `${clientUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${clientUrl}/checkout/cancel?verification=${encodeURIComponent(verificationId.trim())}&artwork=${artworkId}`,
-      customer_email: pv.buyer_email || undefined,
+      ...(tradeCustomerId
+        ? { customer: tradeCustomerId }
+        : { customer_email: pv.buyer_email || undefined }),
       metadata: {
         artwork_id: String(artworkId),
         verification_id: verificationId.trim(),

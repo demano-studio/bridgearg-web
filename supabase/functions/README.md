@@ -64,11 +64,25 @@ supabase secrets set SUPABASE_SERVICE_ROLE_KEY=eyJ...
 supabase secrets set RESEND_API_KEY=re_...
 supabase secrets set RESEND_FROM_EMAIL=notifications@tudominio.com
 supabase secrets set CLIENT_URL=https://tu-app.com
+supabase secrets set TRADE_COUPON_ID=coupon_...
+supabase secrets set ADMIN_EMAILS=admin@bridgearg.net
 
 # Desplegar funciones
 supabase functions deploy stripe-checkout
 supabase functions deploy stripe-webhook
+supabase functions deploy trade-admin
 ```
+
+## trade-admin
+
+Panel admin del Trade Program: listar, aprobar (crea promotion code Stripe + mail Resend), rechazar, desactivar código, alta manual y reenvío de mail.
+
+### Secrets adicionales
+
+| Variable | Descripción |
+|----------|-------------|
+| `TRADE_COUPON_ID` | ID del cupón Stripe del Trade (15% off), ej. `coupon_...` o el id corto del Dashboard |
+| `ADMIN_EMAILS` | Allowlist de emails admin (igual que `admin-write`), separados por coma |
 
 ## Nota sobre `artworks`
 

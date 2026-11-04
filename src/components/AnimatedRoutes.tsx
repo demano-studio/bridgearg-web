@@ -14,6 +14,8 @@ const ContactSuccessPage = lazy(() => import("@/pages/ContactSuccessPage"));
 const VerificationCallbackPage = lazy(() => import("@/pages/VerificationCallbackPage"));
 const NosotrosPage = lazy(() => import("@/pages/NosotrosPage"));
 const ContactoPage = lazy(() => import("@/pages/ContactoPage"));
+const TradePage = lazy(() => import("@/pages/TradePage"));
+const TradeSegmentPage = lazy(() => import("@/pages/TradeSegmentPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 function RedirectArtistasSlug() {
@@ -51,6 +53,8 @@ export const AnimatedRoutes = () => {
           <Route path="/contacto" element={<Navigate to="/contact" replace />} />
           <Route path="/contact" element={<ContactoPage />} />
           <Route path="/contact/success" element={<ContactSuccessPage />} />
+          <Route path="/trade" element={<TradePage />} />
+          <Route path="/trade/:segment" element={<TradeSegmentPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

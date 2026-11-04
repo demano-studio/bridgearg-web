@@ -39,6 +39,35 @@ const STATIC_META = {
     title: "Contact",
     description: "Get in touch with BridgeArg for artist inquiries, acquisitions, and more.",
   },
+  "/trade": {
+    title: "Trade Program",
+    description:
+      "Artwork for your entire project — dedicated advisor, curated selection, and 15% trade pricing for designers, architects, developers and art consultants.",
+  },
+  "/trade/interior-designers": {
+    title: "Art for Interior Designers | BridgeArg Trade Program",
+    description:
+      "Original Argentine contemporary art for your projects. One advisor, curated selections and 15% trade pricing for interior designers.",
+    exactTitle: true,
+  },
+  "/trade/architects": {
+    title: "Art for Architects | BridgeArg Trade Program",
+    description:
+      "Artwork chosen with the space in mind, with clear specs and dimensions. 15% trade pricing for architects and studios.",
+    exactTitle: true,
+  },
+  "/trade/developers": {
+    title: "Art for Real Estate Developers | BridgeArg Trade Program",
+    description:
+      "Cohesive art selections for lobbies, amenities and model units, from one provider. 15% trade pricing on every acquisition.",
+    exactTitle: true,
+  },
+  "/trade/art-consultants": {
+    title: "Art for Art Consultants | BridgeArg Trade Program",
+    description:
+      "Direct access to Argentine contemporary artists, with documented authenticity and verified purchases. 15% trade pricing.",
+    exactTitle: true,
+  },
 };
 
 function escapeAttr(s) {
@@ -56,8 +85,9 @@ function formatPriceUSD(amountUsd) {
   })}`;
 }
 
-function fullTitle(title) {
-  return title ? `${title} — ${SITE_NAME}` : SITE_NAME;
+function fullTitle(title, exactTitle = false) {
+  if (!title) return SITE_NAME;
+  return exactTitle ? title : `${title} — ${SITE_NAME}`;
 }
 
 function absoluteUrl(path) {
@@ -91,8 +121,8 @@ function replaceOrInsertTag(html, prefix, newTag) {
   return html.slice(0, start) + newTag + html.slice(end + 1);
 }
 
-function applyMeta(html, { title, description, image, url }) {
-  const t = fullTitle(title);
+function applyMeta(html, { title, description, image, url, exactTitle = false }) {
+  const t = fullTitle(title, exactTitle);
   const desc = description || DEFAULT_DESCRIPTION;
   const img = image || DEFAULT_OG_IMAGE;
   const loc = absoluteUrl(url);
@@ -153,6 +183,7 @@ function buildPageMetas({ artists, artworks }) {
       description: meta.description,
       image: null,
       url: path,
+      exactTitle: Boolean(meta.exactTitle),
     });
   }
 

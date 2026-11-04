@@ -629,3 +629,110 @@ export async function subscribeNewsletter(
 
   return { ok: true };
 }
+
+export type TradeRole =
+  | "interior_designer"
+  | "architect"
+  | "developer"
+  | "art_consultant"
+  | "other";
+
+export interface TradeApplicationPayload {
+  full_name: string;
+  email: string;
+  company: string;
+  website?: string;
+  role: TradeRole;
+  project_type?: string;
+  message?: string;
+  marketing?: boolean;
+  website_hp?: string;
+}
+
+export async function applyTrade(
+  payload: TradeApplicationPayload,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { getSupabase } = await import("@/lib/supabaseClient");
+  const supabase = getSupabase();
+  const { data, error } = await supabase.functions.invoke("trade-apply", {
+    body: payload,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      error: await readFunctionError(error, "Could not submit application"),
+    };
+  }
+
+  const result = (data ?? {}) as { ok?: boolean; error?: string };
+  if (result.error) {
+    return { ok: false, error: String(result.error) };
+  }
+
+  return { ok: true };
+}
+
+export type TradeApplicationStatus = "pending" | "approved" | "rejected";
+
+export interface TradeApplicationAdminRow {
+  id: string;
+  created_at: string;
+  full_name: string;
+  email: string;
+  company: string;
+  website: string | null;
+  role: TradeRole;
+  project_type: string | null;
+  message: string | null;
+  status: TradeApplicationStatus;
+  approved_at: string | null;
+  marketing_consent: boolean;
+  promo_code: string | null;
+  stripe_promotion_code_id: string | null;
+  stripe_customer_id: string | null;
+  notes: string | null;
+  source: "form" | "manual";
+  deactivated_at: string | null;
+}
+
+function friendlyTradeAdminError(raw: string): string {
+  const msg = raw.trim();
+  if (!msg) return "Something went wrong. Please try again.";
+  if (/fetch|network|connection|Failed to send|FunctionsFetchError/i.test(msg)) {
+    return "Could not reach the server. Check your connection and try again.";
+  }
+  if (/Unauthorized|JWT|session/i.test(msg)) {
+    return "Your session expired. Sign in again.";
+  }
+  if (/Forbidden/i.test(msg)) {
+    return "You don't have permission to manage Trade clients.";
+  }
+  if (/non-2xx|Edge Function/i.test(msg)) {
+    return "The request could not be completed. Please try again.";
+  }
+  return msg.length > 220 ? `${msg.slice(0, 217)}…` : msg;
+}
+
+export async function tradeAdmin(
+  action: string,
+  payload: Record<string, unknown> = {},
+): Promise<Record<string, unknown>> {
+  const { getSupabase } = await import("@/lib/supabaseClient");
+  const supabase = getSupabase();
+  const { data, error } = await supabase.functions.invoke("trade-admin", {
+    body: { action, ...payload },
+  });
+
+  if (error) {
+    throw new Error(
+      friendlyTradeAdminError(await readFunctionError(error, "Could not complete the Trade action")),
+    );
+  }
+
+  const result = (data ?? {}) as { ok?: boolean; error?: string } & Record<string, unknown>;
+  if (result.error) {
+    throw new Error(friendlyTradeAdminError(String(result.error)));
+  }
+  return result;
+}

@@ -7,7 +7,18 @@ import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-const STATIC_PATHS = ["/", "/artworks", "/artists", "/about", "/contact"];
+const STATIC_PATHS = [
+  "/",
+  "/artworks",
+  "/artists",
+  "/about",
+  "/contact",
+  "/trade",
+  "/trade/interior-designers",
+  "/trade/architects",
+  "/trade/developers",
+  "/trade/art-consultants",
+];
 
 /** Carga KEY=VALUE de .env / .env.local sin pisar variables ya definidas en el entorno. */
 function loadEnvFiles() {

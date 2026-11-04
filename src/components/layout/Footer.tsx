@@ -51,6 +51,12 @@ export function Footer() {
               >
                 Contact
               </Link>
+              <Link
+                to="/trade"
+                className="block w-fit font-display text-sm text-[#fcf8ea] decoration-[#fcf8ea]/70 underline-offset-4 transition-all hover:underline"
+              >
+                Trade Program
+              </Link>
             </nav>
           </div>
 

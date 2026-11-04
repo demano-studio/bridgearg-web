@@ -6,6 +6,8 @@ interface SEOProps {
   image?: string;
   url?: string;
   type?: "website" | "article";
+  /** When true, use `title` as-is (no " — BRIDGEARG" suffix). */
+  exactTitle?: boolean;
 }
 
 const SITE_NAME = "BRIDGEARG";
@@ -14,8 +16,15 @@ const DEFAULT_DESCRIPTION =
 const SITE_URL = "https://www.bridgearg.net";
 const DEFAULT_OG_IMAGE = "https://www.bridgearg.net/assets/ui/og-cover.jpg";
 
-export function SEO({ title, description, image, url, type = "website" }: SEOProps) {
-  const fullTitle = title ? `${title} — ${SITE_NAME}` : SITE_NAME;
+export function SEO({
+  title,
+  description,
+  image,
+  url,
+  type = "website",
+  exactTitle = false,
+}: SEOProps) {
+  const fullTitle = !title ? SITE_NAME : exactTitle ? title : `${title} — ${SITE_NAME}`;
   const metaDescription = description ?? DEFAULT_DESCRIPTION;
   const metaUrl = url ? `${SITE_URL}${url}` : SITE_URL;
   const metaImage = image ?? DEFAULT_OG_IMAGE;

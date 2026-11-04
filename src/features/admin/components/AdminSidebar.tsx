@@ -103,6 +103,11 @@ export function AdminSidebar() {
           Nuevo lote
         </Button>
 
+        <div className={sectionTitle}>Trade</div>
+        <NavLink to="/admin/trade" className={navClass}>
+          Trade
+        </NavLink>
+
         <div className={sectionTitle}>Reportes</div>
         <NavLink to="/admin/resumen" className={navClass}>
           Resumen

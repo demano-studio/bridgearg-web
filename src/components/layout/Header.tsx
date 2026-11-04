@@ -31,7 +31,7 @@ export function Header() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const allDataRef = useRef<SearchResults | null>(null);
   const isHome = location.pathname === "/";
-  const lightHeroPages = ["/about", "/contact"];
+  const lightHeroPages = ["/about", "/contact", "/trade"];
   const isLightHero = lightHeroPages.some((p) => location.pathname.startsWith(p));
   const useLightNav = isLightHero && !scrolled;
 
@@ -191,7 +191,23 @@ export function Header() {
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2 md:gap-4">
+            <Link
+              to="/trade"
+              className="hidden md:inline-flex"
+              style={{
+                fontFamily: '"Onest", sans-serif',
+                fontSize: "11px",
+                fontWeight: 500,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: useLightNav ? "rgba(30,21,23,0.55)" : "rgba(252,248,234,0.55)",
+                textDecoration: "none",
+                transition: "color 0.4s ease",
+              }}
+            >
+              Trade
+            </Link>
             <Link
               to="/contact"
               className="hidden md:inline-flex"
@@ -323,6 +339,26 @@ export function Header() {
             );
           })}
           <Link
+            to="/trade"
+            onClick={() => setIsOpen(false)}
+            style={{
+              fontFamily: '"Onest", sans-serif',
+              fontSize: "13px",
+              fontWeight: 500,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              display: "block",
+              color: "rgba(252,248,234,0.55)",
+              textDecoration: "none",
+              marginTop: "2rem",
+              opacity: isOpen ? 1 : 0,
+              transform: isOpen ? "translateX(0)" : "translateX(16px)",
+              transition: `opacity 0.35s ease ${navItems.length * 65}ms, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) ${navItems.length * 65}ms`,
+            }}
+          >
+            Trade
+          </Link>
+          <Link
             to="/contact"
             onClick={() => setIsOpen(false)}
             style={{
@@ -337,7 +373,7 @@ export function Header() {
               textDecoration: "none",
               borderBottom: "1px solid #7FB2D1",
               paddingBottom: "2px",
-              marginTop: "2rem",
+              marginTop: "1.25rem",
             }}
           >
             I'm an Artist
