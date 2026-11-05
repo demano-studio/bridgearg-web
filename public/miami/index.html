@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BridgeARG in Miami · Art Week 2026</title>
+<meta name="description" content="BridgeARG is in Miami for Art Week, Dec 2 – 7. Book 20 minutes and a coffee to see original contemporary art from Argentina's leading artists.">
+<!-- Private campaign page: only reached from our Art Week outreach -->
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="BridgeARG in Miami · Art Week 2026">
+<meta property="og:description" content="Original contemporary art from Argentina. Let's have a coffee in Miami, Dec 2 – 7.">
+<meta property="og:image" content="https://www.bridgearg.net/miami/assets/img/hero-sculpture.jpg">
+<link rel="icon" href="/miami/assets/isotipo-dark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="/miami/assets/img/hero-sculpture.jpg">
+<style>
+  @font-face {
+    font-family: "Best DB Normal";
+    src: url("/miami/assets/fonts/best-db-normal.ttf") format("truetype");
+    font-display: swap;
+  }
+
+  /* Brand palette — BridgeARG brandbook, Cromática */
+  :root {
+    --ink: #1e1517;
+    --cream: #fcf8ea;
+    --sky: #7fb2d1;
+    --white: #fcfcfc;
+    --line: rgba(30, 21, 23, .18);
+    --line-light: rgba(252, 248, 234, .22);
+    --sans: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --script: "Best DB Normal", "Snell Roundhand", "Brush Script MT", cursive;
+    --gutter: clamp(16px, 4vw, 56px);
+    --max: 1760px;
+    --ease: cubic-bezier(.2, .7, .1, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-weight: 300;
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  img { display: block; max-width: 100%; height: auto; }
+  a { color: inherit; }
+  ::selection { background: var(--sky); color: var(--ink); }
+
+  .wrap { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+  /* ---------- Type system (brandbook: light uppercase, underlined titles + parenthetical) ---------- */
+  .eyebrow {
+    font-size: 12px; font-weight: 400; letter-spacing: .14em; text-transform: uppercase;
+  }
+  .title {
+    font-weight: 300; text-transform: uppercase; letter-spacing: -.02em; line-height: .95;
+    font-size: clamp(40px, 6.4vw, 92px); margin: 0;
+  }
+  .title u {
+    text-decoration: underline; text-decoration-thickness: .045em; text-underline-offset: .12em;
+  }
+  .title sup {
+    font-size: 12px; letter-spacing: .08em; font-weight: 400; vertical-align: top;
+    position: relative; top: .5em; margin-left: .4em; white-space: nowrap;
+  }
+  .script {
+    font-family: var(--script); font-weight: 400; text-transform: none; letter-spacing: 0;
+    line-height: 1;
+  }
+  .lead { font-size: clamp(18px, 1.6vw, 22px); line-height: 1.5; max-width: 34em; }
+  .num { font-size: 12px; letter-spacing: .1em; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: .7em;
+    font: 500 14px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase;
+    padding: 18px 26px; border-radius: 999px; text-decoration: none; cursor: pointer;
+    border: 1px solid var(--ink); background: var(--ink); color: var(--cream);
+    transition: background .3s var(--ease), color .3s var(--ease), transform .3s var(--ease);
+  }
+  .btn:hover { background: var(--sky); color: var(--ink); border-color: var(--sky); }
+  .btn:active { transform: scale(.98); }
+  .btn .arrow { transition: transform .3s var(--ease); }
+  .btn:hover .arrow { transform: translateX(4px); }
+  .btn--ghost { background: transparent; color: inherit; border-color: currentColor; }
+  .btn--light { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+
+  /* ---------- Frame corners (brandbook asset: Marcos) ---------- */
+  .corners { position: relative; }
+  .corners::after {
+    content: ""; position: absolute; inset: -14px; pointer-events: none;
+    --c: var(--ink); --l: 26px; --w: 5px;
+    background:
+      linear-gradient(var(--c), var(--c)) top left / var(--l) var(--w),
+      linear-gradient(var(--c), var(--c)) top left / var(--w) var(--l),
+      linear-gradient(var(--c), var(--c)) top right / var(--l) var(--w),
+      linear-gradient(var(--c), var(--c)) top right / var(--w) var(--l),
+      linear-gradient(var(--c), var(--c)) bottom left / var(--l) var(--w),
+      linear-gradient(var(--c), var(--c)) bottom left / var(--w) var(--l),
+      linear-gradient(var(--c), var(--c)) bottom right / var(--l) var(--w),
+      linear-gradient(var(--c), var(--c)) bottom right / var(--w) var(--l);
+    background-repeat: no-repeat;
+  }
+  .corners--light::after { --c: var(--cream); }
+
+  /* Bridge arches band (brandbook asset) */
+  .arches {
+    height: 46px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 46'%3E%3Cpath fill='%231e1517' d='M0 0H240V46H228A48 48 0 0 0 132 46H108A48 48 0 0 0 12 46H0Z'/%3E%3C/svg%3E") repeat-x left top / 240px 46px;
+  }
+  .arches--cream {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 46'%3E%3Cpath fill='%23fcf8ea' d='M0 0H240V46H228A48 48 0 0 0 132 46H108A48 48 0 0 0 12 46H0Z'/%3E%3C/svg%3E");
+  }
+  .arches--flip { transform: scaleY(-1); }
+
+  /* ---------- Header ---------- */
+  .top {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(252, 248, 234, .86);
+    -webkit-backdrop-filter: saturate(1.2) blur(12px); backdrop-filter: saturate(1.2) blur(12px);
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s;
+  }
+  .top.is-scrolled { border-bottom-color: var(--line); }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 72px; }
+  .top .logo img { height: 24px; width: auto; }
+  .top .meta { display: flex; align-items: center; gap: 28px; }
+  .top .when { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+  .top .btn { padding: 13px 20px; font-size: 12px; }
+  @media (max-width: 720px) { .top .when { display: none; } .top .wrap { height: 62px; } .top .logo img { height: 20px; } }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: clamp(28px, 5vw, 64px) 0 clamp(40px, 5vw, 72px); }
+  .hero .wrap {
+    display: grid; grid-template-columns: 1.15fr .85fr; gap: clamp(32px, 6vw, 96px); align-items: center;
+  }
+  .hero .eyebrow { display: flex; gap: 12px; align-items: center; margin-bottom: clamp(20px, 3vw, 36px); }
+  .hero .eyebrow::before { content: ""; width: 40px; height: 1px; background: var(--ink); }
+  @media (max-width: 520px) { .hide-sm { display: none; } }
+  .hero h1 {
+    font-weight: 300; text-transform: uppercase; letter-spacing: -.035em; line-height: .88;
+    font-size: clamp(54px, min(10.4vw, 17svh), 210px); margin: 0;
+  }
+  .hero h1 u { text-decoration-thickness: .04em; text-underline-offset: .1em; }
+  .hero h1 .script {
+    display: block; font-size: .5em; margin: .08em 0 0 .9em; transform: rotate(-6deg);
+    transform-origin: left center; color: var(--ink);
+  }
+  .hero .copy { margin-top: clamp(28px, 3.4vw, 48px); display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: end; }
+  .hero .copy p { margin: 0; }
+  .hero .lead strong { font-weight: 500; }
+  .hero .lead mark { background: none; color: inherit; box-shadow: inset 0 -.34em 0 rgba(127, 178, 209, .55); }
+  .hero-art { position: relative; justify-self: end; width: 100%; max-width: clamp(420px, 34vw, 640px); }
+  .hero-art .arch {
+    border-radius: 999px 999px 0 0; overflow: hidden; aspect-ratio: 896 / 1200; background: #d9cfc1;
+    max-height: calc(100svh - 190px); width: 100%; margin-left: auto;
+  }
+  .hero-art .arch img { width: 100%; height: 100%; object-fit: cover; object-position: 62% center; animation: slowzoom 14s var(--ease) both; }
+  @keyframes slowzoom { from { transform: scale(1.12); } to { transform: scale(1); } }
+  .hero-art .stamp {
+    position: absolute; left: -46px; bottom: 64px; width: 128px; height: 128px; border-radius: 50%;
+    background: var(--sky); color: var(--ink); display: grid; place-items: center; text-align: center;
+    animation: spin 26s linear infinite;
+  }
+  .hero-art .stamp svg { width: 100%; height: 100%; }
+  .hero-art .stamp-core { position: absolute; inset: 0; display: grid; place-items: center; }
+  .hero-art .stamp-core img { width: 30px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hero-art .stamp-core { animation: spin 26s linear infinite reverse; }
+  .caption { font-size: 12px; letter-spacing: .06em; margin-top: 12px; display: flex; justify-content: space-between; gap: 12px; }
+  .caption em { font-style: normal; opacity: .6; }
+
+  @media (max-width: 900px) {
+    .hero .wrap { grid-template-columns: 1fr; }
+    .hero-art { justify-self: center; max-width: 420px; order: 2; }
+    .hero .copy { grid-template-columns: 1fr; }
+    .hero-art .stamp { left: -10px; width: 104px; height: 104px; }
+  }
+
+  /* ---------- Marquee ---------- */
+  .marquee { background: var(--ink); color: var(--cream); overflow: hidden; padding: 22px 0; }
+  .marquee-track { display: flex; width: max-content; animation: marquee 38s linear infinite; }
+  .marquee span {
+    font-size: clamp(18px, 2vw, 26px); font-weight: 300; text-transform: uppercase; letter-spacing: .02em;
+    padding: 0 28px; display: inline-flex; align-items: center; gap: 56px; white-space: nowrap;
+  }
+  .marquee span::after { content: ""; width: 14px; height: 18px; border-radius: 99px 99px 0 0; background: var(--sky); }
+  .marquee .script { font-size: 1.3em; text-transform: none; }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+
+  /* ---------- Section scaffold ---------- */
+  section { position: relative; }
+  .sec { padding: clamp(80px, 11vw, 160px) 0; }
+  .sec-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-bottom: clamp(40px, 6vw, 80px); }
+  .sec-head .num { display: block; margin-bottom: 18px; }
+  .sec-head p { max-width: 26em; margin: 0; }
+
+  /* ---------- Intro ---------- */
+  .intro .wrap > div { max-width: 1240px; }
+  .intro .statement { font-size: clamp(26px, 3.1vw, 44px); line-height: 1.18; font-weight: 300; letter-spacing: -.015em; margin: 0; }
+  .intro .statement .script { font-size: 1.25em; }
+  .intro .statement mark { background: none; color: inherit; box-shadow: inset 0 -.34em 0 rgba(127, 178, 209, .55); }
+
+  /* ---------- Selection gallery ---------- */
+  .gallery {
+    display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(16px, 2.4vw, 32px); align-items: start;
+  }
+  .work { margin: 0; }
+  .work .frame {
+    background: var(--white); padding: clamp(14px, 2vw, 28px); box-shadow: 0 0 0 1px var(--line);
+    overflow: hidden;
+  }
+  .work .frame img { width: 100%; transition: transform 1.2s var(--ease); }
+  .work:hover .frame img { transform: scale(1.04); }
+  .work.bleed .frame { padding: 0; background: none; aspect-ratio: 4 / 5; }
+  .work.bleed .frame img { height: 100%; object-fit: cover; }
+  .work.arch .frame { border-radius: 999px 999px 0 0; padding: 0; }
+  .work figcaption { display: flex; justify-content: space-between; gap: 12px; padding-top: 14px; font-size: 13px; }
+  .work figcaption b { font-weight: 500; letter-spacing: .02em; }
+  .work figcaption span { opacity: .62; text-align: right; }
+  .g1 { grid-column: 1 / span 5; }
+  .g2 { grid-column: 7 / span 6; margin-top: 120px; }
+  .g3 { grid-column: 1 / span 4; }
+  .g4 { grid-column: 5 / span 4; margin-top: 80px; }
+  .g5 { grid-column: 9 / span 4; margin-top: -40px; }
+  .gallery-quote {
+    grid-column: 1 / -1; text-align: center; padding: clamp(40px, 6vw, 80px) 0;
+    font-size: clamp(44px, 7vw, 110px);
+  }
+  @media (max-width: 900px) {
+    .gallery { grid-template-columns: 1fr 1fr; }
+    .g1, .g2, .g3, .g4, .g5 { grid-column: auto; margin-top: 0; }
+    .g2, .g4 { margin-top: 48px; }
+  }
+  @media (max-width: 520px) {
+    .gallery { grid-template-columns: 1fr; }
+    .g2, .g4 { margin-top: 0; }
+  }
+
+  /* ---------- How we work (dark) ---------- */
+  .dark { background: var(--ink); color: var(--cream); }
+  .dark .title u { text-decoration-color: var(--cream); }
+  .pillars { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line-light); }
+  .pillar { padding: 36px 28px 40px 0; border-right: 1px solid var(--line-light); }
+  .pillar + .pillar { padding-left: 28px; }
+  .pillar:last-child { border-right: 0; }
+  .pillar .icon { width: 56px; height: 56px; margin-bottom: 44px; }
+  .pillar h3 { font-weight: 400; font-size: 20px; line-height: 1.25; margin: 0 0 14px; letter-spacing: -.005em; }
+  .pillar p { margin: 0; font-size: 15px; opacity: .78; }
+  @media (max-width: 900px) {
+    .pillars { grid-template-columns: 1fr 1fr; }
+    .pillar { padding: 32px 20px 36px 0; }
+    .pillar:nth-child(2) { border-right: 0; }
+    .pillar:nth-child(3) { padding-left: 0; }
+    .pillar:nth-child(n+3) { border-top: 1px solid var(--line-light); }
+  }
+  @media (max-width: 520px) {
+    .pillars { grid-template-columns: 1fr; }
+    .pillar, .pillar + .pillar { padding: 28px 0; border-right: 0; border-top: 1px solid var(--line-light); }
+    .pillar:first-child { border-top: 0; }
+    .pillar .icon { margin-bottom: 24px; }
+  }
+
+  /* Programs */
+  .programs { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 2.4vw, 32px); margin-top: clamp(64px, 8vw, 110px); }
+  .program {
+    border: 1px solid var(--line-light); border-radius: 260px 260px 0 0; padding: clamp(80px, 9vw, 130px) clamp(24px, 4vw, 56px) clamp(32px, 4vw, 48px);
+    text-align: center; position: relative; transition: background .4s var(--ease), color .4s var(--ease);
+  }
+  .program:hover { background: var(--cream); color: var(--ink); }
+  .program .eyebrow { opacity: .7; }
+  .program h3 { font-weight: 300; text-transform: uppercase; font-size: clamp(30px, 3.4vw, 48px); line-height: 1; letter-spacing: -.02em; margin: 16px 0 6px; }
+  .program .script { font-size: clamp(26px, 2.6vw, 36px); display: block; margin-bottom: 28px; color: var(--sky); }
+  .program:hover .script { color: var(--ink); }
+  .program ul { list-style: none; margin: 0; padding: 0; text-align: left; border-top: 1px solid currentColor; }
+  .program li { padding: 14px 0; border-bottom: 1px solid var(--line-light); display: flex; gap: 14px; font-size: 16px; }
+  .program:hover li { border-bottom-color: var(--line); }
+  .program li::before { content: "→"; opacity: .6; }
+  @media (max-width: 760px) { .programs { grid-template-columns: 1fr; } .program { border-radius: 200px 200px 0 0; } }
+
+  /* ---------- Artists grid ---------- */
+  .artists-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(28px, 3vw, 44px) clamp(14px, 1.8vw, 24px); }
+  .artist-card { text-decoration: none; color: inherit; display: block; }
+  .artist-card .portrait { aspect-ratio: 3 / 4; border-radius: 999px 999px 0 0; overflow: hidden; background: #e9e1d2; margin-bottom: 16px; }
+  .artist-card .portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; filter: grayscale(1) contrast(1.05); transition: filter .6s var(--ease), transform 1s var(--ease); }
+  .artist-card:hover .portrait img, .artist-card:focus-visible .portrait img { filter: none; transform: scale(1.05); }
+  .artist-card:focus-visible { outline: 2px solid var(--sky); outline-offset: 6px; }
+  .artist-card .n { font-size: 11px; letter-spacing: .12em; opacity: .55; }
+  .artist-card h3 { font-weight: 400; text-transform: uppercase; font-size: clamp(17px, 1.5vw, 21px); line-height: 1.1; letter-spacing: -.005em; margin: 6px 0 8px; padding-bottom: 10px; border-bottom: 1px solid var(--ink); }
+  .artist-card .disc { display: inline-block; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: var(--sky); }
+  .artist-card p { font-size: 14px; line-height: 1.45; margin: 10px 0 0; opacity: .75; }
+  .artists-foot { display: flex; justify-content: center; margin-top: clamp(48px, 6vw, 80px); }
+  @media (hover: none) { .artist-card .portrait img { filter: none; } }
+  @media (max-width: 1000px) { .artists-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 620px) { .artists-grid { grid-template-columns: repeat(2, 1fr); } .artist-card p { display: none; } }
+
+  /* ---------- Form ---------- */
+  .book { background: var(--white); }
+  .book .wrap { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(40px, 7vw, 110px); align-items: start; }
+  .book-side { position: sticky; top: 110px; }
+  .book-side .title { font-size: clamp(44px, 6vw, 88px); }
+  .book-side .script { font-size: clamp(36px, 4vw, 58px); display: block; margin: 10px 0 32px 1em; transform: rotate(-5deg); transform-origin: left; }
+  .book-side .cup { display: flex; gap: 18px; align-items: center; margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line); font-size: 15px; }
+  .book-side .cup img { width: 40px; flex: none; }
+  @media (max-width: 900px) { .book .wrap { grid-template-columns: 1fr; } .book-side { position: static; } }
+
+  .form { background: var(--cream); padding: clamp(24px, 4vw, 52px); }
+  .form fieldset { border: 0; margin: 0 0 36px; padding: 0; }
+  .form legend { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; font-weight: 500; margin-bottom: 18px; padding: 0; display: flex; gap: 10px; }
+  .form legend span { opacity: .45; font-weight: 400; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+  .field { position: relative; margin-bottom: 18px; }
+  .field label { display: block; font-size: 13px; margin-bottom: 4px; opacity: .75; }
+  .field input, .field select, .field textarea {
+    width: 100%; font: 300 18px/1.4 var(--sans); color: var(--ink);
+    background: transparent; border: 0; border-bottom: 1px solid var(--ink); border-radius: 0;
+    padding: 8px 0 10px; outline: none; transition: border-color .25s;
+    -webkit-appearance: none; appearance: none;
+  }
+  .field select { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231e1517' stroke-width='1.4'/%3E%3C/svg%3E") no-repeat right 4px center; padding-right: 24px; cursor: pointer; }
+  .field textarea { resize: vertical; min-height: 84px; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-bottom: 2px solid var(--sky); padding-bottom: 9px; }
+  .field input:user-invalid, .field select:user-invalid { border-bottom-color: #b0413e; }
+  .field .err { display: none; color: #b0413e; font-size: 12px; margin-top: 4px; }
+  .field input:user-invalid ~ .err, .field select:user-invalid ~ .err { display: block; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { position: relative; }
+  .chip input { position: absolute; opacity: 0; inset: 0; cursor: pointer; margin: 0; }
+  .chip span {
+    display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 999px;
+    border: 1px solid var(--ink); font-size: 14px; user-select: none;
+    transition: background .2s, color .2s;
+  }
+  .chip input:checked + span { background: var(--ink); color: var(--cream); }
+  .chip input:focus-visible + span { outline: 2px solid var(--sky); outline-offset: 2px; }
+  .chip:hover span { background: rgba(127, 178, 209, .35); }
+  .chip input:checked:hover + span { background: var(--ink); }
+
+  .consent { display: flex; gap: 12px; align-items: flex-start; font-size: 13px; line-height: 1.5; margin: 8px 0 28px; }
+  .consent input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ink); flex: none; }
+  .form-foot { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .form-foot small { font-size: 12px; opacity: .6; }
+  .hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; overflow: hidden; }
+  .btn[disabled] { opacity: .55; pointer-events: none; }
+
+  .form-msg { display: none; text-align: center; padding: clamp(40px, 6vw, 80px) 0; }
+  .form-msg .arch-badge { width: 120px; height: 150px; margin: 0 auto 28px; border-radius: 999px 999px 0 0; background: var(--sky); display: grid; place-items: center; }
+  .form-msg .arch-badge img { width: 44px; }
+  .form-msg h3 { font-weight: 300; text-transform: uppercase; font-size: clamp(32px, 4vw, 52px); line-height: 1; margin: 0 0 8px; letter-spacing: -.02em; }
+  .form-msg .script { font-size: 40px; display: block; margin-bottom: 20px; }
+  .form-msg p { max-width: 28em; margin: 0 auto; }
+  .form.is-sent form { display: none; }
+  .form.is-sent .form-msg.ok { display: block; }
+  .form-error { display: none; margin-top: 18px; font-size: 14px; color: #b0413e; }
+  .form.is-error .form-error { display: block; }
+
+  /* ---------- Footer ---------- */
+  .foot { background: var(--ink); color: var(--cream); padding: clamp(64px, 8vw, 110px) 0 32px; }
+  .foot .big { display: flex; justify-content: space-between; align-items: end; gap: 32px; flex-wrap: wrap; padding-bottom: 56px; border-bottom: 1px solid var(--line-light); }
+  .foot .big img { width: min(560px, 100%); }
+  .foot .big .script { font-size: clamp(30px, 3vw, 44px); }
+  .foot .small { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 24px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+  .foot .small a { text-decoration: none; }
+  .foot .small a:hover { text-decoration: underline; }
+
+  /* ---------- Reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(36px); transition: opacity 1s var(--ease), transform 1s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; }
+  .reveal.d1 { transition-delay: .1s; } .reveal.d2 { transition-delay: .2s; } .reveal.d3 { transition-delay: .3s; }
+  /* Above the fold: animate on load, never wait on the observer */
+  .hero .reveal { opacity: 1; transform: none; animation: rise 1s var(--ease) both; }
+  .hero .reveal.d1 { animation-delay: .12s; } .hero .reveal.d2 { animation-delay: .24s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(36px); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1; transform: none; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="logo" href="https://www.bridgearg.net" aria-label="BridgeARG home"><img src="/miami/assets/logo-dark.svg" alt="BridgeARG" width="150" height="24"></a>
+    <div class="meta">
+      <span class="when">Miami Art Week · Dec 2 — 7</span>
+      <a class="btn" href="#book">Book a coffee <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow reveal"><span><span class="hide-sm">Contemporary art from Argentina · </span>Miami Art Week</span></p>
+        <h1 class="reveal d1">We're in<br><u>Miami.</u><span class="script">let's have a coffee</span></h1>
+        <div class="copy reveal d2">
+          <p class="lead"><strong>We are a bridge.</strong> We bring <mark>original contemporary art</mark> from Argentina's leading artists to homes and projects across the US, and take care of everything in between. From December 2 to 7 we're in Miami: give us twenty minutes, we'll bring the art.</p>
+          <a class="btn" href="#book">Save a spot <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </div>
+
+      <figure class="hero-art reveal d2" style="margin:0">
+        <div class="arch"><img src="/miami/assets/img/hero-sculpture.jpg" alt="Ernesto, a sculpture by Alejandra Espinosa, on a stone plinth in a bright concrete room" width="896" height="1200" fetchpriority="high"></div>
+        <div class="stamp" aria-hidden="true">
+          <svg viewBox="0 0 128 128">
+            <defs><path id="ring" d="M64,64 m-48,0 a48,48 0 1,1 96,0 a48,48 0 1,1 -96,0"/></defs>
+            <text font-family="Onest, sans-serif" font-size="10.5" letter-spacing="2.6" fill="#1e1517">
+              <textPath href="#ring">HECHO EN ARGENTINA · SEEN IN MIAMI · </textPath>
+            </text>
+          </svg>
+          <div class="stamp-core"><img src="/miami/assets/isotipo-dark.svg" alt=""></div>
+        </div>
+        <figcaption class="caption"><span>(In situ) Alejandra Espinosa</span><em>Ernesto · sculpture</em></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- INTRO -->
+  <section class="sec intro" style="padding-top:clamp(24px, 4vw, 56px)">
+    <div class="wrap">
+      <div>
+        <span class="num reveal">01 — (MANIFESTO)</span>
+        <p class="statement reveal d1" style="margin-top:24px">
+          Argentina has <mark>talent, craft and identity</mark>. Every bridge brings us closer and opens new paths. When <span class="script">art</span> crosses borders, something improves.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <span>Original works</span><span class="script">hecho en Argentina</span><span>Shipping &amp; customs handled</span><span>Certificate of authenticity</span><span>Transparent USD pricing</span><span>Trade program</span><span class="script">somos puente</span><span>White-glove delivery</span>
+      <span>Original works</span><span class="script">hecho en Argentina</span><span>Shipping &amp; customs handled</span><span>Certificate of authenticity</span><span>Transparent USD pricing</span><span>Trade program</span><span class="script">somos puente</span><span>White-glove delivery</span>
+    </div>
+  </div>
+
+  <!-- SELECTION -->
+  <section class="sec" id="selection">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="num">02 — (CURATED FOR MIAMI)</span>
+          <h2 class="title reveal"><u>The selection</u><sup>(PREVIEW)</sup></h2>
+        </div>
+        <p class="reveal d1">A short preview of what we're bringing: works that live well in residential and hospitality spaces. The full selection, in person.</p>
+      </div>
+
+      <div class="gallery">
+        <figure class="work g1 reveal">
+          <div class="frame"><img src="/miami/assets/img/hora-floating-island.jpg" alt="Ink drawing of a floating island with mushrooms and figures, by Hora French" loading="lazy"></div>
+          <figcaption><b>Hora French</b><span>Floating island · ink on paper</span></figcaption>
+        </figure>
+        <figure class="work g2 reveal d1">
+          <div class="frame"><img src="/miami/assets/img/mantegani-charcoal.jpg" alt="Charcoal drawing on handmade paper of a figure bending around a pole, by Roger Mantegani" loading="lazy"></div>
+          <figcaption><b>Roger Mantegani</b><span>Charcoal on paper</span></figcaption>
+        </figure>
+        <figure class="work g3 reveal">
+          <div class="frame"><img src="/miami/assets/img/sculpture-red-figure.jpg" alt="Carved and painted wood figure in red against a blue relief wall" loading="lazy" width="1050" height="1400"></div>
+          <figcaption><b>Sculpture</b><span>Carved and painted wood</span></figcaption>
+        </figure>
+        <figure class="work g4 arch reveal d1">
+          <div class="frame"><img src="/miami/assets/img/sculpture-hanging-wood.jpg" alt="Carved wood figure with a blue band, suspended from cords" loading="lazy" width="931" height="1400"></div>
+          <figcaption><b>Sculpture</b><span>Carved wood, suspended</span></figcaption>
+        </figure>
+        <figure class="work g5 reveal d2">
+          <div class="frame"><img src="/miami/assets/img/hora-the-wind.jpg" alt="Ink drawing The Wind, by Hora French" loading="lazy"></div>
+          <figcaption><b>Hora French</b><span>The Wind · ink on paper</span></figcaption>
+        </figure>
+
+        <p class="gallery-quote script reveal">Pieces that cross bridges</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW WE WORK -->
+  <section class="sec dark" id="how">
+    <div class="arches" style="position:absolute;top:-45px;left:0;right:0" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="num">03 — (HOW WE WORK)</span>
+          <h2 class="title reveal"><u>End to end</u></h2>
+        </div>
+        <p class="reveal d1">You choose the work. We handle the rest, from the artist's studio in Argentina to the wall it belongs on.</p>
+      </div>
+
+      <div class="pillars">
+        <div class="pillar reveal">
+          <svg class="icon" viewBox="0 0 56 56" fill="none" stroke="#fcf8ea" stroke-width="1.4" aria-hidden="true"><path d="M8 52V26a20 20 0 0 1 40 0v26"/><path d="M18 52V28a10 10 0 0 1 20 0v24"/></svg>
+          <h3>Original works, direct from the studio</h3>
+          <p>A curated group of Argentina's leading contemporary artists. No prints, no reproductions.</p>
+        </div>
+        <div class="pillar reveal d1">
+          <svg class="icon" viewBox="0 0 56 56" fill="none" stroke="#fcf8ea" stroke-width="1.4" aria-hidden="true"><circle cx="28" cy="28" r="22"/><path d="M34 20c-1.5-2-3.6-3-6-3-3.6 0-6 2-6 5s2.6 4.2 6 5 6 2.2 6 5.2-2.6 5-6 5c-2.6 0-4.8-1.2-6.2-3.2M28 13v4M28 39v4"/></svg>
+          <h3>Transparent USD pricing</h3>
+          <p>Clear prices in dollars, with shipping and import costs spelled out from the start.</p>
+        </div>
+        <div class="pillar reveal d2">
+          <svg class="icon" viewBox="0 0 56 56" fill="none" stroke="#fcf8ea" stroke-width="1.4" aria-hidden="true"><rect x="6" y="16" width="44" height="30"/><path d="M6 24h44M20 16v-6h16v6"/></svg>
+          <h3>Shipping, customs &amp; white-glove delivery</h3>
+          <p>We crate, ship, clear customs and deliver to your door or your client's project.</p>
+        </div>
+        <div class="pillar reveal d3">
+          <svg class="icon" viewBox="0 0 56 56" fill="none" stroke="#fcf8ea" stroke-width="1.4" aria-hidden="true"><circle cx="28" cy="24" r="14"/><circle cx="28" cy="24" r="8"/><path d="M20 36l-4 14 12-5 12 5-4-14"/></svg>
+          <h3>Certificate of authenticity</h3>
+          <p>Every piece leaves with a signed certificate and the story of the artist behind it.</p>
+        </div>
+      </div>
+
+      <div class="programs">
+        <article class="program reveal">
+          <span class="eyebrow">(For interior designers)</span>
+          <h3>Trade program</h3>
+          <span class="script">for your projects</span>
+          <ul>
+            <li>Trade pricing on every work</li>
+            <li>Holds while you present to clients</li>
+            <li>White-glove delivery and installation support</li>
+            <li>Selections for residential and hospitality spaces</li>
+          </ul>
+        </article>
+        <article class="program reveal d1">
+          <span class="eyebrow">(For art advisors &amp; collectors)</span>
+          <h3>Advisor program</h3>
+          <span class="script">for your clients</span>
+          <ul>
+            <li>Direct access to the artists and their studios</li>
+            <li>Advisor terms for those sourcing for clients</li>
+            <li>Shipping, customs and authenticity fully handled</li>
+            <li>Transparent USD pricing, no surprises</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARTISTS -->
+  <section class="sec" id="artists">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <span class="num">04 — (THE ARTISTS)</span>
+          <h2 class="title reveal"><u>Who we bring</u><sup>(10 ARTISTS)</sup></h2>
+        </div>
+        <p class="reveal d1">Ten artists from Córdoba, Argentina. Talent shaped by place, made by hand. Meet them through their work over coffee.</p>
+      </div>
+      <div class="artists-grid">
+        <a class="artist-card reveal" href="https://www.bridgearg.net/artistas/ale-espinosa">
+          <div class="portrait"><img src="/miami/assets/img/artists/espinosa.jpg" alt="Portrait of Alejandra Espinosa" loading="lazy" width="900" height="1333"></div>
+          <span class="n">01</span>
+          <h3>Alejandra Espinosa</h3>
+          <span class="disc">Mixed media</span>
+          <p>Architect and sculptor.</p>
+        </a>
+        <a class="artist-card reveal d1" href="https://www.bridgearg.net/artistas/boyo-quintana">
+          <div class="portrait"><img src="/miami/assets/img/artists/quintana.jpg" alt="Portrait of Boyo Quintana" loading="lazy" width="900" height="1333"></div>
+          <span class="n">02</span>
+          <h3>Boyo Quintana</h3>
+          <span class="disc">Sculpture</span>
+          <p>Key artist and printmaker of the Córdoba scene.</p>
+        </a>
+        <a class="artist-card reveal d2" href="https://www.bridgearg.net/artistas/caro-caeiro">
+          <div class="portrait"><img src="/miami/assets/img/artists/caeiro.jpg" alt="Portrait of Carolina Caeiro" loading="lazy" width="900" height="1333"></div>
+          <span class="n">03</span>
+          <h3>Carolina Caeiro</h3>
+          <span class="disc">Hand-embroidered</span>
+          <p>Textile artist redefining the craft of embroidery.</p>
+        </a>
+        <a class="artist-card reveal d3" href="https://www.bridgearg.net/artistas/fabio-egea">
+          <div class="portrait"><img src="/miami/assets/img/artists/egea.jpg" alt="Portrait of Fabio Egea" loading="lazy" width="900" height="1333"></div>
+          <span class="n">04</span>
+          <h3>Fabio Egea</h3>
+          <span class="disc">Painting</span>
+          <p>A poetic painter who turns the simple into an event.</p>
+        </a>
+        <a class="artist-card reveal d1" href="https://www.bridgearg.net/artistas/hora-french">
+          <div class="portrait"><img src="/miami/assets/img/artists/french.jpg" alt="Portrait of Hora French" loading="lazy" width="900" height="1333"></div>
+          <span class="n">05</span>
+          <h3>Hora French</h3>
+          <span class="disc">Painting</span>
+          <p>A leading figure in contemporary street art.</p>
+        </a>
+        <a class="artist-card reveal" href="https://www.bridgearg.net/artistas/jose-benito">
+          <div class="portrait"><img src="/miami/assets/img/artists/benito.jpg" alt="Portrait of José Benito" loading="lazy" width="900" height="1333"></div>
+          <span class="n">06</span>
+          <h3>José Benito</h3>
+          <span class="disc">Mixed media</span>
+          <p>A prominent figure in Argentine contemporary art.</p>
+        </a>
+        <a class="artist-card reveal d1" href="https://www.bridgearg.net/artistas/mariano-castaneda">
+          <div class="portrait"><img src="/miami/assets/img/artists/castaneda.jpg" alt="Portrait of Mariano Castañeda" loading="lazy" width="900" height="1333"></div>
+          <span class="n">07</span>
+          <h3>Mariano Castañeda</h3>
+          <span class="disc">Mixed media</span>
+          <p>Mountain landscapes and wildlife, in tribute.</p>
+        </a>
+        <a class="artist-card reveal d2" href="https://www.bridgearg.net/artistas/roger-mantegani">
+          <div class="portrait"><img src="/miami/assets/img/artists/mantegani.jpg" alt="Portrait of Roger Mantegani" loading="lazy" width="900" height="1333"></div>
+          <span class="n">08</span>
+          <h3>Roger Mantegani</h3>
+          <span class="disc">Painting</span>
+          <p>Internationally renowned painter.</p>
+        </a>
+        <a class="artist-card reveal d3" href="https://www.bridgearg.net/artistas/sara-goldman">
+          <div class="portrait"><img src="/miami/assets/img/artists/goldman.jpg" alt="Portrait of Sara Goldman" loading="lazy" width="900" height="1333"></div>
+          <span class="n">09</span>
+          <h3>Sara Goldman</h3>
+          <span class="disc">Sculpture</span>
+          <p>Exploring the edges of abstract and kinetic art.</p>
+        </a>
+        <a class="artist-card reveal d1" href="https://www.bridgearg.net/artistas/tulio-romano">
+          <div class="portrait"><img src="/miami/assets/img/artists/romano.jpg" alt="Portrait of Tulio Romano" loading="lazy" width="900" height="1333"></div>
+          <span class="n">10</span>
+          <h3>Tulio Romano</h3>
+          <span class="disc">Sculpture</span>
+          <p>A paragon of contemporary Argentine sculpture.</p>
+        </a>
+      </div>
+      <div class="artists-foot reveal"><a class="btn btn--ghost" href="https://www.bridgearg.net/artists">Meet all the artists <span class="arrow" aria-hidden="true">→</span></a></div>
+    </div>
+  </section>
+
+  <!-- BOOK -->
+  <section class="sec book" id="book">
+    <div class="wrap">
+      <aside class="book-side">
+        <span class="num">05 — (LET'S MEET)</span>
+        <h2 class="title reveal" style="margin-top:18px"><u>Coffee</u><br>is on us</h2>
+        <span class="script reveal d1">nos vemos en Miami</span>
+        <p class="reveal d1">Tell us who you are and when works for you. We'll confirm a time by email within 24 hours and come to you, with a selection chosen for your projects.</p>
+        <div class="cup reveal d2">
+          <img src="/miami/assets/isotipo-dark.svg" alt="">
+          <span>Twenty minutes. No pitch deck, just the work and a good conversation.</span>
+        </div>
+      </aside>
+
+      <div class="form corners reveal" id="formWrap">
+        <form id="coffeeForm" novalidate>
+          <fieldset>
+            <legend>About you <span>01</span></legend>
+            <div class="row">
+              <div class="field"><label for="f-nombre">First name</label><input id="f-nombre" name="nombre" autocomplete="given-name" required><span class="err">Please add your first name</span></div>
+              <div class="field"><label for="f-apellidos">Last name</label><input id="f-apellidos" name="apellidos" autocomplete="family-name" required><span class="err">Please add your last name</span></div>
+            </div>
+            <div class="row">
+              <div class="field"><label for="f-email">Email</label><input id="f-email" type="email" name="email" autocomplete="email" required><span class="err">We need a valid email to confirm</span></div>
+              <div class="field"><label for="f-wa">Phone / WhatsApp <span style="opacity:.6">(optional)</span></label><input id="f-wa" type="tel" name="whatsapp" autocomplete="tel" placeholder="+1 305 …"></div>
+            </div>
+            <div class="row">
+              <div class="field"><label for="f-studio">Studio or company</label><input id="f-studio" name="studio" autocomplete="organization"></div>
+              <div class="field"><label for="f-cargo">Your role</label><input id="f-cargo" name="cargo" autocomplete="organization-title" placeholder="Principal, designer, advisor…"></div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label for="f-rubro">You are</label>
+                <select id="f-rubro" name="rubro" required>
+                  <option value="" disabled selected>Select one</option>
+                  <option>Interior designer</option>
+                  <option>Architect</option>
+                  <option>Art advisor</option>
+                  <option>Hospitality / developer</option>
+                  <option>Collector</option>
+                  <option>Other</option>
+                </select>
+                <span class="err">Please choose one</span>
+              </div>
+              <div class="field"><label for="f-web">Website or Instagram <span style="opacity:.6">(optional)</span></label><input id="f-web" name="web" autocomplete="url" placeholder="studio.com or @studio"></div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>When works <span>02</span></legend>
+            <div class="chips" id="dayChips" style="margin-bottom:22px">
+              <label class="chip"><input type="checkbox" value="Wed Dec 2"><span>Wed 2</span></label>
+              <label class="chip"><input type="checkbox" value="Thu Dec 3"><span>Thu 3</span></label>
+              <label class="chip"><input type="checkbox" value="Fri Dec 4"><span>Fri 4</span></label>
+              <label class="chip"><input type="checkbox" value="Sat Dec 5"><span>Sat 5</span></label>
+              <label class="chip"><input type="checkbox" value="Sun Dec 6"><span>Sun 6</span></label>
+              <label class="chip"><input type="checkbox" value="Mon Dec 7"><span>Mon 7</span></label>
+            </div>
+            <div class="chips" id="timeChips">
+              <label class="chip"><input type="radio" name="_time" value="Morning"><span>Morning</span></label>
+              <label class="chip"><input type="radio" name="_time" value="Midday"><span>Midday</span></label>
+              <label class="chip"><input type="radio" name="_time" value="Afternoon"><span>Afternoon</span></label>
+              <label class="chip"><input type="radio" name="_time" value="Flexible" checked><span>I'm flexible</span></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Where <span>03</span></legend>
+            <div class="chips" id="placeChips" style="margin-bottom:22px">
+              <label class="chip"><input type="radio" name="_place" value="At my studio / office" checked><span>At my studio / office</span></label>
+              <label class="chip"><input type="radio" name="_place" value="A café nearby"><span>A café nearby</span></label>
+              <label class="chip"><input type="radio" name="_place" value="Between fairs"><span>Between fairs</span></label>
+              <label class="chip"><input type="radio" name="_place" value="Video call"><span>Video call</span></label>
+            </div>
+            <div class="field"><label for="f-note">Anything we should know? <span style="opacity:.6">(optional)</span></label><textarea id="f-note" name="nota" placeholder="A project you're working on, the neighborhood you'll be in…"></textarea></div>
+          </fieldset>
+
+          <!-- Honeypot -->
+          <input class="hp" type="text" name="email_address_check" value="" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+          <label class="consent"><input type="checkbox" name="OPT_IN" value="1" required>I agree to BridgeARG contacting me by email about this meeting and occasional news about our artists. You can unsubscribe anytime.</label>
+
+          <div class="form-foot">
+            <button class="btn" type="submit" id="submitBtn">Request my coffee <span class="arrow" aria-hidden="true">→</span></button>
+            <small>We reply within 24 hours.</small>
+          </div>
+          <p class="form-error" role="alert">Something went wrong sending your request. Please try again, or write to us at <a href="mailto:info@bridgearg.net">info@bridgearg.net</a>.</p>
+        </form>
+
+        <div class="form-msg ok" role="status" aria-live="polite">
+          <div class="arch-badge"><img src="/miami/assets/isotipo-dark.svg" alt=""></div>
+          <h3>See you in Miami</h3>
+          <span class="script">gracias</span>
+          <p>We got your request. We'll email you within 24 hours to confirm the day, time and place.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="big">
+      <img src="/miami/assets/logo-cream.svg" alt="BridgeARG" width="560" height="89" loading="lazy">
+      <span class="script">somos puente, somos red</span>
+    </div>
+    <div class="small">
+      <span>Miami Art Week · Dec 2 — 7, 2026</span>
+      <a href="https://www.bridgearg.net">bridgearg.net</a>
+      <a href="#top">Back to top ↑</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/miami/assets/miami.js" defer></script>
+</body>
+</html>

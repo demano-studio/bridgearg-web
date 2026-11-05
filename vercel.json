@@ -9,6 +9,7 @@
     { "source": "/works", "destination": "/artworks", "permanent": true }
   ],
   "rewrites": [
+    { "source": "/miami", "destination": "/miami/index.html" },
     { "source": "/checkout/:path*", "destination": "/index.html" },
     { "source": "/contact/:path*", "destination": "/index.html" },
     { "source": "/verify/:path*", "destination": "/index.html" },
@@ -25,7 +26,25 @@
       ]
     },
     {
-      "source": "/(.*)",
+      "source": "/miami",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; script-src 'self'; connect-src 'self' https://wzofuvxsvomntglezygh.supabase.co; form-action 'self'; base-uri 'self'; frame-ancestors 'none'"
+        }
+      ]
+    },
+    {
+      "source": "/miami/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data:; script-src 'self'; connect-src 'self' https://wzofuvxsvomntglezygh.supabase.co; form-action 'self'; base-uri 'self'; frame-ancestors 'none'"
+        }
+      ]
+    },
+    {
+      "source": "/((?!miami(?:/|$)).*)",
       "headers": [
         {
           "key": "Content-Security-Policy",

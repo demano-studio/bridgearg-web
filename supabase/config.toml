@@ -390,3 +390,6 @@ verify_jwt = false
 
 [functions.trade-apply]
 verify_jwt = false
+
+[functions.miami-request]
+verify_jwt = false
