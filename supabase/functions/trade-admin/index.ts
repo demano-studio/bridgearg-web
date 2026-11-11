@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Supabase Edge Function: Trade Program admin (list / approve / reject / deactivate / create / resend).
 // Auth: JWT + ADMIN_EMAILS allowlist (same as admin-write).
-// Secrets: STRIPE_SECRET_KEY, TRADE_COUPON_ID, ADMIN_EMAILS, RESEND_*, CLIENT_URL, SUPABASE_*
+// Secrets: STRIPE_SECRET_KEY, TRADE_COUPON_ID, ADMIN_EMAILS, RESEND_*, CLIENT_URL, SUPABASE_*, BREVO_API_KEY, BREVO_TRADE_LIST_ID
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
@@ -21,6 +21,8 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 const resendApiKey = Deno.env.get("RESEND_API_KEY")?.trim();
 const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "onboarding@resend.dev";
 const clientUrl = (Deno.env.get("CLIENT_URL") ?? "https://www.bridgearg.net").replace(/\/$/, "");
+const brevoApiKey = Deno.env.get("BREVO_API_KEY")?.trim();
+const brevoTradeListId = Deno.env.get("BREVO_TRADE_LIST_ID")?.trim();
 
 function normalizeOrigin(value: string): string | null {
   try {
@@ -258,6 +260,43 @@ function hasActivePromo(row: TradeRow): boolean {
   return Boolean(row.stripe_promotion_code_id && !row.deactivated_at);
 }
 
+type BrevoTradeEstado = "approved" | "rejected" | "deactivated" | "pending";
+
+/** Best-effort Brevo TRADE_ESTADO upsert. Never throws; skips silently if secrets are missing. */
+async function updateBrevoTradeEstado(email: string, estado: BrevoTradeEstado): Promise<void> {
+  if (!brevoApiKey || !brevoTradeListId) return;
+  if (!email) return;
+  const listId = Number(brevoTradeListId);
+  if (!Number.isFinite(listId)) {
+    console.error("trade-admin: BREVO_TRADE_LIST_ID is not a valid number");
+    return;
+  }
+  try {
+    const res = await fetch("https://api.brevo.com/v3/contacts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "api-key": brevoApiKey,
+      },
+      body: JSON.stringify({
+        email,
+        updateEnabled: true,
+        listIds: [listId],
+        attributes: {
+          TRADE_ESTADO: estado,
+          ORIGEN_BASE: "trade",
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error("trade-admin Brevo contact update error:", res.status, await res.text());
+    }
+  } catch (e) {
+    console.error("trade-admin Brevo contact update failed:", e);
+  }
+}
+
 async function persistApproval(
   supabase: ReturnType<typeof createClient>,
   id: string,
@@ -469,6 +508,7 @@ Deno.serve(async (req) => {
 
     const result = await approveApplication(supabase, row as TradeRow, couponId);
     if (!result.ok) return json(req, 400, { error: result.error });
+    await updateBrevoTradeEstado(result.row.email, "approved");
     return json(req, 200, { ok: true, application: result.row });
   }
 
@@ -503,6 +543,7 @@ Deno.serve(async (req) => {
       console.error("trade-admin reject error:", updateError);
       return json(req, 500, { error: "Could not reject the application." });
     }
+    await updateBrevoTradeEstado((updated as TradeRow).email, "rejected");
     return json(req, 200, { ok: true, application: updated });
   }
 
@@ -543,6 +584,7 @@ Deno.serve(async (req) => {
       console.error("trade-admin reopen error:", updateError);
       return json(req, 500, { error: "Could not reopen the application." });
     }
+    await updateBrevoTradeEstado((updated as TradeRow).email, "pending");
     return json(req, 200, { ok: true, application: updated });
   }
 
@@ -601,6 +643,7 @@ Deno.serve(async (req) => {
         error: "The code was deactivated in Stripe, but we could not save the change. Refresh and check again.",
       });
     }
+    await updateBrevoTradeEstado((updated as TradeRow).email, "deactivated");
     return json(req, 200, { ok: true, application: updated });
   }
 
@@ -638,6 +681,7 @@ Deno.serve(async (req) => {
         application: inserted,
       });
     }
+    await updateBrevoTradeEstado(result.row.email, "approved");
     return json(req, 200, { ok: true, application: result.row });
   }
 

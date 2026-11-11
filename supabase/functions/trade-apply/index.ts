@@ -1,6 +1,6 @@
 // @ts-nocheck
-// Supabase Edge Function: Trade Program application (honeypot + insert + Resend).
-// Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CLIENT_URL, RESEND_API_KEY, RESEND_FROM_EMAIL (optional), RESEND_TO_EMAIL (optional)
+// Supabase Edge Function: Trade Program application (honeypot + insert + Resend + Brevo).
+// Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CLIENT_URL, RESEND_*, BREVO_API_KEY, BREVO_TRADE_LIST_ID
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -15,6 +15,8 @@ const ROLE_VALUES = [
 const resendApiKey = Deno.env.get("RESEND_API_KEY")?.trim();
 const resendToEmail = Deno.env.get("RESEND_TO_EMAIL")?.trim();
 const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") ?? "onboarding@resend.dev";
+const brevoApiKey = Deno.env.get("BREVO_API_KEY")?.trim();
+const brevoTradeListId = Deno.env.get("BREVO_TRADE_LIST_ID")?.trim();
 
 function normalizeOrigin(value: string): string | null {
   try {
@@ -91,6 +93,60 @@ async function sendResendEmail(to: string | null | undefined, subject: string, h
     }
   } catch (e) {
     console.error("Resend send failed:", e);
+  }
+}
+
+function splitFullName(fullName: string): { nombre: string; apellidos: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return {
+    nombre: parts[0] || "",
+    apellidos: parts.slice(1).join(" "),
+  };
+}
+
+/** Best-effort Brevo upsert. Never throws; skips silently if secrets are missing. */
+async function syncBrevoTradePending(params: {
+  email: string;
+  fullName: string;
+  role: string;
+  website: string;
+  message: string;
+}): Promise<void> {
+  if (!brevoApiKey || !brevoTradeListId) return;
+  const listId = Number(brevoTradeListId);
+  if (!Number.isFinite(listId)) {
+    console.error("trade-apply: BREVO_TRADE_LIST_ID is not a valid number");
+    return;
+  }
+  const { nombre, apellidos } = splitFullName(params.fullName);
+  try {
+    const res = await fetch("https://api.brevo.com/v3/contacts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "api-key": brevoApiKey,
+      },
+      body: JSON.stringify({
+        email: params.email,
+        updateEnabled: true,
+        listIds: [listId],
+        attributes: {
+          NOMBRE: nombre,
+          APELLIDOS: apellidos,
+          CARGO: params.role,
+          WEB: params.website || undefined,
+          COMETARIOS: params.message || undefined,
+          ORIGEN_BASE: "trade",
+          TRADE_ESTADO: "pending",
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error("trade-apply Brevo contacts error:", res.status, await res.text());
+    }
+  } catch (e) {
+    console.error("trade-apply Brevo contacts failed:", e);
   }
 }
 
@@ -285,6 +341,14 @@ Deno.serve(async (req) => {
       headers: withCors(req, { "Content-Type": "application/json" }),
     });
   }
+
+  await syncBrevoTradePending({
+    email,
+    fullName,
+    role,
+    website,
+    message,
+  });
 
   const { error: subscriberError } = await supabase.rpc("upsert_subscriber", {
     p_email: email,
