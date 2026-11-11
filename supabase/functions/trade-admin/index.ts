@@ -279,6 +279,7 @@ async function updateBrevoTradeEstado(email: string, estado: BrevoTradeEstado): 
         Accept: "application/json",
         "api-key": brevoApiKey,
       },
+      signal: AbortSignal.timeout(5000),
       body: JSON.stringify({
         email,
         updateEnabled: true,
@@ -508,7 +509,14 @@ Deno.serve(async (req) => {
 
     const result = await approveApplication(supabase, row as TradeRow, couponId);
     if (!result.ok) return json(req, 400, { error: result.error });
-    await updateBrevoTradeEstado(result.row.email, "approved");
+    const approveEmail = result.row?.email?.trim();
+    if (approveEmail) {
+      try {
+        await updateBrevoTradeEstado(approveEmail, "approved");
+      } catch (e) {
+        console.error("trade-admin Brevo sync unexpected error (approve):", e);
+      }
+    }
     return json(req, 200, { ok: true, application: result.row });
   }
 
@@ -543,7 +551,14 @@ Deno.serve(async (req) => {
       console.error("trade-admin reject error:", updateError);
       return json(req, 500, { error: "Could not reject the application." });
     }
-    await updateBrevoTradeEstado((updated as TradeRow).email, "rejected");
+    const rejectEmail = (updated as TradeRow)?.email?.trim();
+    if (rejectEmail) {
+      try {
+        await updateBrevoTradeEstado(rejectEmail, "rejected");
+      } catch (e) {
+        console.error("trade-admin Brevo sync unexpected error (reject):", e);
+      }
+    }
     return json(req, 200, { ok: true, application: updated });
   }
 
@@ -584,7 +599,14 @@ Deno.serve(async (req) => {
       console.error("trade-admin reopen error:", updateError);
       return json(req, 500, { error: "Could not reopen the application." });
     }
-    await updateBrevoTradeEstado((updated as TradeRow).email, "pending");
+    const reopenEmail = (updated as TradeRow)?.email?.trim();
+    if (reopenEmail) {
+      try {
+        await updateBrevoTradeEstado(reopenEmail, "pending");
+      } catch (e) {
+        console.error("trade-admin Brevo sync unexpected error (reopen):", e);
+      }
+    }
     return json(req, 200, { ok: true, application: updated });
   }
 
@@ -643,7 +665,14 @@ Deno.serve(async (req) => {
         error: "The code was deactivated in Stripe, but we could not save the change. Refresh and check again.",
       });
     }
-    await updateBrevoTradeEstado((updated as TradeRow).email, "deactivated");
+    const deactivateEmail = (updated as TradeRow)?.email?.trim();
+    if (deactivateEmail) {
+      try {
+        await updateBrevoTradeEstado(deactivateEmail, "deactivated");
+      } catch (e) {
+        console.error("trade-admin Brevo sync unexpected error (deactivate):", e);
+      }
+    }
     return json(req, 200, { ok: true, application: updated });
   }
 
@@ -681,7 +710,14 @@ Deno.serve(async (req) => {
         application: inserted,
       });
     }
-    await updateBrevoTradeEstado(result.row.email, "approved");
+    const createEmail = result.row?.email?.trim();
+    if (createEmail) {
+      try {
+        await updateBrevoTradeEstado(createEmail, "approved");
+      } catch (e) {
+        console.error("trade-admin Brevo sync unexpected error (create):", e);
+      }
+    }
     return json(req, 200, { ok: true, application: result.row });
   }
 

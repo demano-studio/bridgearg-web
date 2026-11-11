@@ -81,7 +81,10 @@ function roleLabel(role: string): string {
 }
 
 async function sendResendEmail(to: string | null | undefined, subject: string, html: string): Promise<void> {
-  if (!resendApiKey || !to) return;
+  if (!resendApiKey || !to) {
+    console.log("trade-apply: resend skipped (missing secrets or recipient)", { hasRecipient: Boolean(to) });
+    return;
+  }
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -90,6 +93,8 @@ async function sendResendEmail(to: string | null | undefined, subject: string, h
     });
     if (!res.ok) {
       console.error("Resend API error:", res.status, await res.text());
+    } else {
+      console.log("trade-apply: resend sent", { hasRecipient: Boolean(to) });
     }
   } catch (e) {
     console.error("Resend send failed:", e);
@@ -112,8 +117,16 @@ async function syncBrevoTradePending(params: {
   website: string;
   message: string;
 }): Promise<void> {
-  if (!brevoApiKey || !brevoTradeListId) return;
   const listId = Number(brevoTradeListId);
+  console.log("trade-apply: brevo sync start", {
+    hasApiKey: Boolean(brevoApiKey),
+    hasListId: Boolean(brevoTradeListId),
+    listId,
+  });
+  if (!brevoApiKey || !brevoTradeListId) {
+    console.log("trade-apply: brevo skipped (missing secrets)");
+    return;
+  }
   if (!Number.isFinite(listId)) {
     console.error("trade-apply: BREVO_TRADE_LIST_ID is not a valid number");
     return;
@@ -127,6 +140,7 @@ async function syncBrevoTradePending(params: {
         Accept: "application/json",
         "api-key": brevoApiKey,
       },
+      signal: AbortSignal.timeout(5000),
       body: JSON.stringify({
         email: params.email,
         updateEnabled: true,
@@ -142,8 +156,29 @@ async function syncBrevoTradePending(params: {
         },
       }),
     });
+    const bodyText = await res.text();
+    console.log("trade-apply: brevo contacts response", { status: res.status, body: bodyText });
     if (!res.ok) {
-      console.error("trade-apply Brevo contacts error:", res.status, await res.text());
+      console.error("trade-apply Brevo contacts error:", res.status, bodyText);
+      return;
+    }
+    console.log("trade-apply: brevo ok", { hasEmail: Boolean(params.email) });
+
+    const listRes = await fetch(`https://api.brevo.com/v3/contacts/lists/${listId}/contacts/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "api-key": brevoApiKey,
+      },
+      signal: AbortSignal.timeout(5000),
+      body: JSON.stringify({ emails: [params.email] }),
+    });
+    const listBodyText = await listRes.text();
+    if (!listRes.ok) {
+      console.error("trade-apply: brevo list add error:", listRes.status, listBodyText);
+    } else {
+      console.log("trade-apply: brevo list add response", { status: listRes.status, body: listBodyText });
     }
   } catch (e) {
     console.error("trade-apply Brevo contacts failed:", e);
@@ -229,6 +264,7 @@ Deno.serve(async (req) => {
 
   // Honeypot: bots that fill website_hp get a fake success without writing.
   if (typeof body.website_hp === "string" && body.website_hp.trim().length > 0) {
+    console.log("trade-apply: honeypot triggered");
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: withCors(req, { "Content-Type": "application/json" }),
@@ -316,6 +352,7 @@ Deno.serve(async (req) => {
     .limit(1);
 
   if (recentPending && recentPending.length > 0) {
+    console.log("trade-apply: duplicate application, skipping", { hasEmail: Boolean(email) });
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: withCors(req, { "Content-Type": "application/json" }),
@@ -341,14 +378,7 @@ Deno.serve(async (req) => {
       headers: withCors(req, { "Content-Type": "application/json" }),
     });
   }
-
-  await syncBrevoTradePending({
-    email,
-    fullName,
-    role,
-    website,
-    message,
-  });
+  console.log("trade-apply: inserted application", { hasEmail: Boolean(email) });
 
   const { error: subscriberError } = await supabase.rpc("upsert_subscriber", {
     p_email: email,
@@ -379,6 +409,20 @@ Deno.serve(async (req) => {
     "We received your Trade Program application — BridgeArg",
     buildApplicantConfirmationHtml(fullName),
   );
+
+  // After DB + Resend so a Brevo hang/error cannot block the application or emails.
+  // Scope names: fullName, email, role, website, message (from body.full_name / email / role / website / message).
+  try {
+    await syncBrevoTradePending({
+      email,
+      fullName,
+      role,
+      website,
+      message,
+    });
+  } catch (e) {
+    console.error("trade-apply Brevo sync unexpected error:", e);
+  }
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
