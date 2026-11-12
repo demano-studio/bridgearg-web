@@ -34,6 +34,8 @@ export function Header() {
   const lightHeroPages = ["/about", "/contact", "/trade"];
   const isLightHero = lightHeroPages.some((p) => location.pathname.startsWith(p));
   const useLightNav = isLightHero && !scrolled;
+  const isTradePage = location.pathname.startsWith("/trade");
+  const tradeApplyTo = location.pathname === "/trade" ? { hash: "apply" } : "/trade#apply";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
@@ -201,30 +203,60 @@ export function Header() {
                 fontWeight: 500,
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
-                color: useLightNav ? "rgba(30,21,23,0.55)" : "rgba(252,248,234,0.55)",
+                color: isTradePage
+                  ? useLightNav
+                    ? "#1e1517"
+                    : "#fcf8ea"
+                  : useLightNav
+                    ? "rgba(30,21,23,0.55)"
+                    : "rgba(252,248,234,0.55)",
                 textDecoration: "none",
-                transition: "color 0.4s ease",
+                borderBottom: isTradePage ? "1px solid currentColor" : "1px solid transparent",
+                paddingBottom: "2px",
+                transition: "color 0.4s ease, border-color 0.4s ease",
               }}
             >
               Trade
             </Link>
-            <Link
-              to="/contact"
-              className="hidden md:inline-flex"
-              style={{
-                fontFamily: '"Onest", sans-serif',
-                fontSize: "11px",
-                fontWeight: 700,
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-                color: "#7FB2D1",
-                textDecoration: "none",
-                borderBottom: "1px solid #7FB2D1",
-                paddingBottom: "2px",
-              }}
-            >
-              I'm an Artist
-            </Link>
+            {isTradePage ? (
+              <Link
+                to={tradeApplyTo}
+                className="hidden md:inline-flex"
+                style={{
+                  fontFamily: '"Onest", sans-serif',
+                  fontSize: "12px",
+                  fontWeight: 500,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "#fcf8ea",
+                  backgroundColor: "#1e1517",
+                  textDecoration: "none",
+                  borderRadius: 999,
+                  padding: "12px 18px",
+                  transition: "background-color 0.3s ease, color 0.3s ease",
+                }}
+              >
+                Apply
+              </Link>
+            ) : (
+              <Link
+                to="/contact"
+                className="hidden md:inline-flex"
+                style={{
+                  fontFamily: '"Onest", sans-serif',
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  color: "#7FB2D1",
+                  textDecoration: "none",
+                  borderBottom: "1px solid #7FB2D1",
+                  paddingBottom: "2px",
+                }}
+              >
+                I'm an Artist
+              </Link>
+            )}
 
             <button
               onClick={() => setIsSearchOpen(true)}
@@ -347,9 +379,11 @@ export function Header() {
               fontWeight: 500,
               letterSpacing: "0.15em",
               textTransform: "uppercase",
-              display: "block",
-              color: "rgba(252,248,234,0.55)",
+              display: "inline-block",
+              color: isTradePage ? "#fcf8ea" : "rgba(252,248,234,0.55)",
               textDecoration: "none",
+              borderBottom: isTradePage ? "1px solid #fcf8ea" : "1px solid transparent",
+              paddingBottom: "2px",
               marginTop: "2rem",
               opacity: isOpen ? 1 : 0,
               transform: isOpen ? "translateX(0)" : "translateX(16px)",
@@ -358,26 +392,52 @@ export function Header() {
           >
             Trade
           </Link>
-          <Link
-            to="/contact"
-            onClick={() => setIsOpen(false)}
-            style={{
-              fontFamily: '"Onest", sans-serif',
-              fontSize: "14px",
-              fontWeight: 700,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              transform: "rotate(-7deg)",
-              display: "inline-block",
-              color: "#7FB2D1",
-              textDecoration: "none",
-              borderBottom: "1px solid #7FB2D1",
-              paddingBottom: "2px",
-              marginTop: "1.25rem",
-            }}
-          >
-            I'm an Artist
-          </Link>
+          {isTradePage ? (
+            <Link
+              to={tradeApplyTo}
+              onClick={() => setIsOpen(false)}
+              style={{
+                fontFamily: '"Onest", sans-serif',
+                fontSize: "13px",
+                fontWeight: 500,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                display: "inline-flex",
+                marginTop: "1.25rem",
+                color: "#1e1517",
+                backgroundColor: "#fcf8ea",
+                textDecoration: "none",
+                borderRadius: 999,
+                padding: "14px 22px",
+                opacity: isOpen ? 1 : 0,
+                transform: isOpen ? "translateX(0)" : "translateX(16px)",
+                transition: `opacity 0.35s ease ${(navItems.length + 1) * 65}ms, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) ${(navItems.length + 1) * 65}ms`,
+              }}
+            >
+              Apply
+            </Link>
+          ) : (
+            <Link
+              to="/contact"
+              onClick={() => setIsOpen(false)}
+              style={{
+                fontFamily: '"Onest", sans-serif',
+                fontSize: "14px",
+                fontWeight: 700,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                transform: "rotate(-7deg)",
+                display: "inline-block",
+                color: "#7FB2D1",
+                textDecoration: "none",
+                borderBottom: "1px solid #7FB2D1",
+                paddingBottom: "2px",
+                marginTop: "1.25rem",
+              }}
+            >
+              I'm an Artist
+            </Link>
+          )}
         </nav>
       </aside>
 

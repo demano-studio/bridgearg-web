@@ -131,11 +131,11 @@
   }
   .top.is-scrolled { border-bottom-color: var(--line); }
   .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 72px; }
-  .top .logo img { height: 24px; width: auto; }
+  .top .logo img { width: 150px; height: auto; }
   .top .meta { display: flex; align-items: center; gap: 28px; }
   .top .when { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
   .top .btn { padding: 13px 20px; font-size: 12px; }
-  @media (max-width: 720px) { .top .when { display: none; } .top .wrap { height: 62px; } .top .logo img { height: 20px; } }
+  @media (max-width: 720px) { .top .when { display: none; } .top .wrap { height: 62px; } .top .logo img { width: 120px; } }
 
   /* ---------- Hero ---------- */
   .hero { padding: clamp(28px, 5vw, 64px) 0 clamp(40px, 5vw, 72px); }
@@ -367,7 +367,7 @@
   /* ---------- Footer ---------- */
   .foot { background: var(--ink); color: var(--cream); padding: clamp(64px, 8vw, 110px) 0 32px; }
   .foot .big { display: flex; justify-content: space-between; align-items: end; gap: 32px; flex-wrap: wrap; padding-bottom: 56px; border-bottom: 1px solid var(--line-light); }
-  .foot .big img { width: min(560px, 100%); }
+  .foot .big img { width: min(200px, 100%); height: auto; }
   .foot .big .script { font-size: clamp(30px, 3vw, 44px); }
   .foot .small { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 24px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
   .foot .small a { text-decoration: none; }
@@ -393,7 +393,7 @@
 
 <header class="top" id="top">
   <div class="wrap">
-    <a class="logo" href="https://www.bridgearg.net" aria-label="BridgeARG home"><img src="/miami/assets/logo-dark.svg" alt="BridgeARG" width="150" height="24"></a>
+    <a class="logo" href="https://www.bridgearg.net" aria-label="BridgeARG home"><img src="/miami/assets/logo-dark.svg" alt="BridgeARG" width="150" height="150"></a>
     <div class="meta">
       <span class="when">Miami Art Week · Dec 2 — 7</span>
       <a class="btn" href="#book">Book a coffee <span class="arrow" aria-hidden="true">→</span></a>
@@ -740,7 +740,7 @@
 <footer class="foot">
   <div class="wrap">
     <div class="big">
-      <img src="/miami/assets/logo-cream.svg" alt="BridgeARG" width="560" height="89" loading="lazy">
+      <img src="/miami/assets/logo-cream.svg" alt="BridgeARG" width="200" height="88" loading="lazy">
       <span class="script">somos puente, somos red</span>
     </div>
     <div class="small">

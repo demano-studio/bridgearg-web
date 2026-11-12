@@ -1,60 +1,31 @@
-import type { CSSProperties } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/PageTransition";
-import { TradeApplicationForm } from "@/components/TradeApplicationForm";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { SEO } from "@/components/SEO";
-import { getWorks } from "@/lib/api";
-import { useIsMobile } from "@/hooks/use-mobile";
 import {
   getTradeSegment,
-  TRADE_SEGMENT_SLUGS,
+  TRADE_SEGMENT_LIST,
   TRADE_STEPS,
-  type TradeSegmentSlug,
 } from "@/data/tradeSegments";
-
-const eyebrowStyle: CSSProperties = {
-  fontSize: "12px",
-  letterSpacing: "0.26em",
-  textTransform: "uppercase",
-  color: "rgba(30,21,23,0.62)",
-  marginBottom: "24px",
-  fontFamily: '"Onest", sans-serif',
-};
-
-const ctaClass =
-  "inline-flex items-center justify-center border border-[#7FB2D1] bg-[#7FB2D1] px-8 py-4 font-display text-xs uppercase tracking-[0.18em] text-[#1e1517] transition-colors hover:bg-[#7FB2D1]/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e1517]";
-
-function scrollToForm() {
-  document.getElementById("trade-apply")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
+import { TRADE_IMAGES } from "@/data/tradeImages";
+import "@/styles/trade.css";
 
 const TradeSegmentPage = () => {
   const { segment } = useParams<{ segment: string }>();
-  const isMobile = useIsMobile();
   const data = getTradeSegment(segment);
-
-  const segmentIndex = data
-    ? TRADE_SEGMENT_SLUGS.indexOf(data.slug as TradeSegmentSlug)
-    : 0;
-
-  const { data: works = [] } = useQuery({
-    queryKey: ["works"],
-    queryFn: () => getWorks(),
-    enabled: Boolean(data),
-  });
-  const heroWork = works.filter((w) => w.imagenUrl)[segmentIndex] ?? works.find((w) => w.imagenUrl);
 
   if (!data) {
     return <Navigate to="/trade" replace />;
   }
 
+  const cover = TRADE_IMAGES.covers[data.slug];
+  const others = TRADE_SEGMENT_LIST.filter((s) => s.slug !== data.slug);
+
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="trade-page min-h-screen">
         <SEO
           title={data.metaTitle}
           description={data.metaDescription}
@@ -64,285 +35,128 @@ const TradeSegmentPage = () => {
         <Header />
         <main>
           {/* Hero */}
-          <section
-            style={{
-              minHeight: isMobile ? "auto" : "100vh",
-              padding: isMobile
-                ? "100px 20px 48px"
-                : "clamp(120px, 18vh, 180px) clamp(24px, 7vw, 120px) clamp(60px, 10vh, 120px)",
-              borderBottom: "1px solid rgba(30,21,23,0.16)",
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1.05fr 0.95fr",
-              gap: isMobile ? "36px" : "clamp(40px, 6vw, 80px)",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <p style={eyebrowStyle}>Trade Program · {data.cardTitle}</p>
-              <h1
-                style={{
-                  margin: 0,
-                  fontFamily: '"Onest", sans-serif',
-                  fontSize: isMobile ? "36px" : "clamp(42px, 5.5vw, 72px)",
-                  lineHeight: 0.98,
-                  letterSpacing: "-0.05em",
-                  fontWeight: 700,
-                  color: "#1e1517",
-                  maxWidth: "16ch",
-                }}
-              >
-                {data.h1}
-              </h1>
-              <p
-                style={{
-                  marginTop: "24px",
-                  fontFamily: '"Onest", sans-serif',
-                  fontSize: "17px",
-                  lineHeight: 1.7,
-                  color: "rgba(30,21,23,0.65)",
-                  maxWidth: "540px",
-                }}
-              >
-                {data.intro}
-              </p>
-              <div style={{ marginTop: "32px" }}>
-                <button type="button" onClick={scrollToForm} className={ctaClass}>
-                  Apply to the Trade Program
-                </button>
-              </div>
-            </div>
-
-            {heroWork ? (
-              <div style={{ aspectRatio: "4 / 5", overflow: "hidden", backgroundColor: "#e8e4d8" }}>
-                <OptimizedImage
-                  src={heroWork.imagenUrl}
-                  alt=""
-                  aspectRatio="4/5"
-                  className="h-full w-full"
-                  imageClassName="!object-cover"
-                  priority
-                />
-              </div>
-            ) : (
-              <div
-                aria-hidden
-                style={{
-                  aspectRatio: "4 / 5",
-                  background:
-                    "linear-gradient(160deg, rgba(127,178,209,0.22) 0%, rgba(252,248,234,0.9) 55%, rgba(30,21,23,0.06) 100%)",
-                }}
-              />
-            )}
-          </section>
-
-          {/* What we understand */}
-          <section
-            style={{
-              padding: isMobile
-                ? "48px 20px"
-                : "clamp(64px, 10vh, 100px) clamp(24px, 7vw, 120px)",
-              borderBottom: "1px solid rgba(30,21,23,0.16)",
-            }}
-          >
-            <p style={eyebrowStyle}>What we understand</p>
-            <p
-              style={{
-                margin: 0,
-                fontFamily: '"Onest", sans-serif',
-                fontSize: "clamp(22px, 3vw, 34px)",
-                lineHeight: 1.25,
-                letterSpacing: "-0.03em",
-                color: "#1e1517",
-                fontWeight: 500,
-                maxWidth: "28ch",
-              }}
-            >
-              {data.understand}
-            </p>
-          </section>
-
-          {/* How BridgeArg helps */}
-          <section
-            style={{
-              padding: isMobile
-                ? "48px 20px"
-                : "clamp(64px, 10vh, 100px) clamp(24px, 7vw, 120px)",
-              borderBottom: "1px solid rgba(30,21,23,0.16)",
-            }}
-          >
-            <p style={eyebrowStyle}>How BridgeArg helps</p>
-            <h2
-              style={{
-                margin: "0 0 36px",
-                fontFamily: '"Onest", sans-serif',
-                fontSize: "clamp(28px, 4vw, 48px)",
-                letterSpacing: "-0.04em",
-                fontWeight: 600,
-                color: "#1e1517",
-              }}
-            >
-              Built around how you work.
-            </h2>
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-              {data.help.map((item, i) => (
-                <div key={item.title}>
-                  <span
-                    style={{
-                      display: "block",
-                      fontFamily: '"Onest", sans-serif',
-                      fontSize: "12px",
-                      letterSpacing: "0.22em",
-                      textTransform: "uppercase",
-                      color: "#7FB2D1",
-                      marginBottom: "12px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3
-                    style={{
-                      margin: "0 0 10px",
-                      fontFamily: '"Onest", sans-serif',
-                      fontSize: "20px",
-                      letterSpacing: "-0.02em",
-                      color: "#1e1517",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {item.title}
-                  </h3>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontFamily: '"Onest", sans-serif',
-                      fontSize: "15px",
-                      lineHeight: 1.65,
-                      color: "rgba(30,21,23,0.68)",
-                    }}
-                  >
-                    {item.body}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* How it works */}
-          <section
-            style={{
-              padding: isMobile
-                ? "48px 20px"
-                : "clamp(64px, 10vh, 100px) clamp(24px, 7vw, 120px)",
-              borderBottom: "1px solid rgba(30,21,23,0.16)",
-              backgroundColor: "rgba(127,178,209,0.08)",
-            }}
-          >
-            <p style={{ ...eyebrowStyle, color: "rgba(30,21,23,0.55)" }}>How it works</p>
-            <h2
-              style={{
-                margin: "0 0 40px",
-                fontFamily: '"Onest", sans-serif',
-                fontSize: "clamp(28px, 4vw, 48px)",
-                letterSpacing: "-0.04em",
-                fontWeight: 600,
-                color: "#1e1517",
-              }}
-            >
-              Three steps. Clear from the start.
-            </h2>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-10">
-              {TRADE_STEPS.map((step) => (
-                <div key={step.n}>
-                  <span
-                    style={{
-                      display: "block",
-                      fontFamily: '"Onest", sans-serif',
-                      fontSize: "12px",
-                      letterSpacing: "0.22em",
-                      textTransform: "uppercase",
-                      color: "#7FB2D1",
-                      marginBottom: "14px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {step.n}
-                  </span>
-                  <h3
-                    style={{
-                      margin: "0 0 12px",
-                      fontFamily: '"Onest", sans-serif',
-                      fontSize: "clamp(24px, 3vw, 32px)",
-                      letterSpacing: "-0.03em",
-                      color: "#1e1517",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {step.title}
-                  </h3>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontFamily: '"Onest", sans-serif',
-                      fontSize: "15px",
-                      lineHeight: 1.65,
-                      color: "rgba(30,21,23,0.68)",
-                    }}
-                  >
-                    {step.body}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Form */}
-          <section
-            id="trade-apply"
-            style={{
-              padding: isMobile
-                ? "48px 20px 64px"
-                : "clamp(64px, 10vh, 100px) clamp(24px, 7vw, 120px)",
-              borderBottom: "1px solid rgba(30,21,23,0.16)",
-              scrollMarginTop: "100px",
-            }}
-          >
-            <div className="grid grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:items-start">
-              <div>
-                <p style={eyebrowStyle}>Application</p>
-                <h2
-                  style={{
-                    margin: "0 0 16px",
-                    fontFamily: '"Onest", sans-serif',
-                    fontSize: "clamp(28px, 4vw, 44px)",
-                    letterSpacing: "-0.04em",
-                    fontWeight: 600,
-                    color: "#1e1517",
-                  }}
-                >
-                  Tell us about your project.
-                </h2>
-                <p
-                  style={{
-                    margin: "0 0 28px",
-                    fontFamily: '"Onest", sans-serif',
-                    fontSize: "16px",
-                    lineHeight: 1.7,
-                    color: "rgba(30,21,23,0.65)",
-                    maxWidth: "42ch",
-                  }}
-                >
-                  Share a few details and we'll follow up within 48 business hours with next steps
-                  for your Trade Program access.
+          <section className="trade-hero">
+            <div className="trade-wrap trade-hero__grid">
+              <div className="trade-hero__copy">
+                <Link to="/trade" className="trade-back">
+                  ← Trade Program
+                </Link>
+                <p className="trade-eyebrow trade-eyebrow--line">(For {data.label})</p>
+                <h1>
+                  {data.h1a} <u>{data.h1u}</u>
+                </h1>
+                <p className="trade-hero__lead" style={{ fontWeight: 300 }}>
+                  {data.intro}
                 </p>
-                <Link
-                  to="/trade"
-                  className="font-display text-xs uppercase tracking-[0.18em] text-[#1e1517] underline decoration-[rgba(30,21,23,0.35)] underline-offset-4 transition-colors hover:text-[#7FB2D1] hover:decoration-[#7FB2D1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1e1517]"
-                >
-                  ← Back to Trade Program
+                <div className="trade-hero__actions">
+                  <Link className="trade-btn" to="/trade#apply">
+                    Apply to the Trade Program <span className="arrow" aria-hidden="true">→</span>
+                  </Link>
+                </div>
+                <p style={{ marginTop: 16, fontSize: 14, color: "var(--trade-muted)" }}>
+                  15% trade pricing on every acquisition
+                </p>
+              </div>
+
+              <figure className="trade-hero__visual" style={{ margin: 0 }}>
+                <div className="trade-arch trade-hero__arch">
+                  <OptimizedImage
+                    src={cover.src}
+                    alt={cover.alt}
+                    className="h-full w-full"
+                    imageClassName="trade-arch-img !object-cover !object-center"
+                    priority
+                    sizes="(max-width: 900px) 90vw, 34vw"
+                  />
+                </div>
+                <div className="trade-badge trade-badge--sm" aria-hidden="true">
+                  <div>
+                    <span className="trade-badge__pct">15%</span>
+                    <span className="trade-badge__label">Trade pricing</span>
+                  </div>
+                </div>
+              </figure>
+            </div>
+          </section>
+
+          {/* 01 What we understand */}
+          <section className="trade-sec">
+            <div className="trade-wrap">
+              <span className="trade-num">01 — (WHAT WE UNDERSTAND)</span>
+              <p className="trade-understand">{data.understand}</p>
+            </div>
+          </section>
+
+          {/* 02 How BridgeArg helps */}
+          <section className="trade-sec trade-dark">
+            <div className="trade-wrap">
+              <span className="trade-num">02 — (HOW BRIDGEARG HELPS)</span>
+              <h2 className="trade-title" style={{ fontSize: "clamp(36px, 5vw, 64px)" }}>
+                What you get
+              </h2>
+              <div className="trade-help">
+                {data.help.map((item, i) => (
+                  <div key={item.title} className="trade-help__item">
+                    <span className="trade-help__n">{String(i + 1).padStart(2, "0")}</span>
+                    <h3 className="trade-help__title">{item.title}</h3>
+                    <p className="trade-help__body">{item.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* 03 How it works */}
+          <section className="trade-sec">
+            <div className="trade-wrap">
+              <span className="trade-num">03 — (HOW IT WORKS)</span>
+              <h2 className="trade-title" style={{ fontSize: "clamp(32px, 5vw, 56px)" }}>
+                From brief to wall
+              </h2>
+              <div className="trade-steps-row">
+                {TRADE_STEPS.map((step) => (
+                  <div key={step.n} className="trade-step">
+                    <span className="trade-step__n">{step.n}</span>
+                    <h3 className="trade-step__title">{step.title}</h3>
+                    <p className="trade-step__body">{step.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Join band */}
+          <section className="trade-sec trade-join">
+            <div className="trade-wrap">
+              <span className="trade-num">(JOIN THE PROGRAM)</span>
+              <h2 className="trade-title">{data.cta}</h2>
+              <p className="trade-join__copy">
+                We review every application personally and reply within 48 business hours. Approved applicants
+                receive a personal code for 15% trade pricing.
+              </p>
+              <div className="trade-join__actions">
+                <Link className="trade-btn" to="/trade#apply">
+                  Apply to the Trade Program <span className="arrow" aria-hidden="true">→</span>
                 </Link>
               </div>
-              <TradeApplicationForm defaultRole={data.role} />
+            </div>
+          </section>
+
+          {/* Other profiles */}
+          <section className="trade-sec">
+            <div className="trade-wrap">
+              <span className="trade-num">(OTHER PROFILES)</span>
+              <div className="trade-others">
+                {others.map((item) => (
+                  <div key={item.slug} className="trade-other">
+                    <h3 className="trade-other__title">{item.cardTitle}</h3>
+                    <p className="trade-other__line">{item.shortLine}</p>
+                    <Link to={item.path} className="trade-link">
+                      Learn more <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         </main>
