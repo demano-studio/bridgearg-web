@@ -109,14 +109,20 @@ function splitFullName(fullName: string): { nombre: string; apellidos: string } 
   };
 }
 
-/** Best-effort Brevo upsert. Never throws; skips silently if secrets are missing. */
+function brevoListAddSucceeded(status: number, bodyText: string): boolean {
+  if (status >= 200 && status < 300) return true;
+  // Brevo treats "already in list" as a non-fatal outcome for our confirmation automation.
+  return /already\s+in\s+list/i.test(bodyText);
+}
+
+/** Best-effort Brevo upsert. Never throws. Returns true when contact is on the Trade list. */
 async function syncBrevoTradePending(params: {
   email: string;
   fullName: string;
   role: string;
   website: string;
   message: string;
-}): Promise<void> {
+}): Promise<boolean> {
   const listId = Number(brevoTradeListId);
   console.log("trade-apply: brevo sync start", {
     hasApiKey: Boolean(brevoApiKey),
@@ -125,11 +131,11 @@ async function syncBrevoTradePending(params: {
   });
   if (!brevoApiKey || !brevoTradeListId) {
     console.log("trade-apply: brevo skipped (missing secrets)");
-    return;
+    return false;
   }
   if (!Number.isFinite(listId)) {
     console.error("trade-apply: BREVO_TRADE_LIST_ID is not a valid number");
-    return;
+    return false;
   }
   const { nombre, apellidos } = splitFullName(params.fullName);
   try {
@@ -160,7 +166,7 @@ async function syncBrevoTradePending(params: {
     console.log("trade-apply: brevo contacts response", { status: res.status, body: bodyText });
     if (!res.ok) {
       console.error("trade-apply Brevo contacts error:", res.status, bodyText);
-      return;
+      return false;
     }
     console.log("trade-apply: brevo ok", { hasEmail: Boolean(params.email) });
 
@@ -175,13 +181,15 @@ async function syncBrevoTradePending(params: {
       body: JSON.stringify({ emails: [params.email] }),
     });
     const listBodyText = await listRes.text();
-    if (!listRes.ok) {
-      console.error("trade-apply: brevo list add error:", listRes.status, listBodyText);
-    } else {
+    if (brevoListAddSucceeded(listRes.status, listBodyText)) {
       console.log("trade-apply: brevo list add response", { status: listRes.status, body: listBodyText });
+      return true;
     }
+    console.error("trade-apply: brevo list add error:", listRes.status, listBodyText);
+    return false;
   } catch (e) {
     console.error("trade-apply Brevo contacts failed:", e);
+    return false;
   }
 }
 
@@ -404,16 +412,11 @@ Deno.serve(async (req) => {
     }),
   );
 
-  await sendResendEmail(
-    email,
-    "We received your Trade Program application — BridgeArg",
-    buildApplicantConfirmationHtml(fullName),
-  );
-
-  // After DB + Resend so a Brevo hang/error cannot block the application or emails.
-  // Scope names: fullName, email, role, website, message (from body.full_name / email / role / website / message).
+  // Brevo first so its list automation can send the applicant confirmation.
+  // Resend confirmation is only a fallback when Brevo sync fails.
+  let brevoOk = false;
   try {
-    await syncBrevoTradePending({
+    brevoOk = await syncBrevoTradePending({
       email,
       fullName,
       role,
@@ -422,6 +425,17 @@ Deno.serve(async (req) => {
     });
   } catch (e) {
     console.error("trade-apply Brevo sync unexpected error:", e);
+    brevoOk = false;
+  }
+
+  if (brevoOk) {
+    console.log("confirmation handled by Brevo automation");
+  } else {
+    await sendResendEmail(
+      email,
+      "We received your Trade Program application — BridgeArg",
+      buildApplicantConfirmationHtml(fullName),
+    );
   }
 
   return new Response(JSON.stringify({ ok: true }), {

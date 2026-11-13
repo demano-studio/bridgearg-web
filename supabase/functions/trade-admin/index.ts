@@ -262,14 +262,31 @@ function hasActivePromo(row: TradeRow): boolean {
 
 type BrevoTradeEstado = "approved" | "rejected" | "deactivated" | "pending";
 
-/** Best-effort Brevo TRADE_ESTADO upsert. Never throws; skips silently if secrets are missing. */
-async function updateBrevoTradeEstado(email: string, estado: BrevoTradeEstado): Promise<void> {
+/**
+ * Best-effort Brevo upsert (POST /v3/contacts + updateEnabled).
+ * Never throws; skips silently if secrets are missing.
+ * Pass promoCode only on approve so TRADE_CODIGO is set; other estados leave it untouched.
+ */
+async function updateBrevoTradeEstado(
+  email: string,
+  estado: BrevoTradeEstado,
+  promoCode?: string | null,
+): Promise<void> {
   if (!brevoApiKey || !brevoTradeListId) return;
-  if (!email) return;
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return;
   const listId = Number(brevoTradeListId);
   if (!Number.isFinite(listId)) {
     console.error("trade-admin: BREVO_TRADE_LIST_ID is not a valid number");
     return;
+  }
+  const attributes: Record<string, string> = {
+    TRADE_ESTADO: estado,
+    ORIGEN_BASE: "trade",
+  };
+  const code = typeof promoCode === "string" ? promoCode.trim() : "";
+  if (code) {
+    attributes.TRADE_CODIGO = code;
   }
   try {
     const res = await fetch("https://api.brevo.com/v3/contacts", {
@@ -281,17 +298,14 @@ async function updateBrevoTradeEstado(email: string, estado: BrevoTradeEstado): 
       },
       signal: AbortSignal.timeout(5000),
       body: JSON.stringify({
-        email,
+        email: normalizedEmail,
         updateEnabled: true,
         listIds: [listId],
-        attributes: {
-          TRADE_ESTADO: estado,
-          ORIGEN_BASE: "trade",
-        },
+        attributes,
       }),
     });
     if (!res.ok) {
-      console.error("trade-admin Brevo contact update error:", res.status, await res.text());
+      console.error("trade-admin Brevo contact update error:", res.status, normalizedEmail);
     }
   } catch (e) {
     console.error("trade-admin Brevo contact update failed:", e);
@@ -349,6 +363,7 @@ async function approveApplication(
     row.stripe_customer_id &&
     !row.deactivated_at
   ) {
+    await updateBrevoTradeEstado(row.email, "approved", row.promo_code);
     return { ok: true, row };
   }
 
@@ -367,6 +382,9 @@ async function approveApplication(
       stripe_customer_id: customer.customerId,
       status: "approved",
     });
+    if (saved.ok) {
+      await updateBrevoTradeEstado(saved.row.email, "approved", saved.row.promo_code);
+    }
     return saved;
   }
 
@@ -398,6 +416,9 @@ async function approveApplication(
     "Welcome to the BridgeArg Trade Program",
     buildApprovalEmailHtml({ fullName: saved.row.full_name, promoCode: promo.code }),
   );
+
+  // After DB + Resend: Brevo upsert with TRADE_CODIGO (best-effort; never blocks approval/email).
+  await updateBrevoTradeEstado(saved.row.email, "approved", promo.code);
 
   return { ok: true, row: saved.row };
 }
@@ -509,14 +530,6 @@ Deno.serve(async (req) => {
 
     const result = await approveApplication(supabase, row as TradeRow, couponId);
     if (!result.ok) return json(req, 400, { error: result.error });
-    const approveEmail = result.row?.email?.trim();
-    if (approveEmail) {
-      try {
-        await updateBrevoTradeEstado(approveEmail, "approved");
-      } catch (e) {
-        console.error("trade-admin Brevo sync unexpected error (approve):", e);
-      }
-    }
     return json(req, 200, { ok: true, application: result.row });
   }
 
@@ -709,14 +722,6 @@ Deno.serve(async (req) => {
         error: result.error,
         application: inserted,
       });
-    }
-    const createEmail = result.row?.email?.trim();
-    if (createEmail) {
-      try {
-        await updateBrevoTradeEstado(createEmail, "approved");
-      } catch (e) {
-        console.error("trade-admin Brevo sync unexpected error (create):", e);
-      }
     }
     return json(req, 200, { ok: true, application: result.row });
   }
