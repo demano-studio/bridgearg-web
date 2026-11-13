@@ -352,7 +352,7 @@ export function Header() {
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsOpen(false)}
-                className="relative mb-6 block font-display text-lg uppercase tracking-[0.12em]"
+                className="relative mb-6 flex min-h-[44px] items-center font-display text-lg uppercase tracking-[0.12em]"
                 style={{
                   color: isActive ? "#fcf8ea" : "rgba(252,248,234,0.45)",
                   opacity: isOpen ? 1 : 0,
@@ -373,42 +373,32 @@ export function Header() {
           <Link
             to="/trade"
             onClick={() => setIsOpen(false)}
+            className="relative mb-6 flex min-h-[44px] items-center font-display text-lg uppercase tracking-[0.12em]"
             style={{
-              fontFamily: '"Onest", sans-serif',
-              fontSize: "13px",
-              fontWeight: 500,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              display: "inline-block",
-              color: isTradePage ? "#fcf8ea" : "rgba(252,248,234,0.55)",
+              color: isTradePage ? "#fcf8ea" : "rgba(252,248,234,0.45)",
               textDecoration: "none",
-              borderBottom: isTradePage ? "1px solid #fcf8ea" : "1px solid transparent",
-              paddingBottom: "2px",
-              marginTop: "2rem",
               opacity: isOpen ? 1 : 0,
               transform: isOpen ? "translateX(0)" : "translateX(16px)",
               transition: `opacity 0.35s ease ${navItems.length * 65}ms, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) ${navItems.length * 65}ms`,
             }}
           >
             Trade
+            {isTradePage && (
+              <span
+                className="absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full"
+                style={{ right: "-18px", backgroundColor: "#7FB2D1" }}
+              />
+            )}
           </Link>
           {isTradePage ? (
             <Link
               to={tradeApplyTo}
               onClick={() => setIsOpen(false)}
+              className="relative mb-6 flex min-h-[44px] items-center font-display text-lg uppercase tracking-[0.12em]"
               style={{
-                fontFamily: '"Onest", sans-serif',
-                fontSize: "13px",
-                fontWeight: 500,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                display: "inline-flex",
-                marginTop: "1.25rem",
-                color: "#1e1517",
-                backgroundColor: "#fcf8ea",
-                textDecoration: "none",
-                borderRadius: 999,
-                padding: "14px 22px",
+                color: "#7FB2D1",
+                textDecoration: "underline",
+                textUnderlineOffset: "6px",
                 opacity: isOpen ? 1 : 0,
                 transform: isOpen ? "translateX(0)" : "translateX(16px)",
                 transition: `opacity 0.35s ease ${(navItems.length + 1) * 65}ms, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) ${(navItems.length + 1) * 65}ms`,
@@ -420,19 +410,14 @@ export function Header() {
             <Link
               to="/contact"
               onClick={() => setIsOpen(false)}
+              className="relative mb-6 flex min-h-[44px] items-center font-display text-lg uppercase tracking-[0.12em]"
               style={{
-                fontFamily: '"Onest", sans-serif',
-                fontSize: "14px",
-                fontWeight: 700,
-                letterSpacing: "0.15em",
-                textTransform: "uppercase",
-                transform: "rotate(-7deg)",
-                display: "inline-block",
                 color: "#7FB2D1",
-                textDecoration: "none",
-                borderBottom: "1px solid #7FB2D1",
-                paddingBottom: "2px",
-                marginTop: "1.25rem",
+                textDecoration: "underline",
+                textUnderlineOffset: "6px",
+                opacity: isOpen ? 1 : 0,
+                transform: isOpen ? "translateX(0)" : "translateX(16px)",
+                transition: `opacity 0.35s ease ${(navItems.length + 1) * 65}ms, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) ${(navItems.length + 1) * 65}ms`,
               }}
             >
               I'm an Artist
