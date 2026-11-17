@@ -12,7 +12,7 @@ const OUT_DIR = resolve("dist");
 const SITE_NAME = "BRIDGEARG";
 const SITE_URL = "https://www.bridgearg.net";
 const DEFAULT_DESCRIPTION =
-  "Curating and connecting extraordinary Argentine contemporary art with global collectors. From Córdoba to the world.";
+  "Original contemporary art from ten Argentine artists, delivered to collectors, homes and design projects across the US, with provenance, shipping and customs handled for you.";
   const DEFAULT_OG_IMAGE = "https://www.bridgearg.net/assets/ui/og-cover.jpg";
 
 /** Mismos title/description que pasan a <SEO> en los componentes React. */
@@ -20,7 +20,7 @@ const STATIC_META = {
   "/": {
     title: "Contemporary Argentine Art",
     description:
-      "Curating and connecting extraordinary Argentine contemporary art with global collectors. From Córdoba to the world.",
+      "Original contemporary art from ten Argentine artists, delivered to collectors, homes and design projects across the US, with provenance, shipping and customs handled for you.",
   },
   "/artworks": {
     title: "Collection",

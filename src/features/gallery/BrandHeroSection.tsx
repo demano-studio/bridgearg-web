@@ -381,9 +381,8 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
                 from the End of the World.
               </span>
             </h1>
-            <p className="font-display text-2xl font-light text-white/90 leading-relaxed mt-7 max-w-[min(100%,660px)]" style={{ fontSize: "clamp(16px, 1.8vw, 26px)" }}>
-              Connecting extraordinary Argentine contemporary art with global collectors — professionally, legally,
-              and sustainably.
+            <p className="font-display text-2xl font-light text-white/90 leading-relaxed mt-7 max-w-[min(100%,800px)]" style={{ fontSize: "clamp(16px, 1.8vw, 26px)" }}>
+              Original contemporary art from ten Argentine artists, delivered to collectors, homes and design projects across the US, with provenance, shipping and customs handled for you.
             </p>
             <div
               style={{
