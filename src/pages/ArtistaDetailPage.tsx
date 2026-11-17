@@ -92,7 +92,7 @@ const ArtistaDetailPage = () => {
               </h1>
               <Link
                 to="/artistas"
-                className="mt-8 inline-flex items-center rounded-full border border-[#1e1517]/20 px-6 py-3 font-display text-xs uppercase tracking-[0.12em] text-[#1e1517] transition-colors hover:bg-[#1e1517] hover:text-[#fcf8ea]"
+                className="mt-8 inline-flex items-center rounded-[var(--radius-button)] border border-[#1e1517]/20 px-6 py-3 font-display text-xs uppercase tracking-[0.12em] text-[#1e1517] transition-colors hover:bg-[#1e1517] hover:text-[#fcf8ea]"
               >
                 Back to Artists
               </Link>
@@ -125,20 +125,36 @@ const ArtistaDetailPage = () => {
         />
         <Header />
         <main>
-          {/* 1. HERO */}
+          {/* 1. HERO — padding-top clears fixed header via --header-h */}
           <section
-            className="relative grid grid-cols-1 md:[grid-template-columns:1.05fr_0.95fr]"
+            className="artist-detail-hero relative grid grid-cols-1 md:[grid-template-columns:1.05fr_0.95fr]"
             style={{
               minHeight: "auto",
-              padding: isMobile
-                ? "40px 20px"
-                : "80px clamp(24px, 6vw, 96px) clamp(40px, 6vh, 80px)",
+              // Horizontal + bottom only; top comes from .artist-detail-hero (var(--header-h) + gap)
+              paddingLeft: isMobile ? "20px" : "clamp(24px, 6vw, 96px)",
+              paddingRight: isMobile ? "20px" : "clamp(24px, 6vw, 96px)",
+              paddingBottom: isMobile ? "40px" : "clamp(40px, 6vh, 80px)",
               gap: isMobile ? "24px" : "clamp(40px, 7vw, 100px)",
               alignItems: "end",
               borderBottom: "1px solid rgba(30,21,23,0.16)",
               overflow: "hidden",
             }}
           >
+            <style>{`
+              .artist-detail-hero {
+                padding-top: calc(var(--header-h) + 40px);
+              }
+              @media (max-width: 1000px) {
+                .artist-detail-hero {
+                  padding-top: calc(var(--header-h) + 32px);
+                }
+              }
+              @media (max-width: 560px) {
+                .artist-detail-hero {
+                  padding-top: calc(var(--header-h) + 24px);
+                }
+              }
+            `}</style>
             <div style={{ position: "relative", zIndex: 1 }}>
               <Link
                 to="/artistas"
@@ -234,7 +250,7 @@ const ArtistaDetailPage = () => {
             <div style={{ position: "relative", zIndex: 1 }}>
               <div
                 style={{
-                  backgroundColor: "#fcfcfc",
+                  backgroundColor: "var(--color-surface)",
                   padding: "clamp(20px, 2.5vw, 34px)",
                   boxShadow: "0 28px 80px rgba(30,21,23,0.08)",
                   transform: "translateY(25px)",
@@ -409,79 +425,108 @@ const ArtistaDetailPage = () => {
                 No works available yet.
               </p>
             ) : (
-              <div
-                className="grid grid-cols-1 md:[grid-template-columns:1.1fr_0.9fr_1fr]"
-                style={{
-                  gap: isMobile ? "20px" : "34px",
-                  alignItems: "start",
-                  gridTemplateColumns: isMobile ? "1fr" : isTablet ? "1fr 1fr" : "1.1fr 0.9fr 1fr",
-                }}
-              >
+              <div className="artist-works-masonry">
                 {featuredWorks.map((work, i) => {
-                  const offsetClass =
-                    i === 1 ? "md:mt-[90px]" : i === 2 ? "md:mt-[28px]" : "";
+                  const hasDims =
+                    work.width_cm != null &&
+                    work.height_cm != null &&
+                    Number(work.width_cm) > 0 &&
+                    Number(work.height_cm) > 0;
                   return (
                     <Link
                       key={work.id}
                       to={`/artworks/${work.id}`}
-                      className={`group block hover:-translate-y-2 hover:shadow-[0_24px_70px_rgba(30,21,23,0.08)] ${offsetClass}`}
-                      style={{
-                        backgroundColor: "#fcfcfc",
-                        padding: "24px",
-                        cursor: "pointer",
-                        transition: "transform 0.35s ease, box-shadow 0.35s ease",
-                        position: "relative",
-                        overflow: "hidden",
-                        textDecoration: "none",
-                        color: "inherit",
-                      }}
+                      className="artist-works-masonry__card group hover:-translate-y-2 hover:shadow-[0_24px_70px_rgba(30,21,23,0.08)]"
                     >
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "430px",
-                          overflow: "hidden",
-                          backgroundColor: "rgba(30,21,23,0.04)",
-                        }}
-                      >
-                        <OptimizedImage
-                          src={work.imagenUrl ?? ""}
-                          title={work.title}
-                          artistName={artist.name}
-                          variant="artwork"
-                          className="!h-full !w-full"
-                          imageClassName="!h-full !w-full !object-contain !object-center transition-[filter] duration-500 ease-out !saturate-[0.86] !contrast-[0.95] group-hover:!saturate-100 group-hover:!contrast-100"
-                          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, 33vw"
-                          priority={i < 6}
-                          logSrcOnError
-                        />
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: "20px",
-                          marginTop: "18px",
-                          fontSize: "14px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.1em",
-                          fontFamily: '"Onest", sans-serif',
-                          color: "#1e1517",
-                        }}
-                      >
-                        <span>{work.title}</span>
-                        <em
-                          style={{
-                            color: "rgba(30,21,23,0.55)",
-                            fontStyle: "normal",
-                          }}
-                        >
+                      <OptimizedImage
+                        src={work.imagenUrl ?? ""}
+                        title={work.title}
+                        artistName={artist.name}
+                        variant="artwork"
+                        layout="intrinsic"
+                        className="!bg-transparent"
+                        imageClassName="transition-[filter] duration-500 ease-out saturate-[0.86] contrast-[0.95] group-hover:saturate-100 group-hover:contrast-100"
+                        sizes="(max-width: 560px) 100vw, (max-width: 1000px) 50vw, 33vw"
+                        priority={i < 6}
+                        aspectRatio={hasDims ? `${work.width_cm} / ${work.height_cm}` : undefined}
+                        width={hasDims ? Math.round(Number(work.width_cm)) : undefined}
+                        height={hasDims ? Math.round(Number(work.height_cm)) : undefined}
+                        logSrcOnError
+                      />
+                      <div className="artist-works-masonry__meta">
+                        <span className="artist-works-masonry__title">{work.title}</span>
+                        <em className="artist-works-masonry__price">
                           {shouldShowPrice() ? work.priceDisplay : "Price on request"}
                         </em>
                       </div>
                     </Link>
                   );
                 })}
+                <style>{`
+                  .artist-works-masonry {
+                    column-count: 3;
+                    column-gap: 24px;
+                    width: 100%;
+                  }
+                  .artist-works-masonry__card {
+                    break-inside: avoid;
+                    -webkit-column-break-inside: avoid;
+                    page-break-inside: avoid;
+                    display: inline-block;
+                    width: 100%;
+                    margin: 0 0 24px;
+                    background-color: var(--color-surface);
+                    padding: 16px;
+                    cursor: pointer;
+                    transition: transform 0.35s ease, box-shadow 0.35s ease;
+                    position: relative;
+                    overflow: hidden;
+                    text-decoration: none;
+                    color: inherit;
+                    box-sizing: border-box;
+                  }
+                  .artist-works-masonry__meta {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 6px;
+                    margin-top: 16px;
+                    font-size: 14px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                    font-family: "Onest", sans-serif;
+                    color: #1e1517;
+                  }
+                  .artist-works-masonry__title {
+                    display: block;
+                    line-height: 1.35;
+                  }
+                  .artist-works-masonry__price {
+                    display: block;
+                    color: rgba(30, 21, 23, 0.55);
+                    font-style: normal;
+                    line-height: 1.35;
+                  }
+                  @media (max-width: 1000px) {
+                    .artist-works-masonry {
+                      column-count: 2;
+                      column-gap: 20px;
+                    }
+                    .artist-works-masonry__card {
+                      margin-bottom: 20px;
+                    }
+                  }
+                  @media (max-width: 560px) {
+                    .artist-works-masonry {
+                      column-count: 1;
+                      column-gap: 0;
+                    }
+                    .artist-works-masonry__card {
+                      margin-bottom: 20px;
+                      width: 100%;
+                    }
+                  }
+                `}</style>
               </div>
             )}
             <div
@@ -577,7 +622,8 @@ const ArtistaDetailPage = () => {
                 href="#works"
                 className="inline-flex items-center gap-3 border border-[#fcf8ea] text-[#fcf8ea] hover:bg-[#fcf8ea] hover:text-[#1e1517] transition-colors duration-300"
                 style={{
-                  padding: "14px 22px",
+                  padding: "14px 24px",
+                  borderRadius: "var(--radius-button)",
                   fontSize: "12px",
                   textTransform: "uppercase",
                   letterSpacing: "0.13em",
@@ -696,7 +742,8 @@ const ArtistaDetailPage = () => {
                 to="/contact"
                 className="inline-flex items-center gap-3 border border-[#1e1517] text-[#1e1517] hover:bg-[#1e1517] hover:text-[#fcf8ea] transition-colors duration-300"
                 style={{
-                  padding: "14px 22px",
+                  padding: "14px 24px",
+                  borderRadius: "var(--radius-button)",
                   fontSize: "12px",
                   textTransform: "uppercase",
                   letterSpacing: "0.13em",

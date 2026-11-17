@@ -12,7 +12,13 @@ const navItems = [
 ];
 
 const logoLightSrc = "/assets/logos/BRIDGEARG - Exportacion logos-02.svg";
+const logoDarkSrc = "/assets/logos/BRIDGEARG - Exportacion logos-01.svg";
 const desktopLogoWidth = "clamp(140px, 32vw, 260px)";
+
+/** Shared glass classes in styles/index.css (includes -webkit- for Safari). */
+const HEADER_GLASS_OFF = "header-glass-off";
+const HEADER_GLASS_DARK = "header-glass-dark"; // home / default scrolled
+const HEADER_GLASS_CREAM = "header-glass-cream"; // artist detail, always on
 
 type SearchResults = {
   artists: ArtistFromApi[];
@@ -34,8 +40,46 @@ export function Header() {
   const lightHeroPages = ["/about", "/contact", "/trade"];
   const isLightHero = lightHeroPages.some((p) => location.pathname.startsWith(p));
   const useLightNav = isLightHero && !scrolled;
+  // Artist detail only (/artists/:slug) — dark text over cream; other routes unchanged
+  const isArtistDetailPage = /^\/artists\/[^/]+\/?$/.test(location.pathname);
   const isTradePage = location.pathname.startsWith("/trade");
   const tradeApplyTo = location.pathname === "/trade" ? { hash: "apply" } : "/trade#apply";
+  const logoSrc = isArtistDetailPage ? logoDarkSrc : logoLightSrc;
+  // Same scroll reveal as every other page (threshold: scrollY > 60)
+  const logoVisible = scrolled;
+  const logoOpacity = logoVisible ? 1 : 0;
+  const navActiveColor = isArtistDetailPage
+    ? "#1e1517"
+    : scrolled || !isLightHero
+      ? "#fcf8ea"
+      : "#1e1517";
+  const navInactiveColor = isArtistDetailPage
+    ? "#5f5659"
+    : scrolled || !isLightHero
+      ? "rgba(252,248,234,0.45)"
+      : "rgba(30,21,23,0.45)";
+  const searchColor = isArtistDetailPage
+    ? "#1e1517"
+    : scrolled || !isLightHero
+      ? "#fcf8ea"
+      : "#1e1517";
+  const tradeLinkColor = isArtistDetailPage
+    ? "#5f5659"
+    : isTradePage
+      ? useLightNav
+        ? "#1e1517"
+        : "#fcf8ea"
+      : useLightNav
+        ? "rgba(30,21,23,0.55)"
+        : "rgba(252,248,234,0.55)";
+  const artistCtaColor = isArtistDetailPage ? "#1e1517" : "#7FB2D1";
+  const hamburgerDark = isArtistDetailPage || useLightNav;
+  // Artist detail: cream glass always. Other routes: existing dark glass only after scroll.
+  const headerGlassClass = isArtistDetailPage
+    ? HEADER_GLASS_CREAM
+    : scrolled
+      ? HEADER_GLASS_DARK
+      : HEADER_GLASS_OFF;
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
@@ -123,13 +167,9 @@ export function Header() {
   return (
     <>
       <header
-        className="fixed left-0 right-0 top-0 z-50 border-b border-white/10"
+        className={`fixed left-0 right-0 top-0 z-50 border-b ${headerGlassClass}`}
         style={{
-          backgroundColor: scrolled ? "rgba(30,21,23,0.25)" : "transparent",
-          backdropFilter: scrolled ? "blur(20px)" : "none",
-          WebkitBackdropFilter: scrolled ? "blur(20px)" : "none",
-          transition: "background-color 0.4s ease, backdrop-filter 0.4s ease",
-          borderBottomColor: scrolled ? "rgba(255,255,255,0.08)" : "transparent",
+          transition: "background-color 0.4s ease, backdrop-filter 0.4s ease, -webkit-backdrop-filter 0.4s ease",
           height: "var(--header-h)",
         }}
       >
@@ -137,15 +177,25 @@ export function Header() {
           <Link
             to="/"
             aria-label="BridgeArg home"
-            style={{ display: "inline-flex", alignItems: "center", flexShrink: 0, width: desktopLogoWidth }}
+            aria-hidden={!logoVisible}
+            tabIndex={logoVisible ? undefined : -1}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              flexShrink: 0,
+              width: desktopLogoWidth,
+              opacity: logoOpacity,
+              pointerEvents: logoVisible ? "auto" : "none",
+              transition: "opacity 0.4s ease",
+            }}
           >
             <img
-              src={logoLightSrc}
-              alt="BridgeArg"
+              src={logoSrc}
+              alt={logoVisible ? "BridgeArg" : ""}
               className="block h-auto"
               style={{
                 width: desktopLogoWidth,
-                opacity: scrolled ? 1 : 0,
+                minHeight: 25,
                 transition: "opacity 0.4s ease",
               }}
             />
@@ -161,18 +211,12 @@ export function Header() {
                   className={`flex flex-col items-center font-display text-sm uppercase tracking-[0.12em] ${
                     isActive
                       ? ""
-                      : useLightNav
+                      : isArtistDetailPage || useLightNav
                         ? "hover:[color:rgba(30,21,23,0.7)]"
                         : "hover:[color:rgba(252,248,234,0.7)]"
                   }`}
                   style={{
-                    color: isActive
-                      ? scrolled || !isLightHero
-                        ? "#fcf8ea"
-                        : "#1e1517"
-                      : scrolled || !isLightHero
-                        ? "rgba(252,248,234,0.45)"
-                        : "rgba(30,21,23,0.45)",
+                    color: isActive ? navActiveColor : navInactiveColor,
                     transition: "color 0.4s ease",
                   }}
                 >
@@ -184,7 +228,7 @@ export function Header() {
                         width: 4,
                         height: 4,
                         marginTop: 4,
-                        backgroundColor: "#7FB2D1",
+                        backgroundColor: "#7fb2d1",
                       }}
                     />
                   )}
@@ -203,13 +247,7 @@ export function Header() {
                 fontWeight: 500,
                 letterSpacing: "0.15em",
                 textTransform: "uppercase",
-                color: isTradePage
-                  ? useLightNav
-                    ? "#1e1517"
-                    : "#fcf8ea"
-                  : useLightNav
-                    ? "rgba(30,21,23,0.55)"
-                    : "rgba(252,248,234,0.55)",
+                color: tradeLinkColor,
                 textDecoration: "none",
                 borderBottom: isTradePage ? "1px solid currentColor" : "1px solid transparent",
                 paddingBottom: "2px",
@@ -231,8 +269,8 @@ export function Header() {
                   color: "#fcf8ea",
                   backgroundColor: "#1e1517",
                   textDecoration: "none",
-                  borderRadius: 999,
-                  padding: "12px 18px",
+                  borderRadius: "var(--radius-button)",
+                  padding: "12px 24px",
                   transition: "background-color 0.3s ease, color 0.3s ease",
                 }}
               >
@@ -248,9 +286,9 @@ export function Header() {
                   fontWeight: 700,
                   letterSpacing: "0.15em",
                   textTransform: "uppercase",
-                  color: "#7FB2D1",
+                  color: artistCtaColor,
                   textDecoration: "none",
-                  borderBottom: "1px solid #7FB2D1",
+                  borderBottom: "1px solid #7fb2d1",
                   paddingBottom: "2px",
                 }}
               >
@@ -260,10 +298,10 @@ export function Header() {
 
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="flex h-10 w-10 items-center justify-center"
+              className="icon-btn flex h-10 w-10 items-center justify-center"
               aria-label="Open search"
               style={{
-                color: scrolled || !isLightHero ? "#fcf8ea" : "#1e1517",
+                color: searchColor,
                 transition: "color 0.4s ease",
               }}
             >
@@ -272,26 +310,26 @@ export function Header() {
 
             <button
               onClick={() => setIsOpen((prev) => !prev)}
-              className="md:hidden flex h-10 w-10 items-center justify-center"
+              className="icon-btn md:hidden flex h-10 w-10 items-center justify-center"
               aria-label={isOpen ? "Close menu" : "Open menu"}
             >
               <span className="relative block h-4 w-6">
                 <span
-                  className={`absolute left-0 top-0 h-[2px] w-full ${useLightNav ? "bg-[#1e1517]" : "bg-background"}`}
+                  className={`absolute left-0 top-0 h-[2px] w-full ${hamburgerDark ? "bg-[#1e1517]" : "bg-background"}`}
                   style={{
                     transform: isOpen ? "translateY(7px) rotate(45deg)" : "none",
                     transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease",
                   }}
                 />
                 <span
-                  className={`absolute left-0 top-[7px] h-[2px] w-full ${useLightNav ? "bg-[#1e1517]" : "bg-background"}`}
+                  className={`absolute left-0 top-[7px] h-[2px] w-full ${hamburgerDark ? "bg-[#1e1517]" : "bg-background"}`}
                   style={{
                     opacity: isOpen ? 0 : 1,
                     transition: "opacity 0.2s ease, background-color 0.4s ease",
                   }}
                 />
                 <span
-                  className={`absolute left-0 top-[14px] h-[2px] w-full ${useLightNav ? "bg-[#1e1517]" : "bg-background"}`}
+                  className={`absolute left-0 top-[14px] h-[2px] w-full ${hamburgerDark ? "bg-[#1e1517]" : "bg-background"}`}
                   style={{
                     transform: isOpen ? "translateY(-7px) rotate(-45deg)" : "none",
                     transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease",
@@ -332,7 +370,7 @@ export function Header() {
           <Link to="/" className="flex items-center">
             <img src={logoLightSrc} alt="BridgeArg" className="block h-auto" style={{ width: "min(180px, 50vw)" }} />
           </Link>
-          <button onClick={() => setIsOpen(false)} className="relative h-8 w-8" aria-label="Close menu">
+          <button onClick={() => setIsOpen(false)} className="icon-btn relative h-8 w-8" aria-label="Close menu">
             <span
               className="absolute left-1/2 top-1/2 h-[2px] w-6 bg-background"
               style={{ transform: "translate(-50%, -50%) rotate(45deg)" }}
@@ -442,7 +480,7 @@ export function Header() {
       >
         <button
           onClick={closeSearch}
-          className="absolute right-5 h-8 w-8"
+          className="icon-btn absolute right-5 h-8 w-8"
           aria-label="Close search"
           style={{ top: "calc((var(--header-h) - 32px) / 2)" }}
         >

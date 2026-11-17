@@ -28,6 +28,7 @@
     --cream: #fcf8ea;
     --sky: #7fb2d1;
     --white: #fcfcfc;
+    --radius-button: 9999px;
     --line: rgba(30, 21, 23, .18);
     --line-light: rgba(252, 248, 234, .22);
     --sans: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -82,9 +83,10 @@
   .btn {
     display: inline-flex; align-items: center; gap: .7em;
     font: 500 14px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase;
-    padding: 18px 26px; border-radius: 999px; text-decoration: none; cursor: pointer;
+    padding: 18px 26px; border-radius: var(--radius-button, 9999px); text-decoration: none; cursor: pointer;
     border: 1px solid var(--ink); background: var(--ink); color: var(--cream);
     transition: background .3s var(--ease), color .3s var(--ease), transform .3s var(--ease);
+    overflow: hidden;
   }
   .btn:hover { background: var(--sky); color: var(--ink); border-color: var(--sky); }
   .btn:active { transform: scale(.98); }
@@ -134,7 +136,7 @@
   .top .logo img { width: 150px; height: auto; }
   .top .meta { display: flex; align-items: center; gap: 28px; }
   .top .when { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
-  .top .btn { padding: 13px 20px; font-size: 12px; }
+  .top .btn { padding: 13px 24px; font-size: 12px; }
   @media (max-width: 720px) { .top .when { display: none; } .top .wrap { height: 62px; } .top .logo img { width: 120px; } }
 
   /* ---------- Hero ---------- */
@@ -303,7 +305,7 @@
   @media (max-width: 620px) { .artists-grid { grid-template-columns: repeat(2, 1fr); } .artist-card p { display: none; } }
 
   /* ---------- Form ---------- */
-  .book { background: var(--white); }
+  .book { background: var(--cream); }
   .book .wrap { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(40px, 7vw, 110px); align-items: start; }
   .book-side { position: sticky; top: 110px; }
   .book-side .title { font-size: clamp(44px, 6vw, 88px); }
@@ -337,7 +339,7 @@
   .chip { position: relative; }
   .chip input { position: absolute; opacity: 0; inset: 0; cursor: pointer; margin: 0; }
   .chip span {
-    display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; border-radius: var(--radius-button, 9999px);
     border: 1px solid var(--ink); font-size: 14px; user-select: none;
     transition: background .2s, color .2s;
   }

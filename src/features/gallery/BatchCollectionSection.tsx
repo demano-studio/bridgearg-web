@@ -60,7 +60,7 @@ export function BatchCollectionSection() {
             <button
               type="button"
               onClick={() => setFilterMode("all")}
-              className={`h-11 rounded-full border px-5 font-display text-xs uppercase tracking-[0.1em] transition-colors ${
+              className={`h-11 rounded-[var(--radius-button)] border px-6 font-display text-xs uppercase tracking-[0.1em] transition-colors ${
                 filterMode === "all"
                   ? "border-[#1e1517] bg-[#1e1517] text-[#fcf8ea]"
                   : "border-[#1e1517]/20 bg-transparent text-[#1e1517]"
@@ -71,7 +71,7 @@ export function BatchCollectionSection() {
             <button
               type="button"
               onClick={() => setFilterMode("available")}
-              className={`h-11 rounded-full border px-5 font-display text-xs uppercase tracking-[0.1em] transition-colors ${
+              className={`h-11 rounded-[var(--radius-button)] border px-6 font-display text-xs uppercase tracking-[0.1em] transition-colors ${
                 filterMode === "available"
                   ? "border-[#1e1517] bg-[#1e1517] text-[#fcf8ea]"
                   : "border-[#1e1517]/20 bg-transparent text-[#1e1517]"

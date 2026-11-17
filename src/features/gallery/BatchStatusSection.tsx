@@ -26,7 +26,7 @@ export function BatchStatusSection() {
   return (
     <section
       id="collector-services"
-      className="collector-services-section border-t border-[rgba(30,21,23,0.14)] px-6 md:px-12 lg:px-24"
+      className="collector-services-section px-6 md:px-12 lg:px-24"
     >
       <div className="collector-services-section__wrap mx-auto max-w-[1800px]">
         <header className="collector-services-section__head">
@@ -75,7 +75,7 @@ export function BatchStatusSection() {
 
       <style>{`
         .collector-services-section {
-          background: #fcf8ea;
+          background: var(--color-bg, #fcf8ea);
           padding-top: 128px;
           padding-bottom: 136px;
           text-align: left;

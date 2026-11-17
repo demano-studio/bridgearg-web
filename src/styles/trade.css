@@ -98,12 +98,13 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 18px 26px;
-  border-radius: 999px;
+  border-radius: var(--radius-button, 9999px);
   text-decoration: none;
   cursor: pointer;
   border: 1px solid var(--trade-ink);
   background: var(--trade-ink);
   color: var(--trade-cream);
+  overflow: hidden;
   transition:
     background 0.3s var(--trade-ease),
     color 0.3s var(--trade-ease),
@@ -649,7 +650,7 @@
 
 /* ---------- Apply ---------- */
 .trade-apply {
-  background: var(--trade-white);
+  background: var(--color-bg, var(--trade-cream));
 }
 
 .trade-apply__grid {

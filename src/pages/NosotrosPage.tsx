@@ -617,7 +617,7 @@ const NosotrosPage = () => {
               ].map((step) => (
                 <div
                   key={step.s}
-                  className="flex flex-col justify-between transition duration-300 ease-out hover:-translate-y-[6px] hover:bg-white"
+                  className="flex flex-col justify-between transition duration-300 ease-out hover:-translate-y-[6px] hover:bg-[var(--color-surface)]"
                   style={{
                     minHeight: isMobile ? "260px" : "360px",
                     padding: "26px",

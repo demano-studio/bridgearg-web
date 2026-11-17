@@ -187,7 +187,7 @@ export function CollectionSection() {
           position: relative;
           aspect-ratio: 4 / 5;
           max-width: 100%;
-          background: #fffdf6;
+          background: var(--color-surface, #fcfcfc);
           box-shadow: 0 0 0 1px rgba(30, 21, 23, 0.14);
           transition: box-shadow 0.3s;
         }

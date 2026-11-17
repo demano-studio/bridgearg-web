@@ -494,9 +494,11 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
       >
         <div className="flex items-center gap-5">
           <button
+            type="button"
+            data-no-pill
             onClick={handlePlayPause}
             aria-label={isPlaying ? "Pause slideshow" : "Play slideshow"}
-            className="flex h-8 w-8 items-center justify-center"
+            className="icon-btn flex h-8 w-8 items-center justify-center"
             style={{ color: "#fcf8ea" }}
           >
             {isPlaying ? (
@@ -522,10 +524,12 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
             {heroImages.map((_, index) => (
               <button
                 key={index}
+                type="button"
+                data-no-pill
                 onClick={() => goToIndex(index)}
                 aria-label={`Go to slide ${index + 1}`}
-                className="relative h-[3px] flex-1 overflow-hidden"
-                style={{ backgroundColor: "rgba(252,248,234,0.25)" }}
+                className="icon-btn relative h-[3px] flex-1 overflow-hidden"
+                style={{ backgroundColor: "rgba(252,248,234,0.25)", borderRadius: 0 }}
               >
                 {index < activeImageIndex && (
                   <span
@@ -558,10 +562,10 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
               {activeImageIndex + 1} / {heroImages.length}
             </span>
             <div className="flex items-center gap-2 text-[#fcf8ea]">
-              <button onClick={goToPrev} aria-label="Previous slide" className="text-lg leading-none">
+              <button type="button" data-no-pill className="icon-btn text-lg leading-none" onClick={goToPrev} aria-label="Previous slide">
                 ←
               </button>
-              <button onClick={goToNext} aria-label="Next slide" className="text-lg leading-none">
+              <button type="button" data-no-pill className="icon-btn text-lg leading-none" onClick={goToNext} aria-label="Next slide">
                 →
               </button>
             </div>

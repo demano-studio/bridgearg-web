@@ -455,12 +455,12 @@ const ContactoPage = () => {
                           : "border border-[rgba(30,21,23,0.18)] bg-transparent text-[#1e1517] transition duration-200 hover:border-[#1e1517] hover:bg-[#1e1517] hover:text-[#fcf8ea] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-[rgba(30,21,23,0.18)] disabled:hover:bg-transparent disabled:hover:text-[#1e1517]"
                       }
                       style={{
-                        padding: "12px 16px",
+                        padding: "12px 24px",
                         fontSize: "11px",
                         letterSpacing: "0.14em",
                         textTransform: "uppercase",
                         cursor: "pointer",
-                        borderRadius: 0,
+                        borderRadius: "var(--radius-button)",
                         fontFamily: '"Onest", sans-serif',
                       }}
                     >
@@ -723,6 +723,7 @@ const ContactoPage = () => {
                     backgroundColor: "#1e1517",
                     color: "#fcf8ea",
                     border: "1px solid #1e1517",
+                    borderRadius: "var(--radius-button)",
                     padding: "18px 34px",
                     fontSize: "12px",
                     letterSpacing: "0.2em",

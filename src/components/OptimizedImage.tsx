@@ -19,7 +19,7 @@ export interface OptimizedImageProps {
   variant?: "artwork" | "plain";
   /** Classes for the outer container (controls size/rounding). */
   className?: string;
-  /** Classes for the <img> element (in addition to object-cover + transitions). */
+  /** Classes for the <img> element (in addition to default object-fit). */
   imageClassName?: string;
   /** Log the resolved src if the image fails to load. */
   logSrcOnError?: boolean;
@@ -32,10 +32,20 @@ export interface OptimizedImageProps {
   /**
    * CSS aspect-ratio for the outer container (e.g. "4/5").
    * Reserves height before the image loads to avoid CLS.
+   * For layout="intrinsic", applied on the <img> instead.
    */
   aspectRatio?: string;
   /** CSS object-position for the <img> (and blur placeholder). Default "center". */
   objectPosition?: string;
+  /**
+   * - "cover" (default): absolute fill + object-cover (existing grids/cards).
+   * - "intrinsic": natural image height, width 100%, no crop (artist works masonry).
+   */
+  layout?: "cover" | "intrinsic";
+  /** Optional native width attribute (layout reservation). */
+  width?: number;
+  /** Optional native height attribute (layout reservation). */
+  height?: number;
 }
 
 /**
@@ -60,6 +70,9 @@ export function OptimizedImage({
   priority = false,
   aspectRatio,
   objectPosition = "center",
+  layout = "cover",
+  width,
+  height,
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false);
 
@@ -80,6 +93,52 @@ export function OptimizedImage({
         ? `${title} – ${artistName}`
         : title
       : "");
+
+  if (layout === "intrinsic") {
+    return (
+      <div className={`relative w-full ${className}`} style={{ background: "transparent" }}>
+        {!loaded && (
+          <div
+            className="absolute inset-0 transition-opacity duration-300"
+            style={{
+              backgroundImage: `url(${placeholderSrc})`,
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: objectPosition,
+              filter: "blur(12px)",
+              transform: "scale(1.02)",
+              opacity: 0.35,
+            }}
+            aria-hidden
+          />
+        )}
+        <img
+          src={displaySrc}
+          srcSet={srcSet || undefined}
+          sizes={srcSet ? sizes : undefined}
+          alt={resolvedAlt}
+          width={width}
+          height={height}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : undefined}
+          decoding="async"
+          className={`relative block h-auto w-full transition-opacity duration-300 ${imageClassName}`}
+          style={{
+            opacity: loaded ? 1 : 0,
+            objectFit: "initial",
+            objectPosition,
+            aspectRatio: aspectRatio || undefined,
+          }}
+          onLoad={() => setLoaded(true)}
+          onError={() => {
+            if (logSrcOnError) {
+              console.log("[OptimizedImage] Failed to load image src:", displaySrc);
+            }
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div

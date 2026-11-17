@@ -327,7 +327,7 @@ const ArtworkDetailPage = () => {
                       <div
                         style={{
                           width: "100%",
-                          backgroundColor: "#fcfcfc",
+                          backgroundColor: "var(--color-surface)",
                           padding: "clamp(16px, 2vw, 28px)",
                           boxShadow: "0 24px 60px rgba(30,21,23,0.06)",
                         }}
@@ -377,11 +377,14 @@ const ArtworkDetailPage = () => {
                             <button
                               key={url + i}
                               type="button"
+                              data-no-pill
+                              className="icon-btn"
                               onClick={() => setActiveImageUrl(url)}
                               style={{
                                 padding: 0,
                                 border: isActive ? "2px solid #7FB2D1" : "2px solid transparent",
-                                backgroundColor: "#fcfcfc",
+                                backgroundColor: "var(--color-surface)",
+                                borderRadius: 0,
                                 cursor: "pointer",
                                 aspectRatio: "1",
                                 overflow: "hidden",
@@ -428,6 +431,8 @@ const ArtworkDetailPage = () => {
                   )}
 
                   <button
+                    type="button"
+                    data-no-pill
                     onClick={handleShare}
                     style={{ color: '#1e1517' }}
                     className="inline-flex items-center gap-2 mb-6 text-[10px] font-medium uppercase tracking-[0.18em] opacity-50 hover:opacity-100 transition-opacity"
@@ -516,6 +521,7 @@ const ArtworkDetailPage = () => {
                         payment, or release it for other collectors.{" "}
                         <button
                           type="button"
+                          data-no-pill
                           onClick={handleReleaseReservation}
                           disabled={releasing}
                           className="underline underline-offset-2 hover:text-foreground disabled:opacity-50"
@@ -649,7 +655,7 @@ const ArtworkDetailPage = () => {
           )}
 
           {/* Shipping & Logistics */}
-          <section className="section-padded border-b border-border bg-muted/30">
+          <section className="section-padded border-b border-border bg-background">
             <div className="container mx-auto">
               <div className="flex flex-col md:flex-row md:items-start gap-6">
                 <div className="flex-shrink-0 rounded-lg bg-background border border-border p-4">

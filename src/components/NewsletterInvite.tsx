@@ -58,9 +58,10 @@ export function NewsletterInvite() {
     >
       <button
         type="button"
+        data-no-pill
         onClick={dismiss}
         aria-label="Dismiss"
-        className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center text-[#1e1517]/55 transition-colors hover:text-[#1e1517] md:right-8"
+        className="icon-btn absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center text-[#1e1517]/55 transition-colors hover:text-[#1e1517] md:right-8"
       >
         <X className="h-4 w-4" aria-hidden />
       </button>

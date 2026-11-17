@@ -194,9 +194,9 @@ const ArtistasPage = () => {
                     backgroundColor:
                       activeFilter === (disc === "All" ? "all" : disc) ? "#fcf8ea" : "transparent",
                     border: "1px solid rgba(252,248,234,0.6)",
-                    borderRadius: "0",
+                    borderRadius: "var(--radius-button)",
                     color: activeFilter === (disc === "All" ? "all" : disc) ? "#7FB2D1" : "#fcf8ea",
-                    padding: "9px 16px",
+                    padding: "9px 24px",
                     fontSize: "12px",
                     textTransform: "uppercase",
                     letterSpacing: "0.12em",
@@ -227,7 +227,7 @@ const ArtistasPage = () => {
                   key={dir}
                   type="button"
                   onClick={() => setSortOrder(dir)}
-                  className="border border-solid rounded-none text-[12px] uppercase tracking-[0.12em] cursor-pointer font-['Onest',sans-serif] transition-all duration-200 ease-out px-4 py-[9px] border-[rgba(252,248,234,0.6)] bg-transparent text-[#fcf8ea] hover:border-[#fcf8ea] hover:bg-[#fcf8ea] hover:text-[#7FB2D1]"
+                  className="border border-solid rounded-[var(--radius-button)] text-[12px] uppercase tracking-[0.12em] cursor-pointer font-['Onest',sans-serif] transition-all duration-200 ease-out px-6 py-[9px] border-[rgba(252,248,234,0.6)] bg-transparent text-[#fcf8ea] hover:border-[#fcf8ea] hover:bg-[#fcf8ea] hover:text-[#7FB2D1]"
                 >
                   {dir === "asc" ? "A → Z" : "Z → A"}
                 </button>
@@ -300,7 +300,7 @@ const ArtistasPage = () => {
                   }`}
                   style={{
                     alignSelf: "center",
-                    backgroundColor: "#fcfcfc",
+                    backgroundColor: "var(--color-surface)",
                     padding: "14px",
                     boxShadow: "0 14px 42px rgba(30,21,23,0.05)",
                     width: "100%",

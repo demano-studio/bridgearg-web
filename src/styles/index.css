@@ -82,23 +82,25 @@
 @layer base {
   :root {
     /* Core Colors - Final Visual Identity */
-    --background: 52 55% 96%;      /* #fcf8ea - Cream background */
+    --color-bg: #fcf8ea;           /* Page / section cream */
+    --color-surface: #fcfcfc;      /* Cards, inputs, modals on cream */
+    --background: 47 75% 95.3%;    /* #fcf8ea - exact cream */
     --foreground: 350 15% 11%;     /* #1e1517 - Warm black */
     
-    --card: 52 55% 96%;
+    --card: 0 0% 98.8%;            /* #fcfcfc - Surface */
     --card-foreground: 350 15% 11%;
     
-    --popover: 52 55% 96%;
+    --popover: 0 0% 98.8%;         /* #fcfcfc - Surface */
     --popover-foreground: 350 15% 11%;
     
     --primary: 350 15% 11%;        /* Warm black for primary */
-    --primary-foreground: 52 55% 96%;
+    --primary-foreground: 47 75% 95.3%;
     
     --secondary: 35 15% 88%;       /* Warm gray */
     --secondary-foreground: 350 15% 11%;
     
-    --muted: 52 40% 92%;
-    --muted-foreground: 350 10% 35%;
+    --muted: 47 40% 92%;
+    --muted-foreground: 350 10% 35%; /* ≈ #5f5659 support gray */
     
     --accent: 200 50% 70%;         /* #7fb2d1 - Technical blue */
     --accent-foreground: 350 15% 11%;
@@ -111,12 +113,13 @@
     --ring: 200 50% 70%;
     
     --radius: 8px;                 /* Rounded corners for organic feel */
+    --radius-button: 9999px;       /* Pill shape for all CTAs / buttons */
     
     /* Custom BridgeARG tokens */
-    --bridge-cream: 52 55% 96%;    /* #fcf8ea */
+    --bridge-cream: 47 75% 95.3%;  /* #fcf8ea */
     --bridge-black: 350 15% 11%;   /* #1e1517 */
     --bridge-blue: 200 50% 70%;    /* #7fb2d1 */
-    --bridge-white: 0 0% 99%;      /* #fcfcfc */
+    --bridge-white: 0 0% 98.8%;    /* #fcfcfc */
     --bridge-border: 350 10% 80%;
     
     /* Typography */
@@ -530,5 +533,49 @@ input[type="range"].cream-slider::-moz-range-thumb:hover {
 
 .prose-legal a:hover {
   border-bottom-color: #7FB2D1;
+}
+
+/* Shared header glass — outside @layer so -webkit-backdrop-filter survives for Safari */
+.header-glass-off {
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom-color: transparent;
+}
+
+.header-glass-dark {
+  background-color: rgba(30, 21, 23, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.header-glass-cream {
+  background-color: rgba(252, 248, 234, 0.62);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  border-bottom-color: rgba(30, 21, 23, 0.08);
+}
+
+/* Pill buttons — safety net (public site). Exclusions: data-no-pill, .icon-btn, admin. */
+button:not([data-no-pill]):not(.icon-btn),
+a.btn,
+.btn,
+[class*="button"]:not([data-no-pill]):not(.icon-btn) {
+  border-radius: var(--radius-button) !important;
+}
+
+button:not([data-no-pill]):not(.icon-btn):focus-visible,
+a.btn:focus-visible,
+.btn:focus-visible {
+  outline-offset: 2px;
+}
+
+/* Admin keeps sharp corners intentionally */
+.admin-root button,
+.admin-root a.btn,
+.admin-root .btn,
+.admin-root [class*="button"] {
+  border-radius: 0 !important;
 }
 

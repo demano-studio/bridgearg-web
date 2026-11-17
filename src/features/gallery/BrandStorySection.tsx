@@ -80,7 +80,7 @@ export function CuratorSection() {
   return (
     <section
       id="curator"
-      className="curator-section border-t border-[rgba(30,21,23,0.14)] px-6 md:px-12 lg:px-24"
+      className="curator-section px-6 md:px-12 lg:px-24"
       style={{ scrollMarginTop: "calc(var(--header-h, 80px) + 16px)" }}
     >
       <div className="curator-section__wrap mx-auto max-w-[1800px]">
@@ -119,7 +119,7 @@ export function CuratorSection() {
 
       <style>{`
         .curator-section {
-          background: #fcfcfc;
+          background: var(--color-bg, #fcf8ea);
           padding-top: 120px;
           padding-bottom: 120px;
           text-align: left;
@@ -226,7 +226,7 @@ export function CuratorSection() {
           aspect-ratio: 3 / 4;
           overflow: hidden;
           border-radius: 999px 999px 0 0;
-          background: #fcfcfc;
+          background: var(--color-surface, #fcfcfc);
         }
         .curator-section__portrait img {
           width: 100%;

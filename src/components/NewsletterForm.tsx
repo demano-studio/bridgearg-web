@@ -97,7 +97,7 @@ export function NewsletterForm({
           className={
             isFooter
               ? "h-auto flex-1 rounded-none border-[#fcf8ea]/20 bg-transparent px-3 py-2 font-display text-xs text-[#fcf8ea] placeholder:text-[#fcf8ea]/30 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#fcf8ea]/50"
-              : "h-auto flex-1 rounded-none border-[rgba(30,21,23,0.2)] bg-[#fcf8ea] px-3 py-2.5 font-display text-sm text-[#1e1517] placeholder:text-[rgba(30,21,23,0.4)] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#7FB2D1]"
+              : "h-auto flex-1 rounded-none border-[rgba(30,21,23,0.2)] bg-[var(--color-surface)] px-3 py-2.5 font-display text-sm text-[#1e1517] placeholder:text-[rgba(30,21,23,0.4)] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#7FB2D1]"
           }
         />
         <Button
@@ -105,8 +105,8 @@ export function NewsletterForm({
           disabled={status === "loading"}
           className={
             isFooter
-              ? "h-auto rounded-none border border-[#fcf8ea]/20 bg-transparent px-4 py-2 font-display text-xs uppercase tracking-[0.12em] text-[#fcf8ea] hover:bg-[#fcf8ea]/10"
-              : "h-auto rounded-none border border-[#7FB2D1] bg-[#7FB2D1] px-5 py-2.5 font-display text-xs uppercase tracking-[0.12em] text-[#1e1517] hover:bg-[#7FB2D1]/85"
+              ? "h-auto rounded-[var(--radius-button)] border border-[#fcf8ea]/20 bg-transparent px-6 py-2 font-display text-xs uppercase tracking-[0.12em] text-[#fcf8ea] hover:bg-[#fcf8ea]/10"
+              : "h-auto rounded-[var(--radius-button)] border border-[#7FB2D1] bg-[#7FB2D1] px-6 py-2.5 font-display text-xs uppercase tracking-[0.12em] text-[#1e1517] hover:bg-[#7FB2D1]/85"
           }
         >
           {status === "loading" ? (

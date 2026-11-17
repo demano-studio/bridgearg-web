@@ -44,7 +44,8 @@ const filterPanelControlStyle: CSSProperties = {
 const navActionStyle: CSSProperties = {
   border: "1px solid rgba(252,248,234,0.6)",
   backgroundColor: "transparent",
-  padding: "12px 16px",
+  borderRadius: "var(--radius-button)",
+  padding: "12px 24px",
   textTransform: "uppercase",
   letterSpacing: "0.16em",
   fontSize: "11px",
@@ -397,7 +398,7 @@ const ArtworksPage = () => {
 
     const cardShellStyle: CSSProperties = {
       border: "1px solid rgba(30,21,23,0.18)",
-      backgroundColor: "rgba(252,252,252,0.25)",
+      backgroundColor: "var(--color-surface)",
       position: "relative",
       overflow: "hidden",
       transition: "0.35s",
@@ -731,7 +732,7 @@ const ArtworksPage = () => {
                       width: "100%",
                     }}
                   >
-                    <div className="overflow-hidden border border-[rgba(30,21,23,0.18)] bg-[rgba(252,252,252,0.25)]">
+                    <div className="overflow-hidden border border-[rgba(30,21,23,0.18)] bg-[var(--color-surface)]">
                       <Skeleton className="aspect-[4/5] w-full" />
                       <div className="space-y-3 p-6">
                         <Skeleton className="h-3 w-24" />
@@ -762,7 +763,7 @@ const ArtworksPage = () => {
                 <button
                   type="button"
                   onClick={clearAllFilters}
-                  className="mt-4 inline-flex items-center border border-[rgba(30,21,23,0.18)] bg-transparent px-4 py-2 text-[11px] uppercase tracking-[0.18em] text-[#1e1517] transition-colors hover:bg-[#1e1517] hover:text-[#fcf8ea]"
+                  className="mt-4 inline-flex items-center rounded-[var(--radius-button)] border border-[rgba(30,21,23,0.18)] bg-transparent px-6 py-2 text-[11px] uppercase tracking-[0.18em] text-[#1e1517] transition-colors hover:bg-[#1e1517] hover:text-[#fcf8ea]"
                   style={{ fontFamily: '"Onest", sans-serif' }}
                 >
                   Clear filters
@@ -850,9 +851,10 @@ const ArtworksPage = () => {
               to="/contact"
               style={{
                 border: "1px solid #1e1517",
+                borderRadius: "var(--radius-button)",
                 backgroundColor: "transparent",
                 color: "#1e1517",
-                padding: "13px 22px",
+                padding: "13px 24px",
                 textTransform: "uppercase",
                 letterSpacing: "0.18em",
                 fontSize: "11px",

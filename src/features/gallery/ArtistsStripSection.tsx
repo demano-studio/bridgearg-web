@@ -72,7 +72,7 @@ export function ArtistsStripSection() {
   return (
     <section
       id="artists"
-      className="artists-strip-section border-y border-[rgba(30,21,23,0.14)] bg-background px-6 md:px-12 lg:px-24"
+      className="artists-strip-section bg-background px-6 md:px-12 lg:px-24"
       style={{ scrollMarginTop: "calc(var(--header-h, 80px) + 16px)" }}
     >
       <div className="artists-strip-section__wrap mx-auto max-w-[1800px]">

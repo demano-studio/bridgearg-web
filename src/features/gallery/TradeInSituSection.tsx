@@ -87,7 +87,7 @@ export function TradeInSituSection() {
           position: absolute;
           left: 16px;
           bottom: 16px;
-          background: #fcf8ea;
+          background: var(--color-bg, #fcf8ea);
           padding: 8px 12px;
           font-family: "Onest", sans-serif;
           font-size: 12px;
@@ -157,7 +157,8 @@ export function TradeInSituSection() {
           justify-content: center;
           min-height: 48px;
           padding: 14px 24px;
-          border-radius: 999px;
+          border-radius: var(--radius-button, 9999px);
+          overflow: hidden;
           font-family: "Onest", sans-serif;
           font-size: 13px;
           letter-spacing: 0.14em;

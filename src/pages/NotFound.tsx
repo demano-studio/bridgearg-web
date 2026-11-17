@@ -40,7 +40,8 @@ function ButtonLikeLink() {
   return (
     <Link
       to="/"
-      className="text-technical inline-flex items-center justify-center border border-border px-6 py-3 hover:bg-foreground hover:text-background transition-colors"
+      className="btn text-technical inline-flex items-center justify-center border border-border px-6 py-3 hover:bg-foreground hover:text-background transition-colors"
+      style={{ borderRadius: "var(--radius-button)" }}
     >
       Back to Home
     </Link>
