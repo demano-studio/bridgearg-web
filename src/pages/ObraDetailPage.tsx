@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/Header";
@@ -32,12 +32,22 @@ import {
   saveMyVerification,
 } from "@/lib/reservation";
 import { getWorkImageUrl } from "@/lib/work-images";
+import { isSupabaseStorageObjectUrl, transformUrl } from "@/lib/imageTransform";
 import { curatedCollectionOrder, getCollectionSeed } from "@/lib/collectionOrder";
 import { shouldShowPrice } from "@/lib/geoPricing";
 import { formatDimensionsFromString, formatPounds } from "@/lib/units";
 import { toast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
+import Lightbox from "yet-another-react-lightbox";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import "yet-another-react-lightbox/styles.css";
 import "@/styles/artwork-detail.css";
+
+function artworkLightboxSrc(url: string): string {
+  const resolved = getWorkImageUrl(url);
+  if (!isSupabaseStorageObjectUrl(resolved)) return resolved;
+  return transformUrl(resolved, { width: 2400, quality: 85 });
+}
 
 const BRACKET_PATH = "M0 0H285V60A227 227 0 0 0 58 287H0Z";
 
@@ -67,6 +77,8 @@ const ArtworkDetailPage = () => {
   const [work, setWork] = useState<WorkFromApi | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImageUrl, setActiveImageUrl] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const [acquireLoading, setAcquireLoading] = useState(false);
   const [reservation, setReservation] = useState<ArtworkReservation | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -306,9 +318,16 @@ const ArtworkDetailPage = () => {
   const weightText = formatPounds(work.weight_kg);
   const allImages = [work.imagenUrl, ...(work.galleryUrls ?? [])].filter(Boolean);
   const currentImage = activeImageUrl ?? allImages[0] ?? "";
+  const currentImageIndex = Math.max(0, allImages.indexOf(currentImage));
   const priceLabel = shouldShowPrice() ? work.priceDisplay : "Price on request";
   const showDetails = Boolean(work.medium || dimensionsText || weightText);
   const titleClass = ["artwork-detail-title", titleSizeClass(work.title)].filter(Boolean).join(" ");
+
+  const openLightbox = (index = currentImageIndex) => {
+    if (!allImages.length) return;
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
 
   return (
     <PageTransition>
@@ -336,7 +355,14 @@ const ArtworkDetailPage = () => {
                   <CornerBracket position="tr" />
                   <CornerBracket position="bl" />
                   <CornerBracket position="br" />
-                  <div className="artwork-detail-mat">
+                  <button
+                    type="button"
+                    data-no-pill
+                    data-cursor="photo"
+                    className="artwork-detail-mat"
+                    onClick={() => openLightbox()}
+                    aria-label={`View larger image of ${work.title}`}
+                  >
                     <img
                       src={currentImage ? getWorkImageUrl(currentImage) : ""}
                       alt={work.title}
@@ -346,7 +372,7 @@ const ArtworkDetailPage = () => {
                         <span>● Private Collection</span>
                       </div>
                     )}
-                  </div>
+                  </button>
                 </div>
 
                 {allImages.length > 1 && (
@@ -614,6 +640,33 @@ const ArtworkDetailPage = () => {
           </Dialog>
         </main>
         <Footer />
+
+        <Lightbox
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          index={lightboxIndex}
+          slides={allImages.map((url) => ({
+            src: artworkLightboxSrc(url),
+            alt: work.title,
+          }))}
+          plugins={[Zoom]}
+          zoom={{
+            scrollToZoom: true,
+            maxZoomPixelRatio: 3,
+            pinchZoomV4: true,
+          }}
+          controller={{ closeOnBackdropClick: true }}
+          on={{
+            view: ({ index: nextIndex }) => {
+              setLightboxIndex(nextIndex);
+              const nextUrl = allImages[nextIndex];
+              if (nextUrl) setActiveImageUrl(nextUrl);
+            },
+          }}
+          styles={{
+            root: { "--yarl__color_backdrop": "rgba(30, 21, 23, 0.92)" } as CSSProperties,
+          }}
+        />
       </div>
     </PageTransition>
   );

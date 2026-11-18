@@ -125,10 +125,21 @@
 
 .artwork-detail-mat {
   position: relative;
+  display: block;
+  width: 100%;
   aspect-ratio: 4 / 5;
   padding: 56px;
+  border: 0;
   background: var(--ad-mat);
   box-sizing: border-box;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+}
+
+.artwork-detail-mat:focus-visible {
+  outline: 2px solid var(--ad-sky);
+  outline-offset: 4px;
 }
 
 .artwork-detail-mat img {
@@ -137,6 +148,7 @@
   height: 100%;
   object-fit: contain;
   object-position: center;
+  pointer-events: none;
 }
 
 .artwork-detail-sold {

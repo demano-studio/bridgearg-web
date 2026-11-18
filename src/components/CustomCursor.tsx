@@ -11,6 +11,10 @@ function resolveMode(target: EventTarget | null): CursorMode {
   if (target.closest('input, textarea, select, [contenteditable="true"]')) {
     return "input";
   }
+  // Native cursors inside image lightbox (zoom/pan); hide the custom cursor.
+  if (target.closest(".yarl__root")) {
+    return "input";
+  }
   if (target.closest('[data-cursor="photo"]')) {
     return "photo";
   }

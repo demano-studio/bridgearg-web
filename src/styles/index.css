@@ -610,3 +610,13 @@ html.has-custom-cursor [contenteditable="true"] {
   cursor: text !important;
 }
 
+/* Artwork lightbox: restore native cursors for zoom/pan UI */
+html.has-custom-cursor .yarl__root,
+html.has-custom-cursor .yarl__root * {
+  cursor: auto !important;
+}
+html.has-custom-cursor .yarl__root button,
+html.has-custom-cursor .yarl__root [role="button"] {
+  cursor: pointer !important;
+}
+

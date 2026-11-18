@@ -28,10 +28,14 @@ const ContactSuccessPage = () => {
               Thank you for reaching out. We'll get back to you shortly.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="technical" asChild>
+              <Button
+                variant="outline"
+                className="!border-bridge-blue !bg-bridge-blue !text-bridge-black hover:!border-bridge-black hover:!bg-bridge-black hover:!text-bridge-cream"
+                asChild
+              >
                 <Link to="/artworks">Continue browsing</Link>
               </Button>
-              <Button variant="technical" asChild>
+              <Button variant="outline" asChild>
                 <Link to="/">Back to home</Link>
               </Button>
             </div>
