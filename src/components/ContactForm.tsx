@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { submitContact } from "@/lib/api";
 
@@ -20,6 +20,7 @@ type ContactFormProps = {
 
 export function ContactForm({ initialSubject = "", initialMessage = "" }: ContactFormProps) {
   const formId = useId();
+  const navigate = useNavigate();
   const normalizedInitialSubject =
     initialSubject && (CONTACT_SUBJECT_OPTIONS as readonly string[]).includes(initialSubject)
       ? initialSubject
@@ -31,7 +32,7 @@ export function ContactForm({ initialSubject = "", initialMessage = "" }: Contac
   const [message, setMessage] = useState(initialMessage);
   const [consent, setConsent] = useState(false);
   const [websiteHp, setWebsiteHp] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
@@ -86,24 +87,8 @@ export function ContactForm({ initialSubject = "", initialMessage = "" }: Contac
       return;
     }
 
-    setStatus("success");
-    setFullName("");
-    setEmail("");
-    setSubject(normalizedInitialSubject);
-    setMessage(initialMessage);
-    setConsent(false);
-    setWebsiteHp("");
+    navigate("/contact/success", { replace: true });
   };
-
-  if (status === "success") {
-    return (
-      <div className="contact-form" role="status" aria-live="polite">
-        <p className="contact-form__success">
-          Thank you, we&apos;ll be in touch within 48 business hours.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <form className="contact-form" onSubmit={handleSubmit} noValidate>

@@ -178,36 +178,37 @@ Deno.serve(async (req) => {
   const { nombre, apellidos } = splitFullName(fullName);
   const comentarios = `Subject: ${subject} | Message: ${message}`;
 
-  let mailOk = false;
-  let dbOk = false;
-  let brevoOk = false;
+  // Source of truth: persist subscriber first. Side effects (Resend/Brevo) only after success.
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !supabaseServiceRole) {
+    console.error("contact-request: missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY");
+    return json(req, 500, { error: "Could not send your message. Please try again." });
+  }
 
-  mailOk = await sendResendEmail(
+  try {
+    const supabase = createClient(supabaseUrl, supabaseServiceRole);
+    const { error: subscriberError } = await supabase.rpc("upsert_subscriber", {
+      p_email: email,
+      p_source: "contact",
+      p_consent: true,
+    });
+    if (subscriberError) {
+      console.error("contact-request upsert_subscriber error:", subscriberError);
+      return json(req, 500, { error: "Could not send your message. Please try again." });
+    }
+  } catch (e) {
+    console.error("contact-request upsert_subscriber failed:", e);
+    return json(req, 500, { error: "Could not send your message. Please try again." });
+  }
+
+  const mailOk = await sendResendEmail(
     resendToEmail,
     `Contact inquiry — ${fullName} · ${subject}`,
     buildInternalNoticeHtml({ fullName, email, subject, message }),
   );
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (supabaseUrl && supabaseServiceRole) {
-    try {
-      const supabase = createClient(supabaseUrl, supabaseServiceRole);
-      const { error: subscriberError } = await supabase.rpc("upsert_subscriber", {
-        p_email: email,
-        p_source: "contact",
-        p_consent: true,
-      });
-      if (subscriberError) {
-        console.error("contact-request upsert_subscriber error:", subscriberError);
-      } else {
-        dbOk = true;
-      }
-    } catch (e) {
-      console.error("contact-request upsert_subscriber failed:", e);
-    }
-  } else {
-    console.error("contact-request: missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY");
+  if (!mailOk) {
+    console.error("contact-request: Resend notification failed after successful upsert");
   }
 
   // Same Brevo list as Miami (BREVO_LIST_ID). Trade keeps BREVO_TRADE_LIST_ID untouched.
@@ -239,8 +240,6 @@ Deno.serve(async (req) => {
         });
         if (!res.ok) {
           console.error("Brevo contacts error:", res.status, await res.text());
-        } else {
-          brevoOk = true;
         }
       }
     } catch (e) {
@@ -248,10 +247,6 @@ Deno.serve(async (req) => {
     }
   } else {
     console.error("contact-request: BREVO_API_KEY / BREVO_LIST_ID not configured");
-  }
-
-  if (!mailOk && !dbOk && !brevoOk) {
-    return json(req, 500, { error: "Could not submit your message. Please try again." });
   }
 
   return json(req, 200, { ok: true });
