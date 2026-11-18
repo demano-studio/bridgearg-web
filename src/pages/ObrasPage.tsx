@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { NewsletterInvite } from "@/components/NewsletterInvite";
 import { PageTransition } from "@/components/PageTransition";
 import { FALLBACK_ARTIST_NAME, getWorks, type WorkFromApi } from "@/lib/api";
+import { curatedCollectionOrder, getCollectionSeed } from "@/lib/collectionOrder";
 import { shouldShowPrice } from "@/lib/geoPricing";
 import { images } from "@/lib/images";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -44,6 +45,8 @@ const ArtworksPage = () => {
     "default" | "price-asc" | "price-desc" | "newest" | "oldest" | "az"
   >("default");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  /** Session-stable mix seed — generated once per visit (sessionStorage). */
+  const [mixSeed] = useState(() => getCollectionSeed());
 
   useEffect(() => {
     const artistParam = searchParams.get("artist");
@@ -94,10 +97,16 @@ const ArtworksPage = () => {
     return names;
   }, [works]);
 
+  /** Mix the full collection once; filters keep relative order from this list. */
+  const mixedWorks = useMemo(
+    () => curatedCollectionOrder(works, mixSeed),
+    [works, mixSeed],
+  );
+
   const filteredWorks = useMemo(() => {
     const [rangeMin, rangeMax] = priceRange;
 
-    return works.filter((work) => {
+    return mixedWorks.filter((work) => {
       const artistName = work.artistName?.trim() || FALLBACK_ARTIST_NAME;
 
       const matchesArtist = !artistFilter || artistName === artistFilter;
@@ -118,7 +127,7 @@ const ArtworksPage = () => {
 
       return matchesArtist && matchesStatus && matchesPrice;
     });
-  }, [works, artistFilter, statusFilter, priceRange]);
+  }, [mixedWorks, artistFilter, statusFilter, priceRange]);
 
   const sortedWorks = useMemo(() => {
     const list = [...filteredWorks];
@@ -189,6 +198,7 @@ const ArtworksPage = () => {
         });
       case "default":
       default:
+        // Already in curated mix order (mixed → filtered).
         return list;
     }
   }, [filteredWorks, sortBy]);
@@ -433,7 +443,7 @@ const ArtworksPage = () => {
                           )
                         }
                       >
-                        <option value="default">Sort by</option>
+                        <option value="default">Curated mix</option>
                         <option value="price-asc">Price low to high</option>
                         <option value="price-desc">Price high to low</option>
                         <option value="az">Artist A–Z</option>

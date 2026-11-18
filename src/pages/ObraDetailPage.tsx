@@ -32,6 +32,7 @@ import {
   saveMyVerification,
 } from "@/lib/reservation";
 import { getWorkImageUrl } from "@/lib/work-images";
+import { curatedCollectionOrder, getCollectionSeed } from "@/lib/collectionOrder";
 import { shouldShowPrice } from "@/lib/geoPricing";
 import { formatDimensionsFromString, formatPounds } from "@/lib/units";
 import { toast } from "@/hooks/use-toast";
@@ -73,25 +74,19 @@ const ArtworkDetailPage = () => {
   const [emailError, setEmailError] = useState("");
   const [releasing, setReleasing] = useState(false);
 
-  const { data: artistWorks = [] } = useQuery({
-    queryKey: ["works", work?.artistSlug],
-    queryFn: () => getWorks(work!.artistSlug),
-    enabled: !!work?.artistSlug,
-  });
-
   const { data: allWorks = [] } = useQuery({
     queryKey: ["works"],
     queryFn: () => getWorks(),
   });
 
+  /** Same session mix as Collection; pick next 3 after excluding the current work. */
+  const [mixSeed] = useState(() => getCollectionSeed());
   const moreWorks = useMemo(() => {
-    if (!work) return [];
-    const excludeId = work.id;
-    const fromArtist = artistWorks.filter((w) => w.id !== excludeId);
-    const fromArtistIds = new Set(fromArtist.map((w) => w.id));
-    const fillers = allWorks.filter((w) => w.id !== excludeId && !fromArtistIds.has(w.id));
-    return [...fromArtist, ...fillers].slice(0, 3);
-  }, [work, artistWorks, allWorks]);
+    if (!work || allWorks.length === 0) return [];
+    return curatedCollectionOrder(allWorks, mixSeed)
+      .filter((w) => w.id !== work.id)
+      .slice(0, 3);
+  }, [work, allWorks, mixSeed]);
 
   useEffect(() => {
     if (Number.isNaN(workId) || workId < 1) {
