@@ -31,17 +31,35 @@ import {
   readMyVerification,
   saveMyVerification,
 } from "@/lib/reservation";
-import { WorkImage } from "@/components/WorkImage";
 import { getWorkImageUrl } from "@/lib/work-images";
 import { shouldShowPrice } from "@/lib/geoPricing";
 import { formatDimensionsFromString, formatPounds } from "@/lib/units";
 import { toast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
-import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
+import "@/styles/artwork-detail.css";
+
+const BRACKET_PATH = "M0 0H285V60A227 227 0 0 0 58 287H0Z";
+
+function titleSizeClass(title: string): string {
+  const t = title.trim();
+  const len = t.length;
+  const hasPipe = t.includes("|");
+  if (len > 60) return "artwork-detail-title--xl";
+  if (len > 30 || hasPipe) return "artwork-detail-title--lg";
+  return "";
+}
+
+function CornerBracket({ position }: { position: "tl" | "tr" | "bl" | "br" }) {
+  return (
+    <span className={`artwork-detail-bracket artwork-detail-bracket--${position}`} aria-hidden="true">
+      <svg viewBox="0 0 285 287" xmlns="http://www.w3.org/2000/svg">
+        <path d={BRACKET_PATH} fill="currentColor" />
+      </svg>
+    </span>
+  );
+}
 
 const ArtworkDetailPage = () => {
-  const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const workId = id ? parseInt(id, 10) : NaN;
@@ -55,15 +73,25 @@ const ArtworkDetailPage = () => {
   const [emailError, setEmailError] = useState("");
   const [releasing, setReleasing] = useState(false);
 
-  const { data: relatedWorks = [] } = useQuery({
+  const { data: artistWorks = [] } = useQuery({
     queryKey: ["works", work?.artistSlug],
     queryFn: () => getWorks(work!.artistSlug),
     enabled: !!work?.artistSlug,
   });
 
-  const otherWorks = useMemo(() => {
-    return relatedWorks.filter((w) => w.id !== workId).slice(0, 4);
-  }, [relatedWorks, workId]);
+  const { data: allWorks = [] } = useQuery({
+    queryKey: ["works"],
+    queryFn: () => getWorks(),
+  });
+
+  const moreWorks = useMemo(() => {
+    if (!work) return [];
+    const excludeId = work.id;
+    const fromArtist = artistWorks.filter((w) => w.id !== excludeId);
+    const fromArtistIds = new Set(fromArtist.map((w) => w.id));
+    const fillers = allWorks.filter((w) => w.id !== excludeId && !fromArtistIds.has(w.id));
+    return [...fromArtist, ...fillers].slice(0, 3);
+  }, [work, artistWorks, allWorks]);
 
   useEffect(() => {
     if (Number.isNaN(workId) || workId < 1) {
@@ -93,10 +121,7 @@ const ArtworkDetailPage = () => {
 
   useEffect(() => {
     if (!loading && !work) {
-      const timer = setTimeout(
-        () => navigate("/artworks", { replace: true }),
-        2000,
-      );
+      const timer = setTimeout(() => navigate("/artworks", { replace: true }), 2000);
       return () => clearTimeout(timer);
     }
   }, [loading, work, navigate]);
@@ -126,14 +151,14 @@ const ArtworkDetailPage = () => {
     };
   }, [work]);
 
+  const artistName = work?.artistName?.trim() || FALLBACK_ARTIST_NAME;
+
   const handleInquire = () => {
     if (!work) return;
     navigate(
       `/contacto?subject=artwork-inquiry&artwork=${encodeURIComponent(work.title)}&artist=${encodeURIComponent(artistName)}`,
     );
   };
-
-  const artistName = work?.artistName?.trim() || FALLBACK_ARTIST_NAME;
 
   const msLeft = reservation ? new Date(reservation.expiresAt).getTime() - Date.now() : 0;
   const isReserved = msLeft > 0;
@@ -236,27 +261,22 @@ const ArtworkDetailPage = () => {
   if (loading) {
     return (
       <PageTransition>
-        <div className="min-h-screen bg-background">
+        <div className="artwork-detail-page min-h-screen">
           <Header />
           <main>
-            <div className="container mx-auto pt-8">
-              <Skeleton className="h-4 w-24" />
-            </div>
-            <section className="section-padded border-b border-border">
-              <div className="container mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-                  <Skeleton className="aspect-[4/5] w-full rounded-2xl" />
-                  <div className="flex flex-col justify-center gap-4">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-12 w-3/4" />
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-32 w-full" />
-                    <Skeleton className="h-8 w-28" />
-                    <Skeleton className="h-12 w-40" />
-                  </div>
+            <div className="artwork-detail-wrap">
+              <Skeleton className="mt-28 h-4 w-32" />
+              <div className="artwork-detail-main">
+                <Skeleton className="aspect-[4/5] w-full" />
+                <div className="flex flex-col gap-4">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-16 w-3/4" />
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-12 w-40" />
                 </div>
               </div>
-            </section>
+            </div>
           </main>
           <Footer />
         </div>
@@ -267,21 +287,19 @@ const ArtworkDetailPage = () => {
   if (!work) {
     return (
       <PageTransition>
-        <div className="min-h-screen bg-background">
+        <div className="artwork-detail-page min-h-screen">
           <Header />
-          <main className="section-padded">
-            <div className="container mx-auto text-center">
-              <h1 className="text-display text-4xl mb-4">Work not found</h1>
-              <p className="text-muted-foreground mb-8">
-                This work is no longer available or doesn't exist.
-              </p>
-              <Button variant="technical" asChild>
-                <Link to="/artworks">Back to Works</Link>
-              </Button>
-              <p className="mt-4 text-sm text-muted-foreground">
-                Redirecting to collection...
-              </p>
-            </div>
+          <main className="artwork-detail-wrap" style={{ paddingTop: "120px", paddingBottom: "80px" }}>
+            <h1 className="artwork-detail-title" style={{ fontSize: "48px" }}>
+              Work not found
+            </h1>
+            <p className="artwork-detail-year" style={{ marginTop: "16px" }}>
+              This work is no longer available or doesn't exist.
+            </p>
+            <Link to="/artworks" className="artwork-detail-btn artwork-detail-btn--ink" style={{ marginTop: "32px" }}>
+              Back to Works
+            </Link>
+            <p className="artwork-detail-status">Redirecting to collection...</p>
           </main>
           <Footer />
         </div>
@@ -291,13 +309,15 @@ const ArtworkDetailPage = () => {
 
   const dimensionsText = formatDimensionsFromString(work.dimensions);
   const weightText = formatPounds(work.weight_kg);
-
   const allImages = [work.imagenUrl, ...(work.galleryUrls ?? [])].filter(Boolean);
   const currentImage = activeImageUrl ?? allImages[0] ?? "";
+  const priceLabel = shouldShowPrice() ? work.priceDisplay : "Price on request";
+  const showDetails = Boolean(work.medium || dimensionsText || weightText);
+  const titleClass = ["artwork-detail-title", titleSizeClass(work.title)].filter(Boolean).join(" ");
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="artwork-detail-page min-h-screen">
         <SEO
           title={work.title}
           description={`${artistName} · ${[work.year, work.medium].filter(Boolean).join(" · ")} · ${work.priceDisplay}`}
@@ -307,248 +327,273 @@ const ArtworkDetailPage = () => {
         />
         <Header />
         <main>
-          <div className="container mx-auto pt-8">
-            <Link
-              to="/artworks"
-              className="inline-flex items-center gap-2 text-label hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
+          <div className="artwork-detail-wrap">
+            <Link to="/artworks" className="artwork-detail-back">
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
               Back to Works
             </Link>
-          </div>
 
-          {/* Hero: image + title, artist, price */}
-          <section className="section-padded border-b border-border">
-            <div className="container mx-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-                <div className="w-full overflow-hidden rounded-2xl bg-background shadow-sm">
-                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                    <div style={{ position: "relative", width: "100%" }}>
-                      <div
-                        style={{
-                          width: "100%",
-                          backgroundColor: "var(--color-surface)",
-                          padding: "clamp(16px, 2vw, 28px)",
-                          boxShadow: "0 24px 60px rgba(30,21,23,0.06)",
-                        }}
-                      >
-                        <img
-                          src={currentImage ? getWorkImageUrl(currentImage) : ""}
-                          alt={work.title}
-                          style={{
-                            width: "100%",
-                            height: "auto",
-                            maxHeight: isMobile ? "420px" : "clamp(420px, 70vh, 800px)",
-                            objectFit: "contain",
-                            display: "block",
-                          }}
-                        />
-                      </div>
-                      {work.status === "sold" && (
-                        <div
-                          className="rounded-2xl"
-                          style={{
-                            position: "absolute",
-                            inset: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            backgroundColor: "rgba(30,21,23,0.5)",
-                          }}
-                        >
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[#1e1517]/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[#1e1517]/60">
-                            ● Private Collection
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {allImages.length > 1 && (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: `repeat(${Math.min(allImages.length, isMobile ? 3 : isTablet ? 4 : 6)}, 1fr)`,
-                          gap: "12px",
-                        }}
-                      >
-                        {allImages.map((url, i) => {
-                          const isActive = (activeImageUrl ?? allImages[0]) === url;
-                          return (
-                            <button
-                              key={url + i}
-                              type="button"
-                              data-no-pill
-                              className="icon-btn"
-                              onClick={() => setActiveImageUrl(url)}
-                              style={{
-                                padding: 0,
-                                border: isActive ? "2px solid #7FB2D1" : "2px solid transparent",
-                                backgroundColor: "var(--color-surface)",
-                                borderRadius: 0,
-                                cursor: "pointer",
-                                aspectRatio: "1",
-                                overflow: "hidden",
-                                transition: "border-color 0.2s ease",
-                              }}
-                              aria-label={`View image ${i + 1}`}
-                            >
-                              <img
-                                src={getWorkImageUrl(url)}
-                                alt={`${work.title} ${i + 1}`}
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                  display: "block",
-                                  opacity: isActive ? 1 : 0.7,
-                                  transition: "opacity 0.2s ease",
-                                }}
-                              />
-                            </button>
-                          );
-                        })}
+            <section className="artwork-detail-main">
+              {/* Image column */}
+              <div>
+                <div className="artwork-detail-frame">
+                  <CornerBracket position="tl" />
+                  <CornerBracket position="tr" />
+                  <CornerBracket position="bl" />
+                  <CornerBracket position="br" />
+                  <div className="artwork-detail-mat">
+                    <img
+                      src={currentImage ? getWorkImageUrl(currentImage) : ""}
+                      alt={work.title}
+                    />
+                    {work.status === "sold" && (
+                      <div className="artwork-detail-sold">
+                        <span>● Private Collection</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="flex flex-col justify-center">
-                  <p className="text-label mb-2">
-                    {work.artistSlug ? (
-                      <Link to={`/artistas/${work.artistSlug}`} className="hover:text-foreground transition-colors">
-                        {artistName}
-                      </Link>
-                    ) : (
-                      artistName
-                    )}
-                  </p>
-                  <h1 className="text-display text-4xl md:text-5xl lg:text-6xl mb-6">{work.title}</h1>
-                  {/* year comes from Supabase artworks.year field — populate it per artwork */}
-                  {(work.year || work.medium) && (
-                    <p className="text-muted-foreground text-sm mb-6">
-                      {[work.year, work.medium].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-
-                  <button
-                    type="button"
-                    data-no-pill
-                    onClick={handleShare}
-                    style={{ color: '#1e1517' }}
-                    className="inline-flex items-center gap-2 mb-6 text-[10px] font-medium uppercase tracking-[0.18em] opacity-50 hover:opacity-100 transition-opacity"
+                {allImages.length > 1 && (
+                  <div
+                    className="artwork-detail-thumbs"
+                    style={{
+                      gridTemplateColumns: `repeat(${Math.min(allImages.length, 6)}, 1fr)`,
+                    }}
                   >
-                    <Share2 className="h-3 w-3" />
+                    {allImages.map((url, i) => {
+                      const isActive = (activeImageUrl ?? allImages[0]) === url;
+                      return (
+                        <button
+                          key={url + i}
+                          type="button"
+                          data-no-pill
+                          className={`artwork-detail-thumb icon-btn${isActive ? " is-active" : ""}`}
+                          onClick={() => setActiveImageUrl(url)}
+                          aria-label={`View image ${i + 1}`}
+                        >
+                          <img src={getWorkImageUrl(url)} alt={`${work.title} ${i + 1}`} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Info column */}
+              <div>
+                {work.artistSlug ? (
+                  <Link to={`/artistas/${work.artistSlug}`} className="artwork-detail-artist">
+                    ({artistName})
+                  </Link>
+                ) : (
+                  <p className="artwork-detail-artist">({artistName})</p>
+                )}
+
+                <h1 className={titleClass}>{work.title}</h1>
+
+                <div className="artwork-detail-meta">
+                  <p className="artwork-detail-year">{work.year || ""}</p>
+                  <button type="button" data-no-pill className="artwork-detail-share" onClick={handleShare}>
+                    <Share2 aria-hidden />
                     Share
                   </button>
+                </div>
 
-                  {/* Dimensions & weight — clear block */}
-                  <div className="tech-box mb-8">
-                    <h3 className="text-technical text-foreground mb-3">Details</h3>
-                    <dl className="space-y-2 text-sm">
-                      <div>
-                        <dt className="text-muted-foreground">Dimensions</dt>
-                        <dd className="font-medium text-foreground">{dimensionsText}</dd>
+                {showDetails && (
+                  <div className="artwork-detail-details">
+                    <p className="artwork-detail-eyebrow artwork-detail-details__title">Details</p>
+                    <dl>
+                      {work.medium ? (
+                        <div className="artwork-detail-details__row">
+                          <dt>Medium</dt>
+                          <dd>{work.medium}</dd>
+                        </div>
+                      ) : null}
+                      <div className="artwork-detail-details__row">
+                        <dt>Dimensions</dt>
+                        <dd>{dimensionsText}</dd>
                       </div>
-                      <div>
-                        <dt className="text-muted-foreground">Weight</dt>
-                        <dd className="font-medium text-foreground">{weightText}</dd>
+                      <div className="artwork-detail-details__row">
+                        <dt>Weight</dt>
+                        <dd>{weightText}</dd>
                       </div>
                     </dl>
                   </div>
+                )}
 
-                  <div className="flex flex-wrap items-baseline gap-4 mb-8">
-                    <span className="font-display text-2xl font-semibold text-foreground">
-                      {shouldShowPrice() ? work.priceDisplay : "Price on request"}
-                    </span>
-                  </div>
+                <div className="artwork-detail-price">
+                  <p className="artwork-detail-price__label">Price</p>
+                  <p className="artwork-detail-price__value">{priceLabel}</p>
+                </div>
 
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-wrap gap-4">
-                      {isAvailable ? (
-                        <>
-                          {isMyReservation && myVerificationId ? (
-                            <Button variant="acquire" size="xl" asChild className="gap-2">
-                              <Link
-                                to={`/verify/callback?resume=${encodeURIComponent(myVerificationId)}&artwork=${work.id}`}
-                              >
-                                Resume payment
-                              </Link>
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="acquire"
-                              size="xl"
-                              onClick={handleAcquire}
-                              className="gap-2"
-                              disabled={acquireLoading || isReservedByOther}
-                              aria-busy={acquireLoading}
-                            >
-                              {acquireLoading ? (
-                                <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-                              ) : null}
-                              {acquireLoading
-                                ? "Redirecting..."
-                                : isReservedByOther
-                                  ? "Reserved"
-                                  : "Acquire"}
-                            </Button>
-                          )}
-                          <Button
-                            variant="acquire"
-                            size="xl"
-                            onClick={handleInquire}
-                            className="gap-2"
-                          >
-                            <Mail className="h-5 w-5" />
-                            Inquire
-                          </Button>
-                        </>
+                <div className="artwork-detail-actions">
+                  {isAvailable ? (
+                    <>
+                      {isMyReservation && myVerificationId ? (
+                        <Link
+                          to={`/verify/callback?resume=${encodeURIComponent(myVerificationId)}&artwork=${work.id}`}
+                          className="artwork-detail-btn artwork-detail-btn--sky"
+                        >
+                          Resume payment
+                        </Link>
                       ) : (
-                        <Button variant="acquire" size="xl" asChild className="gap-2">
-                          <Link
-                            to={`/contacto?obra=${encodeURIComponent(work.title)}&artista=${encodeURIComponent(
-                              artistName,
-                            )}`}
-                          >
-                            Inquire About This Work
-                          </Link>
-                        </Button>
-                      )}
-                    </div>
-                    {isAvailable && isMyReservation && myVerificationId ? (
-                      <p role="status" className="text-sm text-muted-foreground max-w-xl">
-                        You have this work reserved for about {minutesLeft} more minutes. Resume your
-                        payment, or release it for other collectors.{" "}
                         <button
                           type="button"
-                          data-no-pill
-                          onClick={handleReleaseReservation}
-                          disabled={releasing}
-                          className="underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+                          className="artwork-detail-btn artwork-detail-btn--sky"
+                          onClick={handleAcquire}
+                          disabled={acquireLoading || isReservedByOther}
+                          aria-busy={acquireLoading}
                         >
-                          Release reservation
+                          {acquireLoading ? <Loader2 className="animate-spin" aria-hidden /> : null}
+                          {acquireLoading ? "Redirecting..." : isReservedByOther ? "Reserved" : "Acquire"}
                         </button>
-                      </p>
-                    ) : null}
-                    {isAvailable && isReservedByOther ? (
-                      <p role="status" className="text-sm text-muted-foreground max-w-xl">
-                        Another collector is completing the acquisition of this work. If it isn't
-                        completed, it becomes available again in about {minutesLeft} minutes.
-                      </p>
-                    ) : null}
+                      )}
+                      <button
+                        type="button"
+                        className="artwork-detail-btn artwork-detail-btn--outline"
+                        onClick={handleInquire}
+                      >
+                        <Mail aria-hidden />
+                        Inquire
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      to={`/contacto?obra=${encodeURIComponent(work.title)}&artista=${encodeURIComponent(artistName)}`}
+                      className="artwork-detail-btn artwork-detail-btn--ink"
+                    >
+                      Inquire About This Work
+                    </Link>
+                  )}
+                </div>
+
+                {isAvailable ? (
+                  <p className="artwork-detail-stripe">Secure checkout powered by Stripe</p>
+                ) : null}
+
+                {isAvailable && isMyReservation && myVerificationId ? (
+                  <p role="status" className="artwork-detail-status">
+                    You have this work reserved for about {minutesLeft} more minutes. Resume your payment, or
+                    release it for other collectors.{" "}
+                    <button
+                      type="button"
+                      data-no-pill
+                      onClick={handleReleaseReservation}
+                      disabled={releasing}
+                    >
+                      Release reservation
+                    </button>
+                  </p>
+                ) : null}
+
+                {isAvailable && isReservedByOther ? (
+                  <p role="status" className="artwork-detail-status">
+                    Another collector is completing the acquisition of this work. If it isn't completed, it
+                    becomes available again in about {minutesLeft} minutes.
+                  </p>
+                ) : null}
+              </div>
+            </section>
+
+            {/* More from the collection */}
+            {moreWorks.length > 0 && (
+              <section className="artwork-detail-more">
+                <div className="artwork-detail-more__head">
+                  <div>
+                    <p className="artwork-detail-eyebrow">(Keep exploring)</p>
+                    <h2 className="artwork-detail-more__title">
+                      More from the
+                      <span className="artwork-detail-script">collection</span>
+                    </h2>
+                  </div>
+                  <Link to="/artworks" className="artwork-detail-more__all">
+                    View all works
+                  </Link>
+                </div>
+                <div className="artwork-detail-more__grid">
+                  {moreWorks.map((related) => {
+                    const relatedArtist = related.artistName?.trim() || FALLBACK_ARTIST_NAME;
+                    return (
+                      <Link
+                        key={related.id}
+                        to={`/artworks/${related.id}`}
+                        className="artwork-detail-card"
+                      >
+                        <div className="artwork-detail-card__media">
+                          <img
+                            src={getWorkImageUrl(related.imagenUrl)}
+                            alt={related.title}
+                            loading="lazy"
+                          />
+                        </div>
+                        <p className="artwork-detail-card__artist">{relatedArtist}</p>
+                        <h3 className="artwork-detail-card__title">{related.title}</h3>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Artist bio */}
+            {work.artistBio && (
+              <section className="artwork-detail-extra">
+                <div className="artwork-detail-extra__block">
+                  {work.artistPhoto ? (
+                    <div className="artwork-detail-extra__photo">
+                      <img src={work.artistPhoto} alt={artistName} />
+                    </div>
+                  ) : null}
+                  <div>
+                    <p className="artwork-detail-eyebrow artwork-detail-extra__label">About the artist</p>
+                    <h3 className="artwork-detail-extra__heading">
+                      {work.artistSlug ? (
+                        <Link to={`/artistas/${work.artistSlug}`}>{artistName}</Link>
+                      ) : (
+                        artistName
+                      )}
+                    </h3>
+                    <p className="artwork-detail-extra__copy">{work.artistBio}</p>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Shipping & Certificate */}
+            <section className="artwork-detail-extra">
+              <div className="artwork-detail-extra__grid">
+                <div className="artwork-detail-extra__block">
+                  <Package className="artwork-detail-extra__icon" aria-hidden />
+                  <div>
+                    <h2 className="artwork-detail-extra__heading">Shipping & Logistics</h2>
+                    <p className="artwork-detail-extra__copy">
+                      White-glove international shipping included. We handle all export documentation from
+                      Argentina to your doorstep.
+                    </p>
+                  </div>
+                </div>
+                <div className="artwork-detail-extra__block">
+                  <FileCheck className="artwork-detail-extra__icon" aria-hidden />
+                  <div>
+                    <h2 className="artwork-detail-extra__heading">Certificate of Authenticity</h2>
+                    <p className="artwork-detail-extra__copy">
+                      Each work includes a Certificate of Authenticity—both physical and digital—signed by the
+                      artist, attesting to the piece’s provenance and authenticity.
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </div>
 
           <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Before we verify your identity</DialogTitle>
                 <DialogDescription>
-                  Enter your email. We'll use it only for this acquisition: to keep you updated and
-                  to remind you if you don't finish.
+                  Enter your email. We'll use it only for this acquisition: to keep you updated and to remind
+                  you if you don't finish.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleEmailContinue} className="grid gap-4">
@@ -563,132 +608,15 @@ const ArtworkDetailPage = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={acquireLoading}
                   />
-                  {emailError ? (
-                    <p className="text-sm text-destructive">{emailError}</p>
-                  ) : null}
+                  {emailError ? <p className="text-sm text-destructive">{emailError}</p> : null}
                 </div>
                 <Button type="submit" variant="acquire" disabled={acquireLoading} aria-busy={acquireLoading}>
-                  {acquireLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  ) : null}
+                  {acquireLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                   Continue
                 </Button>
               </form>
             </DialogContent>
           </Dialog>
-
-          {/* Artist bio */}
-          {work.artistBio && (
-            <section className="section-padded border-t border-border">
-              <div className="container mx-auto">
-                <div className="flex flex-col sm:flex-row gap-8 items-start">
-                  {work.artistPhoto && (
-                    <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0 border border-border">
-                      <img
-                        src={work.artistPhoto}
-                        alt={artistName}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <p className="text-label text-muted-foreground mb-1">About the artist</p>
-                    {work.artistSlug ? (
-                      <Link to={`/artistas/${work.artistSlug}`} className="hover:text-foreground transition-colors">
-                        <h3 className="text-display text-xl font-semibold mb-3">{artistName}</h3>
-                      </Link>
-                    ) : (
-                      <h3 className="text-display text-xl font-semibold mb-3">{artistName}</h3>
-                    )}
-                    <p className="text-sm text-muted-foreground leading-relaxed">{work.artistBio}</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {otherWorks.length > 0 && (
-            <section className="section-padded border-t border-border">
-              <div className="container mx-auto">
-                <h2 className="text-technical text-foreground font-semibold mb-8">More works by {artistName}</h2>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 md:gap-8">
-                  {otherWorks.map((relatedWork) => (
-                    <Link key={relatedWork.id} to={`/artworks/${relatedWork.id}`} className="group block">
-                      <div className="flex flex-col border border-border bg-card transition-shadow hover:shadow-md">
-                        <div
-                          className="relative aspect-[4/5] overflow-hidden"
-                          style={{ backgroundColor: "rgba(30,21,23,0.04)" }}
-                        >
-                          <WorkImage
-                            imagenUrl={relatedWork.imagenUrl}
-                            title={relatedWork.title}
-                            artistName={artistName}
-                            className="h-full w-full"
-                            imageClassName="!object-contain !object-center transition-[filter] duration-500 ease-out saturate-[0.86] contrast-[0.95] group-hover:saturate-100 group-hover:contrast-100"
-                          />
-                          {!relatedWork.available && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-foreground/50">
-                              <p className="px-4 py-2 text-center text-background/95 text-sm font-light italic max-w-[80%]">
-                                Private collection
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                        <div className="border-t border-border/80 bg-card px-4 py-4">
-                          <h3 className="font-display text-sm font-semibold text-foreground truncate">
-                            {relatedWork.title}
-                          </h3>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {relatedWork.available
-                              ? shouldShowPrice()
-                                ? relatedWork.priceDisplay
-                                : "Price on request"
-                              : "Private collection"}
-                          </p>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Shipping & Logistics */}
-          <section className="section-padded border-b border-border bg-background">
-            <div className="container mx-auto">
-              <div className="flex flex-col md:flex-row md:items-start gap-6">
-                <div className="flex-shrink-0 rounded-lg bg-background border border-border p-4">
-                  <Package className="h-8 w-8 text-foreground" />
-                </div>
-                <div>
-                  <h2 className="text-technical text-foreground font-semibold mb-2">Shipping & Logistics</h2>
-                  <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl">
-                    White-glove international shipping included. We handle all export documentation from Argentina to
-                    your doorstep.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Certificate of Authenticity */}
-          <section className="section-padded">
-            <div className="container mx-auto">
-              <div className="flex flex-col md:flex-row md:items-start gap-6">
-                <div className="flex-shrink-0 rounded-lg bg-background border border-border p-4">
-                  <FileCheck className="h-8 w-8 text-foreground" />
-                </div>
-                <div>
-                  <h2 className="text-technical text-foreground font-semibold mb-2">Certificate of Authenticity</h2>
-                  <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl">
-                    Each work includes a Certificate of Authenticity—both physical and digital—signed by the artist,
-                    attesting to the piece’s provenance and authenticity.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
         </main>
         <Footer />
       </div>

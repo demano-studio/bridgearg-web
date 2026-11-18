@@ -50,40 +50,87 @@ export function NewsletterForm({
 
   if (status === "success") {
     return (
-      <p
-        className={`font-display text-xs ${
-          isFooter ? "text-[#fcf8ea]/80" : "text-foreground"
-        }`}
-      >
+      <p className={isFooter ? "site-footer-form__success" : "collection-newsletter__success"}>
         Thank you. You're on the list.
       </p>
     );
   }
 
-  return (
-    <form onSubmit={handleSubmit} className="w-full">
-      <div className={`flex gap-2 ${isFooter ? "" : "flex-col sm:flex-row"}`}>
-        <label htmlFor={`newsletter-email-${source}`} className="sr-only">
+  const honeypot = (
+    <input
+      type="text"
+      name="website"
+      value={website}
+      onChange={(e) => setWebsite(e.target.value)}
+      tabIndex={-1}
+      autoComplete="off"
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        left: "-10000px",
+        top: "auto",
+        width: "1px",
+        height: "1px",
+        overflow: "hidden",
+      }}
+    />
+  );
+
+  if (!isFooter) {
+    return (
+      <form onSubmit={handleSubmit} className="collection-newsletter form">
+        <label htmlFor={`newsletter-email-${source}`} className="collection-newsletter__label">
           Email address
         </label>
-        {/* Honeypot: visible to bots, off-screen for humans (no display:none). */}
-        <input
-          type="text"
-          name="website"
-          value={website}
-          onChange={(e) => setWebsite(e.target.value)}
-          tabIndex={-1}
-          autoComplete="off"
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            left: "-10000px",
-            top: "auto",
-            width: "1px",
-            height: "1px",
-            overflow: "hidden",
-          }}
-        />
+        {honeypot}
+        <div className="collection-newsletter__row">
+          <Input
+            id={`newsletter-email-${source}`}
+            type="email"
+            required
+            autoComplete="email"
+            aria-label="Email address"
+            placeholder="your@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={status === "loading"}
+            className="collection-newsletter__input focus-visible:ring-0 focus-visible:ring-offset-0"
+          />
+          <Button
+            type="submit"
+            disabled={status === "loading"}
+            className="collection-newsletter__submit hover:bg-transparent hover:text-[#1e1517]"
+          >
+            {status === "loading" ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Sending...
+              </span>
+            ) : (
+              buttonLabel
+            )}
+          </Button>
+        </div>
+        {status === "error" && error ? (
+          <p role="alert" className="collection-newsletter__error">
+            {error}
+          </p>
+        ) : null}
+        <p className="collection-newsletter__legal">
+          By subscribing you agree to receive occasional emails from BridgeARG about new works and
+          exhibitions. You can unsubscribe at any time.
+        </p>
+      </form>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="site-footer-form">
+      <label htmlFor={`newsletter-email-${source}`} className="site-footer-form__label">
+        Email address
+      </label>
+      {honeypot}
+      <div className="site-footer-form__row">
         <Input
           id={`newsletter-email-${source}`}
           type="email"
@@ -94,25 +141,17 @@ export function NewsletterForm({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={status === "loading"}
-          className={
-            isFooter
-              ? "h-auto flex-1 rounded-none border-[#fcf8ea]/20 bg-transparent px-3 py-2 font-display text-xs text-[#fcf8ea] placeholder:text-[#fcf8ea]/30 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#fcf8ea]/50"
-              : "h-auto flex-1 rounded-none border-[rgba(30,21,23,0.2)] bg-[var(--color-surface)] px-3 py-2.5 font-display text-sm text-[#1e1517] placeholder:text-[rgba(30,21,23,0.4)] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-[#7FB2D1]"
-          }
+          className="site-footer-form__input focus-visible:ring-0 focus-visible:ring-offset-0"
         />
         <Button
           type="submit"
           disabled={status === "loading"}
-          className={
-            isFooter
-              ? "h-auto rounded-[var(--radius-button)] border border-[#fcf8ea]/20 bg-transparent px-6 py-2 font-display text-xs uppercase tracking-[0.12em] text-[#fcf8ea] hover:bg-[#fcf8ea]/10"
-              : "h-auto rounded-[var(--radius-button)] border border-[#7FB2D1] bg-[#7FB2D1] px-6 py-2.5 font-display text-xs uppercase tracking-[0.12em] text-[#1e1517] hover:bg-[#7FB2D1]/85"
-          }
+          className="site-footer-form__submit"
         >
           {status === "loading" ? (
             <span className="inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              {isFooter ? "Subscribing..." : "Sending..."}
+              Subscribing...
             </span>
           ) : (
             buttonLabel
@@ -120,15 +159,11 @@ export function NewsletterForm({
         </Button>
       </div>
       {status === "error" && error ? (
-        <p role="alert" className={`mt-2 font-display text-xs ${isFooter ? "text-[#f5c6c6]" : "text-destructive"}`}>
+        <p role="alert" className="site-footer-form__error">
           {error}
         </p>
       ) : null}
-      <p
-        className={`mt-3 font-display text-[10px] leading-relaxed ${
-          isFooter ? "text-[#fcf8ea]/45" : "text-[rgba(30,21,23,0.55)]"
-        }`}
-      >
+      <p className="site-footer-form__legal">
         By subscribing you agree to receive occasional emails from BridgeARG about new works and
         exhibitions. You can unsubscribe at any time.
       </p>

@@ -48,32 +48,20 @@ export function NewsletterInvite() {
   };
 
   return (
-    <aside
-      className="relative border-y border-[rgba(30,21,23,0.12)] bg-[#fcf8ea]"
-      style={{
-        padding: "28px clamp(24px, 7vw, 120px)",
-        minHeight: "140px",
-      }}
-      aria-label="Newsletter"
-    >
+    <aside className="collection-newsletter" aria-label="Newsletter">
       <button
         type="button"
         data-no-pill
         onClick={dismiss}
         aria-label="Dismiss"
-        className="icon-btn absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center text-[#1e1517]/55 transition-colors hover:text-[#1e1517] md:right-8"
+        className="collection-newsletter__dismiss icon-btn"
       >
         <X className="h-4 w-4" aria-hidden />
       </button>
-      <div className="grid max-w-3xl gap-4 pr-10 md:grid-cols-[1fr_1.2fr] md:items-end md:gap-10">
+      <div className="collection-newsletter__grid">
         <div>
-          <h2
-            className="font-display text-2xl font-semibold tracking-tight text-[#1e1517] md:text-3xl"
-            style={{ letterSpacing: "-0.03em" }}
-          >
-            New works, first.
-          </h2>
-          <p className="mt-2 font-display text-sm leading-relaxed text-[rgba(30,21,23,0.65)]">
+          <h2 className="collection-newsletter__title">New works, first.</h2>
+          <p className="collection-newsletter__copy">
             Leave your email and we'll let you know when new works arrive.
           </p>
         </div>

@@ -1,5 +1,3 @@
-import emailjs from "@emailjs/browser";
-
 const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
 /** Format price in USD with en-US locale (e.g. "USD 4,500.00"). */
@@ -580,28 +578,37 @@ export async function createStripeCheckoutViaEdgeFunction(input: CheckoutInput |
 }
 
 export interface ContactPayload {
-  name: string;
+  full_name: string;
   email: string;
   subject: string;
   message: string;
+  consent: boolean;
+  website_hp?: string;
 }
 
-export async function submitContact(payload: ContactPayload): Promise<void> {
-  const result = await emailjs.send(
-    import.meta.env.VITE_EMAILJS_SERVICE_ID,
-    import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-    {
-      from_name: payload.name,
-      from_email: payload.email,
-      subject: payload.subject,
-      message: payload.message,
-    },
-    import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-  );
+/** Contact form → edge function `contact-request` (Brevo list BREVO_LIST_ID, ORIGEN_BASE: "contact"). */
+export async function submitContact(
+  payload: ContactPayload,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { getSupabase } = await import("@/lib/supabaseClient");
+  const supabase = getSupabase();
+  const { data, error } = await supabase.functions.invoke("contact-request", {
+    body: payload,
+  });
 
-  if (result.status !== 200) {
-    throw new Error("Could not send your message");
+  if (error) {
+    return {
+      ok: false,
+      error: await readFunctionError(error, "Could not send your message"),
+    };
   }
+
+  const result = (data ?? {}) as { ok?: boolean; error?: string };
+  if (result.error) {
+    return { ok: false, error: String(result.error) };
+  }
+
+  return { ok: true };
 }
 
 export async function subscribeNewsletter(

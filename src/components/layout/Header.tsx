@@ -40,8 +40,10 @@ export function Header() {
   const lightHeroPages = ["/about", "/contact", "/trade"];
   const isLightHero = lightHeroPages.some((p) => location.pathname.startsWith(p));
   const useLightNav = isLightHero && !scrolled;
-  // Artist detail only (/artists/:slug) — dark text over cream; other routes unchanged
-  const isArtistDetailPage = /^\/artists\/[^/]+\/?$/.test(location.pathname);
+  // Artist detail + artwork detail — dark text over cream glass; other routes unchanged
+  const isArtistDetailPage =
+    /^\/artists\/[^/]+\/?$/.test(location.pathname) ||
+    /^\/artworks\/\d+\/?$/.test(location.pathname);
   const isTradePage = location.pathname.startsWith("/trade");
   const tradeApplyTo = location.pathname === "/trade" ? { hash: "apply" } : "/trade#apply";
   const logoSrc = isArtistDetailPage ? logoDarkSrc : logoLightSrc;

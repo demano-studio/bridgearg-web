@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/Header";
@@ -8,11 +8,12 @@ import { PageTransition } from "@/components/PageTransition";
 import { FALLBACK_ARTIST_NAME, getWorks, type WorkFromApi } from "@/lib/api";
 import { shouldShowPrice } from "@/lib/geoPricing";
 import { images } from "@/lib/images";
-import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OptimizedImage } from "@/components/OptimizedImage";
+import "@/styles/collection.css";
 
 /**
  * TODO - Base de datos:
@@ -24,39 +25,8 @@ import { OptimizedImage } from "@/components/OptimizedImage";
  * - Imágenes reales (no las mismas fotos repetidas)
  */
 
-const filterPanelLabelStyle: CSSProperties = {
-  fontSize: "10px",
-  letterSpacing: "0.22em",
-  textTransform: "uppercase",
-  color: "rgba(252,248,234,0.85)",
-  marginBottom: "9px",
-};
-
-const filterPanelControlStyle: CSSProperties = {
-  width: "100%",
-  border: "1px solid rgba(252,248,234,0.4)",
-  backgroundColor: "transparent",
-  padding: "12px",
-  color: "#fcf8ea",
-  outline: "none",
-};
-
-const navActionStyle: CSSProperties = {
-  border: "1px solid rgba(252,248,234,0.6)",
-  backgroundColor: "transparent",
-  borderRadius: "var(--radius-button)",
-  padding: "12px 24px",
-  textTransform: "uppercase",
-  letterSpacing: "0.16em",
-  fontSize: "11px",
-  color: "#fcf8ea",
-  cursor: "pointer",
-  fontFamily: '"Onest", sans-serif',
-};
-
 const ArtworksPage = () => {
   const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
   const sectionRef = useRef<HTMLElement>(null);
   const [searchParams] = useSearchParams();
   const {
@@ -256,7 +226,7 @@ const ArtworksPage = () => {
 
   const overlayLabel = (work: WorkFromApi) => {
     if (work.status === "sold") return "Sold";
-  if (work.status === "reserved") return "Reserved";
+    if (work.status === "reserved") return "Reserved";
     return "Private collection";
   };
 
@@ -264,12 +234,9 @@ const ArtworksPage = () => {
     const artistName = work.artistName?.trim() || FALLBACK_ARTIST_NAME;
     const showOverlay = !work.available || work.status === "sold";
 
-    const mediaBlock = (
-      <Link
-        to={`/artworks/${work.id}`}
-        style={{ display: "block", textDecoration: "none", color: "inherit" }}
-      >
-        <div className="media relative w-full overflow-hidden" style={{ backgroundColor: "transparent" }}>
+    return (
+      <article key={work.id} className="collection-card group">
+        <Link to={`/artworks/${work.id}`} className="collection-card__media relative">
           <OptimizedImage
             src={work.imagenUrl}
             title={work.title}
@@ -277,154 +244,47 @@ const ArtworksPage = () => {
             variant="artwork"
             aspectRatio="4/5"
             priority={index < 6}
-            sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
-            imageClassName="transition-[filter] duration-300 ease-out saturate-[0.92] contrast-[0.97] group-hover:saturate-100 group-hover:contrast-100"
+            sizes="(max-width: 560px) 100vw, (max-width: 1000px) 50vw, 33vw"
+            className="!bg-[#efe7cf]"
+            imageClassName="collection-card__img saturate-[0.92] contrast-[0.97] group-hover:saturate-100 group-hover:contrast-100"
           />
-          {showOverlay && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 1,
-                backgroundColor: "rgba(30,21,23,0.46)",
-                display: "grid",
-                placeItems: "center",
-                color: "#fcf8ea",
-                fontSize: "10px",
-                textTransform: "uppercase",
-                letterSpacing: "0.22em",
-                pointerEvents: "none",
-              }}
-            >
-              {overlayLabel(work)}
-            </div>
-          )}
-        </div>
-      </Link>
-    );
+          {showOverlay && <div className="collection-card__overlay">{overlayLabel(work)}</div>}
+        </Link>
 
-    const infoLinkStyle: CSSProperties = {
-      fontSize: "10px",
-      textTransform: "uppercase",
-      letterSpacing: "0.18em",
-      fontFamily: '"Onest", sans-serif',
-      textDecoration: "none",
-      paddingBottom: "3px",
-    };
-    const infoLinkClassName =
-      "border-b border-solid border-[rgba(252,248,234,0.4)] text-[#fcf8ea] transition-[color,border-color] duration-200 hover:text-[#7FB2D1] hover:border-[#7FB2D1]";
-
-    const infoBlock = (
-      <div
-        className="info"
-        style={{
-          padding: "24px 24px 22px",
-          minHeight: 174,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          backgroundColor: "#1e1517",
-          color: "#fcf8ea",
-        }}
-      >
-        <div>
-          <p
-            style={{
-              fontSize: "11px",
-              textTransform: "uppercase",
-              letterSpacing: "0.28em",
-              color: "rgba(252,248,234,0.85)",
-              marginBottom: "8px",
-              fontFamily: '"Onest", sans-serif',
-            }}
-          >
-            {artistName}
-          </p>
-          <h3
-            style={{
-              fontFamily: '"Onest", sans-serif',
-              fontSize: "22px",
-              letterSpacing: "-0.03em",
-              margin: "0 0 18px",
-              fontWeight: 500,
-              color: "#fcf8ea",
-            }}
-          >
-            {work.title}
-          </h3>
-          <p
-            style={{
-              fontSize: "16px",
-              fontWeight: 600,
-              margin: "0 0 18px",
-              color: "#fcf8ea",
-              fontFamily: '"Onest", sans-serif',
-            }}
-          >
+        <div className="collection-card__info">
+          <p className="collection-card__artist">{artistName}</p>
+          <h3 className="collection-card__title">{work.title}</h3>
+          <p className="collection-card__price">
             {shouldShowPrice() ? work.priceDisplay : "Price on request"}
           </p>
-        </div>
-        <div
-          className="card-actions flex flex-wrap gap-x-5 gap-y-2 opacity-65 transition-opacity duration-300 ease-out group-hover:opacity-100"
-          style={{ fontFamily: '"Onest", sans-serif' }}
-        >
-          <Link
-            to={`/artworks/${work.id}`}
-            className={infoLinkClassName}
-            style={infoLinkStyle}
-          >
-            View work
-          </Link>
-          {work.available ? (
-            <Link
-              to={`/contacto?obra=${encodeURIComponent(work.title)}&artista=${encodeURIComponent(artistName)}`}
-              className={infoLinkClassName}
-              style={infoLinkStyle}
-            >
-              Inquire
+          <div className="collection-card__actions">
+            <Link to={`/artworks/${work.id}`} className="collection-card__link">
+              View work
             </Link>
-          ) : (
-            <Link
-              to={`/contacto?obra=${encodeURIComponent(work.title)}&tipo=private-collection`}
-              className={infoLinkClassName}
-              style={infoLinkStyle}
-            >
-              Inquire
-            </Link>
-          )}
+            {work.available ? (
+              <Link
+                to={`/contacto?obra=${encodeURIComponent(work.title)}&artista=${encodeURIComponent(artistName)}`}
+                className="collection-card__link"
+              >
+                Inquire
+              </Link>
+            ) : (
+              <Link
+                to={`/contacto?obra=${encodeURIComponent(work.title)}&tipo=private-collection`}
+                className="collection-card__link"
+              >
+                Inquire
+              </Link>
+            )}
+          </div>
         </div>
-      </div>
-    );
-
-    const cardShellStyle: CSSProperties = {
-      border: "1px solid rgba(30,21,23,0.18)",
-      backgroundColor: "var(--color-surface)",
-      position: "relative",
-      overflow: "hidden",
-      transition: "0.35s",
-    };
-
-    return (
-      <article
-        key={work.id}
-        className="group"
-        style={{
-          breakInside: "avoid",
-          marginBottom: "24px",
-          display: "inline-block",
-          width: "100%",
-          ...cardShellStyle,
-        }}
-      >
-        {mediaBlock}
-        {infoBlock}
       </article>
     );
   };
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="collection-page min-h-screen">
         <SEO
           title="Collection"
           description="Explore our collection of works by contemporary Argentine artists."
@@ -432,7 +292,7 @@ const ArtworksPage = () => {
         />
         <Header />
         <main ref={sectionRef}>
-          {/* 1. Hero */}
+          {/* 1. Hero — unchanged */}
           <section
             className="grid grid-cols-1 min-[1000px]:grid-cols-[1.2fr_0.8fr] min-[1000px]:items-end"
             style={{
@@ -543,332 +403,163 @@ const ArtworksPage = () => {
             </aside>
           </section>
 
-          {/* 2. Nav row */}
-          <div
-            style={{
-              position: isMobile ? "static" : "sticky",
-              top: "80px",
-              zIndex: 15,
-              padding: isMobile ? "20px" : "28px clamp(24px, 7vw, 120px)",
-              borderBottom: "1px solid rgba(30,21,23,0.18)",
-              backgroundColor: "rgba(127,178,209,0.95)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: "30px",
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={() => setFiltersOpen((o) => !o)}
-                className="transition-colors duration-300 hover:bg-[#fcf8ea] hover:text-[#7FB2D1]"
-                style={navActionStyle}
-              >
-                {filtersOpen ? "Filter works −" : "Filter works +"}
-              </button>
-              <select
-                value={sortBy}
-                className="transition-colors duration-300 hover:bg-[#fcf8ea] hover:text-[#7FB2D1]"
-                onChange={(e) =>
-                  setSortBy(
-                    e.target.value as
-                      | "default"
-                      | "price-asc"
-                      | "price-desc"
-                      | "newest"
-                      | "oldest"
-                      | "az",
-                  )
-                }
-                style={{ ...navActionStyle, cursor: "pointer" }}
-              >
-                <option value="default">Sort by</option>
-                <option value="price-asc">Price low to high</option>
-                <option value="price-desc">Price high to low</option>
-                <option value="az">Artist A–Z</option>
-              </select>
-            </div>
-          </div>
-
-          {/* 3. Filter panel */}
-          {filtersOpen && (
-            <div
-              className="grid max-[679px]:grid-cols-1 max-[999px]:grid-cols-2 min-[1000px]:grid-cols-3"
-              style={{
-                marginLeft: isMobile ? "20px" : "clamp(24px, 7vw, 120px)",
-                marginRight: isMobile ? "20px" : "clamp(24px, 7vw, 120px)",
-                border: "1px solid rgba(252,248,234,0.4)",
-                borderTop: "none",
-                padding: isMobile ? "20px" : "28px",
-                backgroundColor: "rgba(127,178,209,0.95)",
-                gap: isMobile ? "14px" : "20px",
-              }}
-            >
-              <div>
-                <label style={filterPanelLabelStyle}>Artist</label>
-                <select
-                  value={artistFilter}
-                  onChange={(e) => setArtistFilter(e.target.value)}
-                  style={{ ...filterPanelControlStyle, fontFamily: '"Onest", sans-serif' }}
-                >
-                  <option value="">All artists</option>
-                  {artistOptions.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={filterPanelLabelStyle}>Availability</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value as "all" | "available" | "sold")}
-                  style={{ ...filterPanelControlStyle, fontFamily: '"Onest", sans-serif' }}
-                >
-                  <option value="all">All</option>
-                  <option value="available">Available</option>
-                  <option value="sold">Sold</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "10px",
-                    letterSpacing: "0.22em",
-                    textTransform: "uppercase",
-                    color: "rgba(252,248,234,0.85)",
-                    marginBottom: "12px",
-                    fontFamily: '"Onest", sans-serif',
-                  }}
-                >
-                  Price range
-                </label>
-
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "#fcf8ea",
-                      fontFamily: '"Onest", sans-serif',
-                      fontWeight: 500,
-                    }}
-                  >
-                    USD {priceBounds.min.toLocaleString()}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "#fcf8ea",
-                      fontFamily: '"Onest", sans-serif',
-                      fontWeight: 500,
-                    }}
-                  >
-                    USD {priceRange[1].toLocaleString()}
-                  </span>
+          <div className="collection-body">
+            <div className="collection-wrap">
+              {/* 2. Filter / sort bar */}
+              <div className="collection-toolbar">
+                <div className="collection-toolbar__inner">
+                  <p className="collection-eyebrow">{sortedWorks.length} works</p>
+                  <div className="collection-toolbar__actions">
+                    <button
+                      type="button"
+                      className="collection-pill"
+                      onClick={() => setFiltersOpen((o) => !o)}
+                    >
+                      {filtersOpen ? "Filter works −" : "Filter works +"}
+                    </button>
+                    <div className="collection-sort">
+                      <select
+                        value={sortBy}
+                        aria-label="Sort by"
+                        onChange={(e) =>
+                          setSortBy(
+                            e.target.value as
+                              | "default"
+                              | "price-asc"
+                              | "price-desc"
+                              | "newest"
+                              | "oldest"
+                              | "az",
+                          )
+                        }
+                      >
+                        <option value="default">Sort by</option>
+                        <option value="price-asc">Price low to high</option>
+                        <option value="price-desc">Price high to low</option>
+                        <option value="az">Artist A–Z</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-
-                <input
-                  type="range"
-                  min={priceBounds.min}
-                  max={priceBounds.max}
-                  value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceBounds.min, Number(e.target.value)])}
-                  className="cream-slider"
-                  style={{
-                    width: "100%",
-                    WebkitAppearance: "none",
-                    appearance: "none",
-                    height: "2px",
-                    backgroundColor: "rgba(252,248,234,0.3)",
-                    outline: "none",
-                    cursor: "pointer",
-                    accentColor: "#fcf8ea",
-                  }}
-                />
               </div>
-            </div>
-          )}
 
-          {/* 4. Counter */}
-          <p
-            style={{
-              margin: "30px clamp(24px, 7vw, 120px) 18px",
-              fontSize: "11px",
-              letterSpacing: "0.26em",
-              textTransform: "uppercase",
-              color: "rgba(30,21,23,0.62)",
-              fontFamily: '"Onest", sans-serif',
-            }}
-          >
-            {sortedWorks.length} works
-          </p>
+              {/* 3. Filter panel */}
+              {filtersOpen && (
+                <div className="collection-filters">
+                  <div>
+                    <label htmlFor="collection-filter-artist">Artist</label>
+                    <select
+                      id="collection-filter-artist"
+                      value={artistFilter}
+                      onChange={(e) => setArtistFilter(e.target.value)}
+                    >
+                      <option value="">All artists</option>
+                      {artistOptions.map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="collection-filter-status">Availability</label>
+                    <select
+                      id="collection-filter-status"
+                      value={statusFilter}
+                      onChange={(e) =>
+                        setStatusFilter(e.target.value as "all" | "available" | "sold")
+                      }
+                    >
+                      <option value="all">All</option>
+                      <option value="available">Available</option>
+                      <option value="sold">Sold</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="collection-filter-price">Price range</label>
+                    <div className="collection-filters__range-labels">
+                      <span>USD {priceBounds.min.toLocaleString()}</span>
+                      <span>USD {priceRange[1].toLocaleString()}</span>
+                    </div>
+                    <input
+                      id="collection-filter-price"
+                      type="range"
+                      min={priceBounds.min}
+                      max={priceBounds.max}
+                      value={priceRange[1]}
+                      onChange={(e) => setPriceRange([priceBounds.min, Number(e.target.value)])}
+                      className="collection-filters__slider cream-slider"
+                    />
+                  </div>
+                </div>
+              )}
 
-          <NewsletterInvite />
+              {/* 4. Newsletter */}
+              <NewsletterInvite />
 
-          {/* 5. Works (masonry columns) */}
-          <section>
-            {loading ? (
-              <div
-                className="columns-1 sm:columns-2 lg:columns-3"
-                style={{
-                  padding: "0 clamp(24px, 7vw, 120px) 96px",
-                  columnGap: "24px",
-                  columnCount: isMobile ? 1 : isTablet ? 2 : 3,
-                }}
-              >
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      breakInside: "avoid",
-                      marginBottom: "24px",
-                      display: "inline-block",
-                      width: "100%",
-                    }}
-                  >
-                    <div className="overflow-hidden border border-[rgba(30,21,23,0.18)] bg-[var(--color-surface)]">
-                      <Skeleton className="aspect-[4/5] w-full" />
-                      <div className="space-y-3 p-6">
+              {/* 5. Works grid */}
+              <section className="collection-grid" aria-label="Works">
+                {loading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="collection-card">
+                      <Skeleton className="aspect-[4/5] w-full !bg-[#efe7cf]" />
+                      <div className="collection-card__info space-y-3">
                         <Skeleton className="h-3 w-24" />
-                        <Skeleton className="h-6 w-[80%]" />
+                        <Skeleton className="h-7 w-[80%]" />
                         <Skeleton className="h-4 w-32" />
                       </div>
                     </div>
+                  ))
+                ) : works.length === 0 ? (
+                  <div className="collection-empty">
+                    <p>Could not load the collection. Please try again later.</p>
                   </div>
-                ))}
-              </div>
-            ) : works.length === 0 && !loading ? (
-              <div
-                className="py-24 text-center"
-                style={{ paddingLeft: "clamp(24px, 7vw, 120px)", paddingRight: "clamp(24px, 7vw, 120px)" }}
-              >
-                <p className="text-sm text-muted-foreground" style={{ fontFamily: '"Onest", sans-serif' }}>
-                  Could not load the collection. Please try again later.
-                </p>
-              </div>
-            ) : sortedWorks.length === 0 ? (
-              <div
-                className="py-24 text-center"
-                style={{ paddingLeft: "clamp(24px, 7vw, 120px)", paddingRight: "clamp(24px, 7vw, 120px)" }}
-              >
-                <p className="text-sm text-muted-foreground" style={{ fontFamily: '"Onest", sans-serif' }}>
-                  No works match your current filters.
-                </p>
-                <button
-                  type="button"
-                  onClick={clearAllFilters}
-                  className="mt-4 inline-flex items-center rounded-[var(--radius-button)] border border-[rgba(30,21,23,0.18)] bg-transparent px-6 py-2 text-[11px] uppercase tracking-[0.18em] text-[#1e1517] transition-colors hover:bg-[#1e1517] hover:text-[#fcf8ea]"
-                  style={{ fontFamily: '"Onest", sans-serif' }}
-                >
-                  Clear filters
-                </button>
-              </div>
-            ) : (
-              <div
-                className="columns-1 sm:columns-2 lg:columns-3"
-                style={{
-                  padding: "0 clamp(24px, 7vw, 120px) 96px",
-                  columnGap: "24px",
-                  columnCount: isMobile ? 1 : isTablet ? 2 : 3,
-                }}
-              >
-                {sortedWorks.map((work, index) => renderWorkCard(work, index))}
-              </div>
-            )}
-          </section>
+                ) : sortedWorks.length === 0 ? (
+                  <div className="collection-empty">
+                    <p>No works match your current filters.</p>
+                    <button
+                      type="button"
+                      onClick={clearAllFilters}
+                      className="collection-pill collection-empty__btn"
+                    >
+                      Clear filters
+                    </button>
+                  </div>
+                ) : (
+                  sortedWorks.map((work, index) => renderWorkCard(work, index))
+                )}
+              </section>
+            </div>
 
-          {/* 6. Quote */}
-          <section
-            className="grid grid-cols-1 min-[1000px]:grid-cols-[0.7fr_1.3fr] min-[1000px]:items-center"
-            style={{
-              padding: "94px clamp(24px, 7vw, 120px)",
-              borderTop: "1px solid rgba(30,21,23,0.18)",
-              borderBottom: "1px solid rgba(30,21,23,0.18)",
-              gap: "50px",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: '"BestDB", "Caveat", cursive',
-                fontStyle: "italic",
-                fontSize: "clamp(48px, 5vw, 62px)",
-                color: "#7FB2D1",
-                transform: "rotate(-5deg)",
-                display: "inline-block",
-                margin: 0,
-              }}
-            >
-              Handmade in Argentina
-            </p>
-            <p
-              style={{
-                fontFamily: '"Onest", sans-serif',
-                fontSize: "clamp(28px, 3vw, 38px)",
-                lineHeight: 1.14,
-                letterSpacing: "-0.05em",
-                margin: 0,
-                maxWidth: "850px",
-                color: "#1e1517",
-              }}
-            >
-              Works that are not only decorative, but also stories of craft, design and identity.
-            </p>
-          </section>
-
-          {/* 7. Final CTA */}
-          <section style={{ padding: "90px clamp(24px, 7vw, 120px) 110px", textAlign: "center" }}>
-            <h2
-              style={{
-                fontFamily: '"Onest", sans-serif',
-                fontSize: "clamp(44px, 5vw, 62px)",
-                letterSpacing: "-0.06em",
-                margin: "0 0 18px",
-                fontWeight: 600,
-                color: "#1e1517",
-              }}
-            >
-              Looking for a specific piece?
-            </h2>
-            <p
-              style={{
-                color: "rgba(30,21,23,0.62)",
-                margin: "0 auto 28px",
-                maxWidth: "520px",
-                lineHeight: 1.7,
-                fontFamily: '"Onest", sans-serif',
-              }}
-            >
-              BridgeArg can help you find the right artwork, confirm availability and coordinate the
-              complete acquisition process.
-            </p>
-            <Link
-              to="/contact"
-              style={{
-                border: "1px solid #1e1517",
-                borderRadius: "var(--radius-button)",
-                backgroundColor: "transparent",
-                color: "#1e1517",
-                padding: "13px 24px",
-                textTransform: "uppercase",
-                letterSpacing: "0.18em",
-                fontSize: "11px",
-                cursor: "pointer",
-                transition: "0.25s",
-                textDecoration: "none",
-                display: "inline-block",
-                fontFamily: '"Onest", sans-serif',
-              }}
-              className="hover:!bg-[#1e1517] hover:!text-[#fcf8ea]"
-            >
-              Inquire with BridgeArg
-            </Link>
-          </section>
+            {/* 6. Close */}
+            <section className="collection-close">
+              <div className="collection-wrap">
+                <div className="collection-close__grid">
+                  <div>
+                    <p className="collection-close__eyebrow">(Handmade in Argentina)</p>
+                    <h2 className="collection-close__title">
+                      Handmade in
+                      <span className="collection-script">Argentina</span>
+                    </h2>
+                  </div>
+                  <div>
+                    <p className="collection-close__copy">
+                      Works that are not only decorative, but also stories of craft, design and
+                      identity.
+                    </p>
+                    <p className="collection-close__ask">Looking for a specific piece?</p>
+                    <p className="collection-close__help">
+                      BridgeArg can help you find the right artwork, confirm availability and
+                      coordinate the complete acquisition process.
+                    </p>
+                    <Link to="/contact" className="collection-close__btn">
+                      Inquire with BridgeArg <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         </main>
         <Footer />
       </div>

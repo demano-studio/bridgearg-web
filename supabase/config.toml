@@ -393,3 +393,6 @@ verify_jwt = false
 
 [functions.miami-request]
 verify_jwt = false
+
+[functions.contact-request]
+verify_jwt = false

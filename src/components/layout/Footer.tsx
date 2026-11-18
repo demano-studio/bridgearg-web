@@ -1,168 +1,101 @@
-import { Instagram, Linkedin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NewsletterForm } from "@/components/NewsletterForm";
+import "@/styles/footer.css";
 
-const logoSrc = encodeURI("/assets/logos/BRIDGEARG - Exportacion logos-05.svg");
+const logoSrc = encodeURI("/assets/logos/BRIDGEARG - Exportacion logos-06.svg");
 
 export function Footer() {
   return (
-    <footer className="bg-[#1e1517] text-[#fcf8ea]">
-      <div className="mx-auto max-w-7xl px-6 pb-12 pt-10 md:px-10 md:pb-14">
-        {/* Top: logo */}
-        <div className="mb-12 border-b border-[#fcf8ea]/10 pb-10">
-          <Link to="/">
-            <img
-              src={logoSrc}
-              alt="BridgeArg"
-              className="h-auto w-auto"
-              style={{ maxWidth: "200px" }}
-            />
-          </Link>
-        </div>
-
-        {/* Middle: nav + contact + newsletter */}
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-12">
-          <div>
-            <h4 className="mb-5 font-display text-xs font-medium uppercase tracking-[0.12em] text-[#fcf8ea]/72">
-              Navigation
-            </h4>
-            <nav className="space-y-3">
-              <Link
-                to="/artistas"
-                className="block w-fit font-display text-sm text-[#fcf8ea] decoration-[#fcf8ea]/70 underline-offset-4 transition-all hover:underline"
-              >
-                Artists
-              </Link>
-              <Link
-                to="/artworks"
-                className="block w-fit font-display text-sm text-[#fcf8ea] decoration-[#fcf8ea]/70 underline-offset-4 transition-all hover:underline"
-              >
-                Collection
-              </Link>
-              <Link
-                to="/about"
-                className="block w-fit font-display text-sm text-[#fcf8ea] decoration-[#fcf8ea]/70 underline-offset-4 transition-all hover:underline"
-              >
-                About
-              </Link>
-              <Link
-                to="/contact"
-                className="block w-fit font-display text-sm text-[#fcf8ea] decoration-[#fcf8ea]/70 underline-offset-4 transition-all hover:underline"
-              >
-                Contact
-              </Link>
-              <Link
-                to="/trade"
-                className="block w-fit font-display text-sm text-[#fcf8ea] decoration-[#fcf8ea]/70 underline-offset-4 transition-all hover:underline"
-              >
-                Trade Program
-              </Link>
-            </nav>
-          </div>
-
-          <div>
-            <h4 className="mb-5 font-display text-xs font-medium uppercase tracking-[0.12em] text-[#fcf8ea]/72">
-              Contact
-            </h4>
-            <div className="space-y-3 font-display text-sm text-[#fcf8ea]">
-              <p>info@bridgearg.net</p>
-              <p>Cordoba, Argentina</p>
-              <p>Plantation, FL, United States</p>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="mb-5 font-display text-xs font-medium uppercase tracking-[0.12em] text-[#fcf8ea]/72">
-              Newsletter
-            </h4>
-            <p className="mb-4 font-display text-xs leading-relaxed text-[#fcf8ea]/60">
-              Stay updated on new arrivals and exhibitions.
-            </p>
-            <NewsletterForm source="footer" variant="footer" />
-          </div>
-        </div>
-
-        {/* Bottom: payments + copyright + social */}
-        <div className="mt-12 border-t border-[#fcf8ea]/12 pt-6 space-y-6">
-          {/* Payment security */}
-          <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-2 opacity-50 hover:opacity-70 transition-opacity">
+    <footer className="site-footer">
+      <div className="site-footer__shell">
+        <div className="site-footer__card">
+          {/* Top: lockup + social */}
+          <div className="site-footer__top">
+            <Link to="/" className="site-footer__logo" aria-label="BridgeArg">
+              {/* Crop empty canvas in logos-06 so the lockup reads at ~48px */}
               <svg
+                className="site-footer__logo-svg"
+                viewBox="42 49 217 28"
                 xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#fcf8ea"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                role="img"
+                aria-hidden="true"
               >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                <title>BridgeArg</title>
+                <image href={logoSrc} x="0" y="0" width="300" height="132" />
               </svg>
-              <span className="font-display text-[10px] uppercase tracking-[0.14em] text-[#fcf8ea]">
-                Secure checkout powered by Stripe
-              </span>
-            </div>
-            <div className="flex items-center gap-2 opacity-40">
-              <span className="font-display text-[10px] uppercase tracking-[0.1em] text-[#fcf8ea]">
-                Visa
-              </span>
-              <span className="text-[#fcf8ea]/30">·</span>
-              <span className="font-display text-[10px] uppercase tracking-[0.1em] text-[#fcf8ea]">
-                Mastercard
-              </span>
-              <span className="text-[#fcf8ea]/30">·</span>
-              <span className="font-display text-[10px] uppercase tracking-[0.1em] text-[#fcf8ea]">
-                Amex
-              </span>
-            </div>
-          </div>
-
-          {/* Copyright + social */}
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-[#fcf8ea]/10 pt-4 md:flex-row">
-            <div className="flex flex-col items-center gap-2 md:items-start">
-              <p className="font-display text-xs uppercase tracking-[0.1em] text-[#fcf8ea]/72">
-                © 2026 BridgeArg
-              </p>
-              <p className="font-display text-[11px] text-[#fcf8ea]/58">
-                <Link to="/legal#terms" className="transition-colors hover:text-[#7FB2D1]">
-                  Terms &amp; Conditions
-                </Link>
-                <span className="px-2 text-[#fcf8ea]/35">·</span>
-                <Link to="/legal#privacy" className="transition-colors hover:text-[#7FB2D1]">
-                  Privacy Policy
-                </Link>
-              </p>
-            </div>
-            <div className="flex items-center gap-6">
-                {/* TODO: Reemplazar con URLs reales de redes sociales */}
-                {/* Instagram: https://www.instagram.com/bridgearg_ */}
-                {/* LinkedIn: https://www.linkedin.com/company/bridgearg */}
+            </Link>
+            <div className="site-footer__social">
+              {/* TODO: Reemplazar con URLs reales de redes sociales */}
+              {/* Instagram: https://www.instagram.com/bridgearg_ */}
+              {/* LinkedIn: https://www.linkedin.com/company/bridgearg */}
               <a
                 href="https://instagram.com/bridgearg_"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 font-display text-xs text-[#fcf8ea]/72 transition-colors hover:text-[#fcf8ea] truncate block max-w-full"
               >
-                <Instagram size={16} strokeWidth={1.5} />
-                  <span className="normal-case tracking-normal inline-block max-w-[8rem] truncate">
-                    @bridgearg_
-                  </span>
+                @bridgearg_
               </a>
               <a
                 href="https://linkedin.com/company/bridgearg"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 font-display text-xs text-[#fcf8ea]/72 transition-colors hover:text-[#fcf8ea]"
               >
-                <Linkedin size={16} strokeWidth={1.5} />
-                  <span className="normal-case tracking-normal inline-block max-w-[8rem] truncate">
-                    LinkedIn
-                  </span>
+                LinkedIn
               </a>
             </div>
+          </div>
+
+          {/* Columns */}
+          <div className="site-footer__cols">
+            <div>
+              <h4 className="site-footer__heading">Navigation</h4>
+              <nav className="site-footer__nav" aria-label="Footer">
+                <Link to="/artistas">Artists</Link>
+                <Link to="/artworks">Collection</Link>
+                <Link to="/about">About</Link>
+                <Link to="/contact">Contact</Link>
+                <Link to="/trade">Trade Program</Link>
+              </nav>
+            </div>
+
+            <div>
+              <h4 className="site-footer__heading">Contact</h4>
+              <div className="site-footer__contact">
+                <p className="site-footer__email">info@bridgearg.net</p>
+                <div>
+                  <p className="site-footer__place-label">Argentina</p>
+                  <p className="site-footer__place-text">Cordoba, Argentina</p>
+                </div>
+                <div>
+                  <p className="site-footer__place-label">United States</p>
+                  <p className="site-footer__place-text">Plantation, FL, United States</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="site-footer__heading">Newsletter</h4>
+              <p className="site-footer__newsletter-copy">
+                Stay updated on new arrivals and exhibitions.
+              </p>
+              <NewsletterForm source="footer" variant="footer" />
+            </div>
+          </div>
+
+          {/* Payments */}
+          <div className="site-footer__payments">
+            <p className="site-footer__stripe">Secure checkout powered by Stripe</p>
+            <p className="site-footer__cards">Visa · Mastercard · Amex</p>
+          </div>
+
+          {/* Copyright + legal */}
+          <div className="site-footer__bottom">
+            <p className="site-footer__copy">© 2026 BridgeArg</p>
+            <p className="site-footer__legal">
+              <Link to="/legal#terms">Terms &amp; Conditions</Link>
+              <span className="site-footer__legal-sep">·</span>
+              <Link to="/legal#privacy">Privacy Policy</Link>
+            </p>
           </div>
         </div>
       </div>
