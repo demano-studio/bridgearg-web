@@ -348,6 +348,7 @@ const ArtistaDetailPage = () => {
                       <Link
                         to={`/artworks/${work.id}`}
                         className="artist-detail__work-media"
+                        data-cursor="photo"
                         aria-label={`View ${work.title}`}
                       >
                         <OptimizedImage
@@ -435,7 +436,7 @@ const ArtistaDetailPage = () => {
 
           {/* 7. CLOSE */}
           <section className="artist-detail__close" aria-label="Inquire">
-            <div className="artist-detail__close-panel">
+            <div className="artist-detail__close-panel" data-cursor-theme="dark">
               <div className="artist-detail__close-copy">
                 <p className="artist-detail__close-eyebrow">(Inquire)</p>
                 <h2 className="artist-detail__close-title">

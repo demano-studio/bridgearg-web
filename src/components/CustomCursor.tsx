@@ -1,138 +1,241 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
-export const CustomCursor = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+type CursorMode = "base" | "dark" | "link" | "photo" | "input";
+
+const LERP = 0.18;
+const RING_SIZE = 36;
+
+function resolveMode(target: EventTarget | null): CursorMode {
+  if (!(target instanceof Element)) return "base";
+
+  if (target.closest('input, textarea, select, [contenteditable="true"]')) {
+    return "input";
+  }
+  if (target.closest('[data-cursor="photo"]')) {
+    return "photo";
+  }
+  if (target.closest('a, button, [role="button"], [data-cursor="link"]')) {
+    return "link";
+  }
+  if (target.closest('[data-cursor-theme="dark"]')) {
+    return "dark";
+  }
+  return "base";
+}
+
+function CustomCursorActive() {
+  const dotRef = useRef<HTMLDivElement>(null);
+  const ringWrapRef = useRef<HTMLDivElement>(null);
+  const ringInnerRef = useRef<HTMLDivElement>(null);
+
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const ringPosRef = useRef({ x: 0, y: 0 });
+  const modeRef = useRef<CursorMode>("base");
+  const visibleRef = useRef(false);
+  const readyRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+
+  const applyMode = (mode: CursorMode) => {
+    modeRef.current = mode;
+    const dot = dotRef.current;
+    const ring = ringInnerRef.current;
+    if (!dot || !ring) return;
+
+    const hideCursor = mode === "input" || !visibleRef.current;
+    const opacity = hideCursor ? "0" : "1";
+
+    if (mode === "input") {
+      dot.style.opacity = "0";
+      ring.style.opacity = "0";
+      return;
+    }
+
+    ring.style.opacity = opacity;
+
+    if (mode === "link") {
+      dot.style.opacity = "0";
+      ring.style.transform = "translate(-50%, -50%) scale(1.56)";
+      ring.style.borderColor = "#7fb2d1";
+      ring.style.backgroundColor = "rgba(127, 178, 209, 0.35)";
+      return;
+    }
+
+    if (mode === "photo") {
+      dot.style.opacity = opacity;
+      dot.style.backgroundColor = "#7fb2d1";
+      ring.style.transform = "translate(-50%, -50%) scale(2)";
+      ring.style.borderColor = "#7fb2d1";
+      ring.style.backgroundColor = "rgba(127, 178, 209, 0.22)";
+      return;
+    }
+
+    if (mode === "dark") {
+      dot.style.opacity = opacity;
+      dot.style.backgroundColor = "#7fb2d1";
+      ring.style.transform = "translate(-50%, -50%) scale(1)";
+      ring.style.borderColor = "rgba(127, 178, 209, 0.7)";
+      ring.style.backgroundColor = "transparent";
+      return;
+    }
+
+    // base
+    dot.style.opacity = opacity;
+    dot.style.backgroundColor = "#1e1517";
+    ring.style.transform = "translate(-50%, -50%) scale(1)";
+    ring.style.borderColor = "rgba(30, 21, 23, 0.45)";
+    ring.style.backgroundColor = "transparent";
+  };
 
   useEffect(() => {
-    // Disable custom cursor on touch devices.
-    // This runs only on the client (useEffect), so window/navigator are safe to reference.
-    setIsTouchDevice(
-      "ontouchstart" in window || (navigator?.maxTouchPoints ?? 0) > 0
-    );
+    document.documentElement.classList.add("has-custom-cursor");
 
-    // Ensure we don't keep the cursor visible on touch devices.
-    setIsVisible(false);
-  }, []);
+    const tick = () => {
+      const mouse = mouseRef.current;
+      const ringPos = ringPosRef.current;
+      ringPos.x += (mouse.x - ringPos.x) * LERP;
+      ringPos.y += (mouse.y - ringPos.y) * LERP;
 
-  useEffect(() => {
-    const updateMousePosition = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-      setIsVisible(true);
+      if (ringWrapRef.current) {
+        ringWrapRef.current.style.transform = `translate3d(${ringPos.x}px, ${ringPos.y}px, 0)`;
+      }
+
+      rafRef.current = window.requestAnimationFrame(tick);
     };
 
-    const handleMouseEnter = () => setIsVisible(true);
-    const handleMouseLeave = () => setIsVisible(false);
+    const onMove = (event: MouseEvent) => {
+      mouseRef.current = { x: event.clientX, y: event.clientY };
 
-    const addHoverListeners = () => {
-      const clickableElements = document.querySelectorAll(
-        'a, button, [role="button"], input, textarea, select, [data-clickable]'
-      );
-      
-      clickableElements.forEach((el) => {
-        el.addEventListener("mouseenter", () => setIsHovering(true));
-        el.addEventListener("mouseleave", () => setIsHovering(false));
-      });
+      if (!readyRef.current) {
+        readyRef.current = true;
+        ringPosRef.current = { x: event.clientX, y: event.clientY };
+        visibleRef.current = true;
+        applyMode(modeRef.current);
+      }
+
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0) translate(-50%, -50%)`;
+      }
     };
 
-    window.addEventListener("mousemove", updateMousePosition);
-    document.addEventListener("mouseenter", handleMouseEnter);
-    document.addEventListener("mouseleave", handleMouseLeave);
+    const onOver = (event: MouseEvent) => {
+      applyMode(resolveMode(event.target));
+    };
 
-    // Initial setup and observe for DOM changes
-    addHoverListeners();
-    const observer = new MutationObserver(addHoverListeners);
-    observer.observe(document.body, { childList: true, subtree: true });
+    const onLeave = () => {
+      visibleRef.current = false;
+      applyMode(modeRef.current);
+    };
+
+    const onEnter = () => {
+      if (!readyRef.current) return;
+      visibleRef.current = true;
+      applyMode(modeRef.current);
+    };
+
+    window.addEventListener("mousemove", onMove, { passive: true });
+    document.addEventListener("mouseover", onOver, { passive: true });
+    document.addEventListener("mouseleave", onLeave);
+    document.addEventListener("mouseenter", onEnter);
+    rafRef.current = window.requestAnimationFrame(tick);
 
     return () => {
-      window.removeEventListener("mousemove", updateMousePosition);
-      document.removeEventListener("mouseenter", handleMouseEnter);
-      document.removeEventListener("mouseleave", handleMouseLeave);
-      observer.disconnect();
+      window.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseover", onOver);
+      document.removeEventListener("mouseleave", onLeave);
+      document.removeEventListener("mouseenter", onEnter);
+      if (rafRef.current != null) {
+        window.cancelAnimationFrame(rafRef.current);
+      }
+      document.documentElement.classList.remove("has-custom-cursor");
     };
   }, []);
-
-  if (isTouchDevice) {
-    return null;
-  }
 
   return (
     <>
-      {/* Main cursor dot */}
-      <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-[990] mix-blend-difference"
-        animate={{
-          x: mousePosition.x - (isHovering ? 20 : 6),
-          y: mousePosition.y - (isHovering ? 20 : 6),
-          scale: isVisible ? 1 : 0,
-          opacity: isVisible ? 1 : 0,
+      <div
+        ref={dotRef}
+        aria-hidden
+        className="custom-cursor__dot"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          zIndex: 9999,
+          width: 6,
+          height: 6,
+          borderRadius: "50%",
+          backgroundColor: "#1e1517",
+          pointerEvents: "none",
+          opacity: 0,
+          transition: "opacity 0.2s ease",
+          willChange: "transform, opacity",
         }}
-        transition={{
-          type: "spring",
-          stiffness: 500,
-          damping: 28,
-          mass: 0.5,
-        }}
-      >
-        <motion.div
-          className="rounded-full bg-white"
-          animate={{
-            width: isHovering ? 40 : 12,
-            height: isHovering ? 40 : 12,
-            opacity: isHovering ? 0.8 : 1,
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 20,
-          }}
-        />
-      </motion.div>
-
-      {/* Outer ring */}
-      <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-[989]"
-        animate={{
-          x: mousePosition.x - 20,
-          y: mousePosition.y - 20,
-          scale: isVisible ? 1 : 0,
-          opacity: isVisible ? 1 : 0,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 150,
-          damping: 15,
-          mass: 0.1,
+      />
+      <div
+        ref={ringWrapRef}
+        aria-hidden
+        className="custom-cursor__ring-wrap"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          zIndex: 9999,
+          width: 0,
+          height: 0,
+          pointerEvents: "none",
+          willChange: "transform",
         }}
       >
-        <motion.div
-          className="w-10 h-10 rounded-full border border-foreground/30"
-          animate={{
-            scale: isHovering ? 1.5 : 1,
-            opacity: isHovering ? 0 : 0.5,
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 20,
+        <div
+          ref={ringInnerRef}
+          className="custom-cursor__ring"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: RING_SIZE,
+            height: RING_SIZE,
+            borderRadius: "50%",
+            border: "1px solid rgba(30, 21, 23, 0.45)",
+            backgroundColor: "transparent",
+            transform: "translate(-50%, -50%) scale(1)",
+            opacity: 0,
+            transition:
+              "transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease",
+            willChange: "transform, opacity, background-color, border-color",
+            boxSizing: "border-box",
           }}
         />
-      </motion.div>
-
-      {/* Global style to hide default cursor */}
-      <style>{`
-        @media (hover: hover) and (pointer: fine) {
-          * {
-            cursor: none !important;
-          }
-          button, a, [role="button"], input, textarea, select {
-            cursor: none !important;
-          }
-        }
-      `}</style>
+      </div>
     </>
   );
+}
+
+export const CustomCursor = () => {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const sync = () => {
+      const next = finePointer.matches && !reducedMotion.matches;
+      setEnabled(next);
+      if (!next) {
+        document.documentElement.classList.remove("has-custom-cursor");
+      }
+    };
+
+    sync();
+    finePointer.addEventListener("change", sync);
+    reducedMotion.addEventListener("change", sync);
+    return () => {
+      finePointer.removeEventListener("change", sync);
+      reducedMotion.removeEventListener("change", sync);
+      document.documentElement.classList.remove("has-custom-cursor");
+    };
+  }, []);
+
+  if (!enabled) return null;
+  return <CustomCursorActive />;
 };

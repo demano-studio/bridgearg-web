@@ -87,7 +87,7 @@ export function ArtistsStripSection() {
       {column.map((artist) => (
         <li key={artist.slug} className="artists-strip-section__item">
           <Link to={`/artists/${artist.slug}`} className="artists-strip-section__row">
-            <span className="artists-strip-section__portrait">
+            <span className="artists-strip-section__portrait" data-cursor="photo">
               <img
                 src={resolveArtistImage(artist.imageUrl)}
                 alt={`Portrait of ${artist.name}`}

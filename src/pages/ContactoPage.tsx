@@ -117,7 +117,7 @@ const ContactoPage = () => {
               </div>
             </div>
 
-            <aside className="contact-card" aria-label="BridgeArg contact">
+            <aside className="contact-card" data-cursor-theme="dark" aria-label="BridgeArg contact">
               <CornerMark className="contact-card__corner contact-card__corner--tl" />
               <CornerMark className="contact-card__corner contact-card__corner--tr" />
               <CornerMark className="contact-card__corner contact-card__corner--bl" />
@@ -169,7 +169,7 @@ const ContactoPage = () => {
             </aside>
           </section>
 
-          <section className="contact-close">
+          <section className="contact-close" data-cursor-theme="dark">
             <div className="contact-wrap">
               <p className="contact-close__eyebrow">(Argentina to the world)</p>
               <h2 className="contact-close__title">

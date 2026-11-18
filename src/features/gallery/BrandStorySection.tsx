@@ -10,7 +10,7 @@ export function BridgeNetworkSection() {
   const attrs = ["Culture", "Quality", "Transparency", "Warmth", "Transcendence", "Closeness"];
 
   return (
-    <section className="bg-[#1e1517] px-6 py-24 md:px-12 md:py-32 lg:px-24">
+    <section className="bg-[#1e1517] px-6 py-24 md:px-12 md:py-32 lg:px-24" data-cursor-theme="dark">
       <div className="mx-auto grid max-w-[1800px] grid-cols-1 items-center gap-16 md:grid-cols-2 md:gap-24">
         <motion.div
           initial={{ opacity: 0, y: 24 }}

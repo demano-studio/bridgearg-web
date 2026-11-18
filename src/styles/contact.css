@@ -32,8 +32,7 @@ html:has(.contact-page) {
   width: 100%;
   max-width: 1760px;
   margin: 0 auto;
-  padding-left: clamp(28px, 4vw, 72px);
-  padding-right: clamp(28px, 4vw, 72px);
+  padding-inline: clamp(24px, 4vw, 64px);
 }
 
 /* ---------- Hero ---------- */
@@ -42,7 +41,8 @@ html:has(.contact-page) {
   grid-template-columns: 1.15fr 0.85fr;
   gap: 80px;
   align-items: end;
-  padding: 96px 0 72px;
+  padding-top: 96px;
+  padding-bottom: 72px;
 }
 
 .contact-eyebrow {
@@ -570,15 +570,11 @@ html:has(.contact-page) {
 
 /* ---------- Responsive ---------- */
 @media (max-width: 1000px) {
-  .contact-wrap {
-    padding-left: 28px;
-    padding-right: 28px;
-  }
-
   .contact-hero {
     grid-template-columns: 1fr;
     gap: 40px;
-    padding: 88px 0 56px;
+    padding-top: 88px;
+    padding-bottom: 56px;
   }
 
   .contact-hero__title {
@@ -629,13 +625,9 @@ html:has(.contact-page) {
 }
 
 @media (max-width: 560px) {
-  .contact-wrap {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-
   .contact-hero {
-    padding: 72px 0 48px;
+    padding-top: 72px;
+    padding-bottom: 48px;
     gap: 32px;
   }
 

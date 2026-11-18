@@ -167,7 +167,7 @@ const NosotrosPage = () => {
           </section>
 
           {/* 3. Why BridgeArg exists */}
-          <section className="about-why">
+          <section className="about-why" data-cursor-theme="dark">
             <img
               className="about-why__mark"
               src={ISOTIPO_CREAM}
@@ -284,7 +284,7 @@ const NosotrosPage = () => {
           </section>
 
           {/* 7. Close */}
-          <section className="about-close">
+          <section className="about-close" data-cursor-theme="dark">
             <div className="about-wrap">
               <h2 className="about-close__title">
                 Art deserves to travel with

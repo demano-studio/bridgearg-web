@@ -515,7 +515,7 @@ const ArtworkDetailPage = () => {
                         to={`/artworks/${related.id}`}
                         className="artwork-detail-card"
                       >
-                        <div className="artwork-detail-card__media">
+                        <div className="artwork-detail-card__media" data-cursor="photo">
                           <img
                             src={getWorkImageUrl(related.imagenUrl)}
                             alt={related.title}

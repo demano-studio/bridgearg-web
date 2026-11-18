@@ -247,6 +247,7 @@ export function BrandHeroSection({ logoWidth = "420px" }: BrandHeroProps) {
   return (
     <section
       className="relative overflow-hidden"
+      data-cursor-theme="dark"
       style={{
         isolation: "isolate",
         paddingTop: "var(--header-h)",

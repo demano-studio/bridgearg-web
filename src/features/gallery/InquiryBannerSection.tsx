@@ -4,7 +4,7 @@ const bridgeSealSrc = "/assets/logos/bridgearg-logo-light.svg";
 
 export function InquiryBannerSection() {
   return (
-    <section className="bg-[#1e1517] px-6 py-20 md:px-12 md:py-24 lg:px-24 2xl:py-28">
+    <section className="bg-[#1e1517] px-6 py-20 md:px-12 md:py-24 lg:px-24 2xl:py-28" data-cursor-theme="dark">
       <div className="mx-auto max-w-[1440px] text-center">
         <img
           src={bridgeSealSrc}

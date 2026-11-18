@@ -139,7 +139,7 @@ const TradePage = () => {
           </section>
 
           {/* 2. Band */}
-          <div className="trade-band" aria-label="Program highlights">
+          <div className="trade-band" data-cursor-theme="dark" aria-label="Program highlights">
             <div className="trade-band__track">
               {[0, 1].map((copy) => (
                 <div key={copy} style={{ display: "contents" }}>
@@ -192,7 +192,7 @@ const TradePage = () => {
           </section>
 
           {/* 4. How it works */}
-          <section id="how" className="trade-sec trade-dark" style={{ scrollMarginTop: "100px" }}>
+          <section id="how" className="trade-sec trade-dark" data-cursor-theme="dark" style={{ scrollMarginTop: "100px" }}>
             <div className="trade-wrap">
               <span className="trade-num">02 — (HOW IT WORKS)</span>
               <h2 className="trade-title" style={{ fontSize: "clamp(36px, 5.5vw, 72px)", marginBottom: "clamp(36px, 5vw, 64px)" }}>

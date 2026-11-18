@@ -213,6 +213,7 @@ const LegalPage = () => {
           </section>
 
           <section
+            data-cursor-theme="dark"
             style={{
               backgroundColor: "#1e1517",
               backgroundImage:

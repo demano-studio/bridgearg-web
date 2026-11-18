@@ -356,6 +356,7 @@ export function Header() {
 
       <aside
         className="fixed right-0 top-0 z-[60] h-[100svh] w-full max-w-[420px]"
+        data-cursor-theme="dark"
         style={{
           transform: isOpen ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.55s cubic-bezier(0.16, 1, 0.3, 1)",

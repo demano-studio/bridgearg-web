@@ -351,7 +351,7 @@ const ArtworksPage = () => {
 
     return (
       <article key={work.id} className="collection-card group">
-        <Link to={`/artworks/${work.id}`} className="collection-card__media relative">
+        <Link to={`/artworks/${work.id}`} className="collection-card__media relative" data-cursor="photo">
           <OptimizedImage
             src={work.imagenUrl}
             title={work.title}
@@ -783,7 +783,7 @@ const ArtworksPage = () => {
             </div>
 
             {/* 6. Close */}
-            <section className="collection-close">
+            <section className="collection-close" data-cursor-theme="dark">
               <div className="collection-wrap">
                 <div className="collection-close__grid">
                   <div>

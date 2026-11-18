@@ -95,6 +95,7 @@ const ArtistasPage = () => {
         <main>
           {/* 1. HERO */}
           <section
+            data-cursor-theme="dark"
             style={{
               minHeight: isMobile ? "auto" : "100vh",
               display: "flex",
@@ -239,7 +240,7 @@ const ArtistasPage = () => {
                     to={`/artistas/${card.artist.slug}`}
                     className="artists-index__card"
                   >
-                    <span className="artists-index__portrait">
+                    <span className="artists-index__portrait" data-cursor="photo">
                       {portraitSrc ? (
                         <img
                           src={portraitSrc}
@@ -740,6 +741,7 @@ const ArtistasPage = () => {
           {/* 5. FEATURED BANNER */}
           <section
             className="grid grid-cols-1 md:grid-cols-2"
+            data-cursor-theme="dark"
             style={{
               margin: isMobile
                 ? "0 20px 60px"

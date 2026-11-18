@@ -222,6 +222,7 @@ export function CollectionSection() {
               <Link
                 to={`/artworks/${work.id}`}
                 className="home-collection-section__media"
+                data-cursor="photo"
                 aria-label={`${work.title} by ${work.artistName}`}
               >
                 <img

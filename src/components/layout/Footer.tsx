@@ -8,7 +8,7 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <div className="site-footer__shell">
-        <div className="site-footer__card">
+        <div className="site-footer__card" data-cursor-theme="dark">
           {/* Top: lockup + social */}
           <div className="site-footer__top">
             <Link to="/" className="site-footer__logo" aria-label="BridgeArg">
