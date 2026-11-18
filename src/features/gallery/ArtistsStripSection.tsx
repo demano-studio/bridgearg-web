@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getArtists, type ArtistFromApi } from "@/lib/api";
+import { isSupabaseStorageObjectUrl, transformUrl } from "@/lib/imageTransform";
 
 type StripArtist = {
   name: string;
@@ -33,9 +34,17 @@ function normalizeName(value: string) {
     .trim();
 }
 
+function resolveArtistImage(url: string): string {
+  if (!url || url.startsWith("/assets/")) return url;
+  if (isSupabaseStorageObjectUrl(url)) {
+    return transformUrl(url, { width: 600, quality: 75 });
+  }
+  return url;
+}
+
 export function ArtistsStripSection() {
   const [artists, setArtists] = useState<StripArtist[]>(
-    FEATURED.map((a) => ({ ...a, imageUrl: a.fallbackSrc }))
+    FEATURED.map((a) => ({ ...a, imageUrl: a.fallbackSrc })),
   );
 
   useEffect(() => {
@@ -57,7 +66,7 @@ export function ArtistsStripSection() {
               discipline: match?.discipline?.trim() || featured.discipline,
               imageUrl: match?.imageUrl || featured.fallbackSrc,
             };
-          })
+          }),
         );
       })
       .catch(() => {
@@ -69,155 +78,358 @@ export function ArtistsStripSection() {
     };
   }, []);
 
+  const leftCol = artists.slice(0, 5);
+  const rightCol = artists.slice(5, 10);
+  const artistCount = artists.length;
+
+  const renderColumn = (column: StripArtist[], key: string) => (
+    <ul key={key} className="artists-strip-section__col">
+      {column.map((artist) => (
+        <li key={artist.slug} className="artists-strip-section__item">
+          <Link to={`/artists/${artist.slug}`} className="artists-strip-section__row">
+            <span className="artists-strip-section__portrait">
+              <img
+                src={resolveArtistImage(artist.imageUrl)}
+                alt={`Portrait of ${artist.name}`}
+                loading="lazy"
+                decoding="async"
+                width={132}
+                height={176}
+              />
+            </span>
+            <span className="artists-strip-section__text">
+              <span className="artists-strip-section__name">{artist.name}</span>
+              <span className="artists-strip-section__discipline">{artist.discipline}</span>
+            </span>
+            <span className="artists-strip-section__arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <section
       id="artists"
-      className="artists-strip-section bg-background px-6 md:px-12 lg:px-24"
+      className="artists-strip-section"
       style={{ scrollMarginTop: "calc(var(--header-h, 80px) + 16px)" }}
     >
-      <div className="artists-strip-section__wrap mx-auto max-w-[1800px]">
+      <div className="artists-strip-section__wrap">
         <div className="artists-strip-section__head">
-          <div>
-            <p className="artists-strip-section__eyebrow">Curated Argentine talent</p>
-            <h2 className="artists-strip-section__title">Artists who cross bridges</h2>
+          <div className="artists-strip-section__copy">
+            <p className="artists-strip-section__eyebrow">(Curated Argentine talent)</p>
+            <h2 className="artists-strip-section__title">
+              Artists who cross{" "}
+              <em className="artists-strip-section__script">bridges</em>
+            </h2>
+            <p className="artists-strip-section__lede">
+              {artistCount} voices from Argentina, each with a studio, a practice and a body of work
+              you can follow from here.
+            </p>
           </div>
           <Link to="/artists" className="artists-strip-section__cta">
             Meet the artists →
           </Link>
         </div>
 
-        <div className="artists-strip-section__strip">
-          {artists.map((artist) => (
-            <Link
-              key={artist.slug}
-              to={`/artists/${artist.slug}`}
-              className="artists-strip-section__artist"
-            >
-              <div className="artists-strip-section__portrait">
-                <img src={artist.imageUrl} alt={artist.name} loading="lazy" decoding="async" />
-              </div>
-              <h3 className="artists-strip-section__name">{artist.name}</h3>
-              <p className="artists-strip-section__discipline">{artist.discipline}</p>
-            </Link>
-          ))}
+        <div className="artists-strip-section__list" aria-label="Artists">
+          {renderColumn(leftCol, "left")}
+          {rightCol.length > 0 ? renderColumn(rightCol, "right") : null}
         </div>
       </div>
 
       <style>{`
         .artists-strip-section {
-          padding-block: clamp(64px, 9vw, 128px);
-          padding-bottom: max(clamp(64px, 9vw, 128px), calc(env(safe-area-inset-bottom, 0px) + 4rem));
+          --as-ink: #1e1517;
+          --as-cream: #fcf8ea;
+          --as-sky: #7fb2d1;
+          --as-muted: #5f5659;
+          --as-rule: #cfc6b0;
+          --as-sans: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+          --as-script: "BestDB", "Best DB Normal", "Snell Roundhand", cursive;
+          --as-page-pad: clamp(24px, 6vw, 96px);
+          --as-photo-w: 132px;
+          --as-photo-h: 176px;
+          --as-gap-photo: 36px;
+          --as-arrow: 44px;
+          --as-col-gap: clamp(48px, 6vw, 120px);
+
+          background: var(--as-cream);
+          color: var(--as-ink);
+          padding-block: 120px;
+          padding-bottom: max(120px, calc(env(safe-area-inset-bottom, 0px) + 4rem));
+          overflow-x: clip;
+          -webkit-font-smoothing: antialiased;
         }
+
         .artists-strip-section__wrap {
           width: 100%;
+          max-width: none;
+          margin: 0;
+          padding-inline: var(--as-page-pad);
+          box-sizing: border-box;
         }
+
         .artists-strip-section__head {
           display: flex;
           justify-content: space-between;
-          align-items: end;
-          gap: 24px;
-          flex-wrap: wrap;
-          margin-bottom: clamp(32px, 4vw, 56px);
+          align-items: flex-end;
+          gap: 32px;
+          margin-bottom: 80px;
         }
+
+        .artists-strip-section__copy {
+          min-width: 0;
+          flex: 1 1 auto;
+        }
+
         .artists-strip-section__eyebrow {
           margin: 0;
-          font-family: "Onest", sans-serif;
+          font-family: var(--as-sans);
           font-size: 12px;
-          letter-spacing: 0.2em;
+          font-weight: 500;
+          letter-spacing: 0.22em;
           text-transform: uppercase;
-          font-weight: 400;
-          color: #1e1517;
+          color: var(--as-muted);
         }
+
         .artists-strip-section__title {
-          margin: 14px 0 0;
-          font-family: "Onest", sans-serif;
+          margin: 16px 0 0;
+          font-family: var(--as-sans);
           font-weight: 300;
-          font-size: clamp(32px, 4vw, 60px);
-          line-height: 1.05;
+          font-size: 56px;
+          line-height: 1.02;
           letter-spacing: -0.02em;
-          color: #1e1517;
+          text-transform: uppercase;
+          color: var(--as-ink);
           text-wrap: balance;
         }
+
+        .artists-strip-section__script {
+          font-family: var(--as-script);
+          font-style: normal;
+          font-weight: 400;
+          font-size: 1.25em;
+          letter-spacing: 0;
+          text-transform: none;
+          color: var(--as-ink);
+        }
+
+        .artists-strip-section__lede {
+          margin: 18px 0 0;
+          max-width: 480px;
+          font-family: var(--as-sans);
+          font-weight: 300;
+          font-size: 16px;
+          line-height: 1.6;
+          color: var(--as-muted);
+        }
+
         .artists-strip-section__cta {
           display: inline-flex;
           align-items: center;
-          min-height: 44px;
-          padding: 10px 0;
-          font-family: "Onest", sans-serif;
-          font-size: 13px;
-          letter-spacing: 0.14em;
+          justify-content: center;
+          flex-shrink: 0;
+          min-height: 48px;
+          padding: 0 28px;
+          border-radius: 9999px;
+          background: var(--as-sky);
+          color: var(--as-ink);
+          font-family: var(--as-sans);
+          font-weight: 500;
+          font-size: 12px;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
           text-decoration: none;
-          color: #1e1517;
-          border-bottom: 1px solid currentColor;
           white-space: nowrap;
+          transition: background 0.25s ease, color 0.25s ease;
         }
+
         .artists-strip-section__cta:hover {
-          color: #4a7fa0;
+          background: var(--as-ink);
+          color: var(--as-cream);
         }
-        .artists-strip-section__strip {
+
+        .artists-strip-section__cta:focus-visible {
+          outline: 2px solid var(--as-ink);
+          outline-offset: 4px;
+        }
+
+        .artists-strip-section__list {
           display: grid;
-          grid-template-columns: repeat(10, minmax(0, 1fr));
-          gap: clamp(10px, 1.2vw, 18px);
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          column-gap: var(--as-col-gap);
+          align-items: start;
+          width: 100%;
         }
-        .artists-strip-section__artist {
+
+        .artists-strip-section__col {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          border-top: 1px solid var(--as-ink);
+        }
+
+        .artists-strip-section__item {
+          margin: 0;
+          padding: 0;
+          border-bottom: 1px solid var(--as-rule);
+        }
+
+        .artists-strip-section__item:last-child {
+          border-bottom: 1px solid var(--as-ink);
+        }
+
+        .artists-strip-section__row {
+          display: grid;
+          grid-template-columns: var(--as-photo-w) minmax(0, 1fr) var(--as-arrow);
+          align-items: center;
+          column-gap: var(--as-gap-photo);
+          padding: 24px 0;
           text-decoration: none;
-          display: block;
-          min-width: 0;
           color: inherit;
         }
+
+        .artists-strip-section__row:focus-visible {
+          outline: 2px solid var(--as-ink);
+          outline-offset: 4px;
+        }
+
         .artists-strip-section__portrait {
-          aspect-ratio: 3 / 4;
+          display: block;
+          width: var(--as-photo-w);
+          height: var(--as-photo-h);
           overflow: hidden;
           border-radius: 999px 999px 0 0;
-          background: #e6dfd0;
+          background: #efe7cf;
         }
+
         .artists-strip-section__portrait img {
+          display: block;
           width: 100%;
           height: 100%;
           object-fit: cover;
-          filter: grayscale(1);
-          transition: filter 0.5s, transform 1s;
-          display: block;
+          object-position: center 20%;
+          filter: none;
+          transform: none;
         }
-        .artists-strip-section__artist:hover img {
-          filter: grayscale(0);
-          transform: scale(1.04);
+
+        .artists-strip-section__text {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          min-width: 0;
         }
+
         .artists-strip-section__name {
-          font-family: "Onest", sans-serif;
-          font-size: 13px;
-          font-weight: 400;
-          margin: 10px 0 0;
-          letter-spacing: 0;
-          line-height: 1.3;
-          color: #1e1517;
-        }
-        .artists-strip-section__discipline {
-          margin: 2px 0 0;
-          font-family: "Onest", sans-serif;
-          font-size: 12px;
+          font-family: var(--as-sans);
           font-weight: 300;
-          color: #6b6365;
-          line-height: 1.35;
+          font-size: 30px;
+          line-height: 1.1;
+          letter-spacing: -0.01em;
+          color: var(--as-ink);
+          white-space: nowrap;
         }
-        @media (hover: none) {
-          .artists-strip-section__portrait img {
-            filter: none;
-          }
+
+        .artists-strip-section__discipline {
+          margin-top: 10px;
+          font-family: var(--as-sans);
+          font-weight: 500;
+          font-size: 11px;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: var(--as-muted);
         }
-        @media (max-width: 1100px) {
-          .artists-strip-section__strip {
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            row-gap: 28px;
-          }
+
+        .artists-strip-section__arrow {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: var(--as-arrow);
+          height: var(--as-arrow);
+          border: 1px solid var(--as-ink);
+          border-radius: 9999px;
+          font-size: 16px;
+          line-height: 1;
+          color: var(--as-ink);
+          transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+          justify-self: end;
         }
-        @media (max-width: 560px) {
-          .artists-strip-section__strip {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        .artists-strip-section__row:hover .artists-strip-section__arrow,
+        .artists-strip-section__row:focus-visible .artists-strip-section__arrow {
+          background: var(--as-sky);
+          border-color: var(--as-sky);
+          color: var(--as-ink);
+        }
+
+        @media (max-width: 1000px) {
+          .artists-strip-section {
+            --as-photo-w: 108px;
+            --as-photo-h: 144px;
+            --as-gap-photo: 28px;
+            --as-arrow: 40px;
+            padding-block: 96px;
+            padding-bottom: max(96px, calc(env(safe-area-inset-bottom, 0px) + 4rem));
           }
+
+          .artists-strip-section__title {
+            font-size: 44px;
+          }
+
+          .artists-strip-section__name {
+            font-size: 24px;
+          }
+
           .artists-strip-section__head {
-            align-items: start;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 64px;
+          }
+        }
+
+        @media (max-width: 700px) {
+          .artists-strip-section__list {
+            grid-template-columns: 1fr;
+            row-gap: 0;
+          }
+
+          .artists-strip-section__list .artists-strip-section__col + .artists-strip-section__col {
+            border-top: 0;
+          }
+
+          .artists-strip-section__list .artists-strip-section__col:first-child .artists-strip-section__item:last-child {
+            border-bottom: 1px solid var(--as-rule);
+          }
+        }
+
+        @media (max-width: 560px) {
+          .artists-strip-section {
+            --as-photo-w: 96px;
+            --as-photo-h: 128px;
+            --as-gap-photo: 20px;
+            --as-arrow: 40px;
+            padding-block: 72px;
+            padding-bottom: max(72px, calc(env(safe-area-inset-bottom, 0px) + 4rem));
+          }
+
+          .artists-strip-section__title {
+            font-size: 34px;
+          }
+
+          .artists-strip-section__name {
+            font-size: 22px;
+            white-space: normal;
+          }
+
+          .artists-strip-section__head {
+            margin-bottom: 48px;
+          }
+
+          .artists-strip-section__cta {
+            width: 100%;
           }
         }
       `}</style>
