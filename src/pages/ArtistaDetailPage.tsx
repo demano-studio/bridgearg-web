@@ -8,7 +8,7 @@ import { OptimizedImage } from "@/components/OptimizedImage";
 import { PageTransition } from "@/components/PageTransition";
 import { toast } from "@/hooks/use-toast";
 import { SEO } from "@/components/SEO";
-import { getArtistBySlug, getArtists, getWorks } from "@/lib/api";
+import { getArtistBySlug, getWorks } from "@/lib/api";
 import { shouldShowPrice } from "@/lib/geoPricing";
 import { isSupabaseStorageObjectUrl, transformUrl } from "@/lib/imageTransform";
 
@@ -66,11 +66,6 @@ const ArtistaDetailPage = () => {
     enabled: !!slug,
   });
 
-  const { data: allArtists = [] } = useQuery({
-    queryKey: ["artists"],
-    queryFn: getArtists,
-  });
-
   const {
     data: works = [],
     isError: worksError,
@@ -118,15 +113,6 @@ const ArtistaDetailPage = () => {
     elements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, [artist?.id, works.length]);
-
-  const artistNumber = useMemo(() => {
-    if (!artist || allArtists.length === 0) return null;
-    const sorted = [...allArtists].sort((a, b) =>
-      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-    );
-    const index = sorted.findIndex((item) => item.id === artist.id);
-    return index >= 0 ? index + 1 : null;
-  }, [allArtists, artist]);
 
   const preferredStudioSrc = useMemo(() => {
     if (!artist) return "";
@@ -222,9 +208,6 @@ const ArtistaDetailPage = () => {
     { label: "Shipping", value: "Available to U.S." },
     { label: "Certificate", value: "Included" },
   ];
-  const artistOrderLabel =
-    artistNumber != null ? `(Artist ${String(artistNumber).padStart(2, "0")})` : null;
-
   return (
     <PageTransition>
       <div className="min-h-screen bg-background">
@@ -245,9 +228,6 @@ const ArtistaDetailPage = () => {
 
             <div className="artist-detail__hero-grid">
               <div className="artist-detail__hero-copy">
-                {artistOrderLabel ? (
-                  <p className="artist-detail__eyebrow">{artistOrderLabel}</p>
-                ) : null}
                 <h1 className="artist-detail__name">
                   <span className="artist-detail__firstname">{firstName}</span>
                   {lastName ? <em className="artist-detail__lastname">{lastName}</em> : null}
