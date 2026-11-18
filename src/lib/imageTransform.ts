@@ -12,7 +12,9 @@ export function isSupabaseStorageObjectUrl(url: string): boolean {
 }
 
 /**
- * Convierte `/storage/v1/object/public/...` en `/storage/v1/render/image/public/...?width=&quality=`.
+ * Convierte `/storage/v1/object/public/...` en `/storage/v1/render/image/public/...?width=&quality=&resize=contain`.
+ * `resize=contain` is required: without it, Supabase Image Transformation keeps the
+ * source height while forcing width, which distorts/crops the artwork.
  * Si no es una URL de Supabase Storage, la devuelve intacta.
  */
 export function transformUrl(publicUrl: string, { width, quality = 75 }: TransformOptions): string {
@@ -22,6 +24,7 @@ export function transformUrl(publicUrl: string, { width, quality = 75 }: Transfo
   const url = new URL(base);
   url.searchParams.set("width", String(Math.max(1, Math.round(width))));
   url.searchParams.set("quality", String(quality));
+  url.searchParams.set("resize", "contain");
   return url.toString();
 }
 

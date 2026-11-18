@@ -26,8 +26,79 @@ import "@/styles/collection.css";
  * - Imágenes reales (no las mismas fotos repetidas)
  */
 
+/** Provisional image height/width until real ratio is known (4/5 box). */
+const PROVISIONAL_HW = 5 / 4;
+const META_EST_PX = 140;
+const COL_WIDTH_EST = 400;
+
+function workHwRatio(work: WorkFromApi, measured: Record<number, number>): number {
+  const w = work.width_cm != null ? Number(work.width_cm) : 0;
+  const h = work.height_cm != null ? Number(work.height_cm) : 0;
+  if (w > 0 && h > 0) return h / w;
+  const m = measured[work.id];
+  if (typeof m === "number" && m > 0) return m;
+  return PROVISIONAL_HW;
+}
+
+function workAspectCss(work: WorkFromApi, measured: Record<number, number>): string {
+  const w = work.width_cm != null ? Number(work.width_cm) : 0;
+  const h = work.height_cm != null ? Number(work.height_cm) : 0;
+  if (w > 0 && h > 0) return `${w} / ${h}`;
+  const m = measured[work.id];
+  if (typeof m === "number" && m > 0) return `1 / ${m}`;
+  return "4 / 5";
+}
+
+/** Left-to-right order preserved: each item goes to the current shortest column. */
+function distributeShortestColumn(
+  works: WorkFromApi[],
+  columnCount: number,
+  measured: Record<number, number>,
+): WorkFromApi[][] {
+  const cols: WorkFromApi[][] = Array.from({ length: columnCount }, () => []);
+  const heights = new Array(columnCount).fill(0);
+  for (const work of works) {
+    let shortest = 0;
+    for (let i = 1; i < columnCount; i++) {
+      if (heights[i] < heights[shortest]) shortest = i;
+    }
+    cols[shortest].push(work);
+    heights[shortest] += workHwRatio(work, measured) * COL_WIDTH_EST + META_EST_PX;
+  }
+  return cols;
+}
+
+function useCollectionColumnCount(): number {
+  const [count, setCount] = useState(() => {
+    if (typeof window === "undefined") return 3;
+    if (window.matchMedia("(max-width: 560px)").matches) return 1;
+    if (window.matchMedia("(max-width: 1000px)").matches) return 2;
+    return 3;
+  });
+
+  useEffect(() => {
+    const mq560 = window.matchMedia("(max-width: 560px)");
+    const mq1000 = window.matchMedia("(max-width: 1000px)");
+    const update = () => {
+      if (mq560.matches) setCount(1);
+      else if (mq1000.matches) setCount(2);
+      else setCount(3);
+    };
+    update();
+    mq560.addEventListener("change", update);
+    mq1000.addEventListener("change", update);
+    return () => {
+      mq560.removeEventListener("change", update);
+      mq1000.removeEventListener("change", update);
+    };
+  }, []);
+
+  return count;
+}
+
 const ArtworksPage = () => {
   const isMobile = useIsMobile();
+  const columnCount = useCollectionColumnCount();
   const sectionRef = useRef<HTMLElement>(null);
   const [searchParams] = useSearchParams();
   const {
@@ -47,6 +118,8 @@ const ArtworksPage = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   /** Session-stable mix seed — generated once per visit (sessionStorage). */
   const [mixSeed] = useState(() => getCollectionSeed());
+  /** Measured image height/width ratios (when DB dims are missing). */
+  const [measuredRatios, setMeasuredRatios] = useState<Record<number, number>>({});
 
   useEffect(() => {
     const artistParam = searchParams.get("artist");
@@ -240,9 +313,41 @@ const ArtworksPage = () => {
     return "Private collection";
   };
 
-  const renderWorkCard = (work: WorkFromApi, index: number) => {
+  const masonryColumns = useMemo(
+    () => distributeShortestColumn(sortedWorks, columnCount, measuredRatios),
+    [sortedWorks, columnCount, measuredRatios],
+  );
+
+  const listIndexById = useMemo(() => {
+    const map = new Map<number, number>();
+    sortedWorks.forEach((w, i) => map.set(w.id, i));
+    return map;
+  }, [sortedWorks]);
+
+  const onCardNaturalSize = (work: WorkFromApi, nw: number, nh: number) => {
+    const hasDims =
+      work.width_cm != null &&
+      work.height_cm != null &&
+      Number(work.width_cm) > 0 &&
+      Number(work.height_cm) > 0;
+    if (hasDims || nw <= 0 || nh <= 0) return;
+    const next = nh / nw;
+    setMeasuredRatios((prev) => {
+      const prevRatio = prev[work.id];
+      if (typeof prevRatio === "number" && Math.abs(prevRatio - next) < 0.002) return prev;
+      return { ...prev, [work.id]: next };
+    });
+  };
+
+  const renderWorkCard = (work: WorkFromApi) => {
     const artistName = work.artistName?.trim() || FALLBACK_ARTIST_NAME;
     const showOverlay = !work.available || work.status === "sold";
+    const index = listIndexById.get(work.id) ?? 0;
+    const hasDims =
+      work.width_cm != null &&
+      work.height_cm != null &&
+      Number(work.width_cm) > 0 &&
+      Number(work.height_cm) > 0;
 
     return (
       <article key={work.id} className="collection-card group">
@@ -252,11 +357,15 @@ const ArtworksPage = () => {
             title={work.title}
             artistName={artistName}
             variant="artwork"
-            aspectRatio="4/5"
+            layout="intrinsic"
+            aspectRatio={workAspectCss(work, measuredRatios)}
+            width={hasDims ? Math.round(Number(work.width_cm)) : undefined}
+            height={hasDims ? Math.round(Number(work.height_cm)) : undefined}
             priority={index < 6}
             sizes="(max-width: 560px) 100vw, (max-width: 1000px) 50vw, 33vw"
             className="!bg-[#efe7cf]"
-            imageClassName="collection-card__img saturate-[0.92] contrast-[0.97] group-hover:saturate-100 group-hover:contrast-100"
+            imageClassName="collection-card__img saturate-[0.92] contrast-[0.97]"
+            onNaturalSize={(nw, nh) => onCardNaturalSize(work, nw, nh)}
           />
           {showOverlay && <div className="collection-card__overlay">{overlayLabel(work)}</div>}
         </Link>
@@ -455,71 +564,199 @@ const ArtworksPage = () => {
 
               {/* 3. Filter panel */}
               {filtersOpen && (
-                <div className="collection-filters">
-                  <div>
-                    <label htmlFor="collection-filter-artist">Artist</label>
-                    <select
-                      id="collection-filter-artist"
-                      value={artistFilter}
-                      onChange={(e) => setArtistFilter(e.target.value)}
-                    >
-                      <option value="">All artists</option>
-                      {artistOptions.map((name) => (
-                        <option key={name} value={name}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="collection-filter-status">Availability</label>
-                    <select
-                      id="collection-filter-status"
-                      value={statusFilter}
-                      onChange={(e) =>
-                        setStatusFilter(e.target.value as "all" | "available" | "sold")
-                      }
-                    >
-                      <option value="all">All</option>
-                      <option value="available">Available</option>
-                      <option value="sold">Sold</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="collection-filter-price">Price range</label>
-                    <div className="collection-filters__range-labels">
-                      <span>USD {priceBounds.min.toLocaleString()}</span>
-                      <span>USD {priceRange[1].toLocaleString()}</span>
+                <>
+                  <div className="collection-filters">
+                    <div className="collection-filters__col">
+                      <p className="collection-filters__heading" id="collection-filter-artist-label">
+                        Artist
+                      </p>
+                      <div
+                        className="collection-filters__chips"
+                        role="group"
+                        aria-labelledby="collection-filter-artist-label"
+                      >
+                        <button
+                          type="button"
+                          className="collection-filters__chip"
+                          aria-pressed={artistFilter === ""}
+                          onClick={() => setArtistFilter("")}
+                        >
+                          All artists
+                        </button>
+                        {artistOptions.map((name) => (
+                          <button
+                            key={name}
+                            type="button"
+                            className="collection-filters__chip"
+                            aria-pressed={artistFilter === name}
+                            onClick={() => setArtistFilter(name)}
+                          >
+                            {name}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <input
-                      id="collection-filter-price"
-                      type="range"
-                      min={priceBounds.min}
-                      max={priceBounds.max}
-                      value={priceRange[1]}
-                      onChange={(e) => setPriceRange([priceBounds.min, Number(e.target.value)])}
-                      className="collection-filters__slider cream-slider"
-                    />
+
+                    <div className="collection-filters__col">
+                      <p className="collection-filters__heading" id="collection-filter-status-label">
+                        Availability
+                      </p>
+                      <div
+                        className="collection-filters__segment"
+                        role="group"
+                        aria-label="Availability"
+                        aria-labelledby="collection-filter-status-label"
+                      >
+                        {(
+                          [
+                            { value: "all", label: "All" },
+                            { value: "available", label: "Available" },
+                            { value: "sold", label: "Sold" },
+                          ] as const
+                        ).map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            className="collection-filters__segment-btn"
+                            aria-pressed={statusFilter === opt.value}
+                            onClick={() => setStatusFilter(opt.value)}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="collection-filters__col">
+                      <p className="collection-filters__heading" id="collection-filter-price-label">
+                        Price range
+                      </p>
+                      <div className="collection-filters__range-labels">
+                        <span>USD {priceBounds.min.toLocaleString()}</span>
+                        <span>
+                          USD{" "}
+                          {(Number.isFinite(priceRange[1])
+                            ? priceRange[1]
+                            : priceBounds.max
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="collection-filters__slider-wrap">
+                        <div className="collection-filters__slider-rail" aria-hidden="true">
+                          <div
+                            className="collection-filters__slider-fill"
+                            style={{
+                              width: `${
+                                priceBounds.max > priceBounds.min
+                                  ? ((Math.min(
+                                      Number.isFinite(priceRange[1])
+                                        ? priceRange[1]
+                                        : priceBounds.max,
+                                      priceBounds.max,
+                                    ) -
+                                      priceBounds.min) /
+                                      (priceBounds.max - priceBounds.min)) *
+                                    100
+                                  : 100
+                              }%`,
+                            }}
+                          />
+                        </div>
+                        <input
+                          id="collection-filter-price"
+                          type="range"
+                          min={priceBounds.min}
+                          max={priceBounds.max}
+                          value={
+                            Number.isFinite(priceRange[1]) ? priceRange[1] : priceBounds.max
+                          }
+                          onChange={(e) =>
+                            setPriceRange([priceBounds.min, Number(e.target.value)])
+                          }
+                          aria-labelledby="collection-filter-price-label"
+                          className="collection-filters__slider"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="link-btn collection-filters__clear"
+                        onClick={clearAllFilters}
+                      >
+                        Clear all
+                      </button>
+                    </div>
                   </div>
-                </div>
+
+                  {(artistFilter !== "" ||
+                    statusFilter !== "all" ||
+                    (Number.isFinite(priceRange[1]) &&
+                      priceRange[1] < priceBounds.max)) && (
+                    <div className="collection-filters__applied" aria-label="Active filters">
+                      {artistFilter !== "" && (
+                        <button
+                          type="button"
+                          className="collection-filters__applied-chip"
+                          onClick={() => setArtistFilter("")}
+                        >
+                          {artistFilter} <span aria-hidden="true">✕</span>
+                          <span className="sr-only">Remove artist filter</span>
+                        </button>
+                      )}
+                      {statusFilter !== "all" && (
+                        <button
+                          type="button"
+                          className="collection-filters__applied-chip"
+                          onClick={() => setStatusFilter("all")}
+                        >
+                          {statusFilter === "available" ? "Available" : "Sold"}{" "}
+                          <span aria-hidden="true">✕</span>
+                          <span className="sr-only">Remove availability filter</span>
+                        </button>
+                      )}
+                      {Number.isFinite(priceRange[1]) && priceRange[1] < priceBounds.max && (
+                        <button
+                          type="button"
+                          className="collection-filters__applied-chip"
+                          onClick={() =>
+                            setPriceRange([priceBounds.min, priceBounds.max])
+                          }
+                        >
+                          Price: USD {priceBounds.min.toLocaleString()}–
+                          {priceRange[1].toLocaleString()}{" "}
+                          <span aria-hidden="true">✕</span>
+                          <span className="sr-only">Remove price filter</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
 
               {/* 4. Newsletter */}
               <NewsletterInvite />
 
-              {/* 5. Works grid */}
-              <section className="collection-grid" aria-label="Works">
+              {/* 5. Works grid — shortest-column masonry (LTR order) */}
+              <section
+                className={`collection-grid${loading || works.length === 0 || sortedWorks.length === 0 ? " collection-grid--solo" : ""}`}
+                aria-label="Works"
+              >
                 {loading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="collection-card">
-                      <Skeleton className="aspect-[4/5] w-full !bg-[#efe7cf]" />
-                      <div className="collection-card__info space-y-3">
-                        <Skeleton className="h-3 w-24" />
-                        <Skeleton className="h-7 w-[80%]" />
-                        <Skeleton className="h-4 w-32" />
+                  <div className="collection-grid" style={{ padding: 0, width: "100%" }}>
+                    {Array.from({ length: columnCount }).map((_, col) => (
+                      <div key={col} className="collection-grid__col">
+                        {Array.from({ length: 2 }).map((__, i) => (
+                          <div key={i} className="collection-card">
+                            <Skeleton className="aspect-[4/5] w-full !bg-[#efe7cf]" />
+                            <div className="collection-card__info space-y-3">
+                              <Skeleton className="h-3 w-24" />
+                              <Skeleton className="h-7 w-[80%]" />
+                              <Skeleton className="h-4 w-32" />
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 ) : works.length === 0 ? (
                   <div className="collection-empty">
                     <p>Could not load the collection. Please try again later.</p>
@@ -536,7 +773,11 @@ const ArtworksPage = () => {
                     </button>
                   </div>
                 ) : (
-                  sortedWorks.map((work, index) => renderWorkCard(work, index))
+                  masonryColumns.map((col, colIndex) => (
+                    <div key={colIndex} className="collection-grid__col">
+                      {col.map((work) => renderWorkCard(work))}
+                    </div>
+                  ))
                 )}
               </section>
             </div>

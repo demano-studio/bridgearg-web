@@ -11,12 +11,15 @@ describe("transformUrl", () => {
     expect(out).not.toContain("/object/public/");
     expect(out).toContain("width=800");
     expect(out).toContain("quality=75");
+    expect(out).toContain("resize=contain");
+    expect(out).not.toContain("resize=cover");
   });
 
   it("defaults quality to 75", () => {
     const out = transformUrl(OBJECT_URL, { width: 1200 });
     expect(out).toContain("quality=75");
     expect(out).toContain("width=1200");
+    expect(out).toContain("resize=contain");
   });
 
   it("returns non-Supabase URLs intact", () => {

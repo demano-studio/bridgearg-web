@@ -557,18 +557,29 @@ input[type="range"].cream-slider::-moz-range-thumb:hover {
   border-bottom-color: rgba(30, 21, 23, 0.08);
 }
 
-/* Pill buttons — safety net (public site). Exclusions: data-no-pill, .icon-btn, admin. */
-button:not([data-no-pill]):not(.icon-btn),
+/* Pill buttons — safety net (public site). Exclusions: data-no-pill, .icon-btn, .link-btn, admin. */
+button:not([data-no-pill]):not(.icon-btn):not(.link-btn),
 a.btn,
 .btn,
-[class*="button"]:not([data-no-pill]):not(.icon-btn) {
+[class*="button"]:not([data-no-pill]):not(.icon-btn):not(.link-btn) {
   border-radius: var(--radius-button) !important;
 }
 
-button:not([data-no-pill]):not(.icon-btn):focus-visible,
+button:not([data-no-pill]):not(.icon-btn):not(.link-btn):focus-visible,
 a.btn:focus-visible,
 .btn:focus-visible {
   outline-offset: 2px;
+}
+
+/* Text-style controls (e.g. CLEAR ALL) — opt out of pill radius / button chrome */
+.link-btn {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
 }
 
 /* Admin keeps sharp corners intentionally */

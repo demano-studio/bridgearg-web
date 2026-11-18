@@ -46,6 +46,8 @@ export interface OptimizedImageProps {
   width?: number;
   /** Optional native height attribute (layout reservation). */
   height?: number;
+  /** Fired once the image has natural dimensions (for masonry height estimates). */
+  onNaturalSize?: (naturalWidth: number, naturalHeight: number) => void;
 }
 
 /**
@@ -73,13 +75,14 @@ export function OptimizedImage({
   layout = "cover",
   width,
   height,
+  onNaturalSize,
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false);
 
   const resolvedSrc = variant === "artwork" ? getWorkImageUrl(src) : src;
   const useTransforms = responsive && isSupabaseStorageObjectUrl(resolvedSrc);
   const displaySrc = useTransforms
-    ? transformUrl(resolvedSrc, { width: 800 })
+    ? transformUrl(resolvedSrc, { width: 1200, quality: 75 })
     : resolvedSrc;
   const srcSet = useTransforms ? buildSrcSet(resolvedSrc) : undefined;
   const placeholderSrc = useTransforms
@@ -94,20 +97,22 @@ export function OptimizedImage({
         : title
       : "");
 
+  const handleLoad = (img: HTMLImageElement) => {
+    setLoaded(true);
+    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+      onNaturalSize?.(img.naturalWidth, img.naturalHeight);
+    }
+  };
+
   if (layout === "intrinsic") {
     return (
-      <div className={`relative w-full ${className}`} style={{ background: "transparent" }}>
+      <div className={`relative w-full ${className}`}>
         {!loaded && (
           <div
             className="absolute inset-0 transition-opacity duration-300"
             style={{
-              backgroundImage: `url(${placeholderSrc})`,
-              backgroundSize: "contain",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: objectPosition,
-              filter: "blur(12px)",
-              transform: "scale(1.02)",
-              opacity: 0.35,
+              backgroundColor: "inherit",
+              opacity: 1,
             }}
             aria-hidden
           />
@@ -122,14 +127,17 @@ export function OptimizedImage({
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : undefined}
           decoding="async"
-          className={`relative block h-auto w-full transition-opacity duration-300 ${imageClassName}`}
+          className={`relative block h-auto w-full ${
+            loaded ? "opacity-100" : "opacity-0"
+          } ${imageClassName}`}
           style={{
-            opacity: loaded ? 1 : 0,
-            objectFit: "initial",
+            // Reserve space before load; once loaded, drop aspect-ratio so the
+            // decoded image drives height (avoids stretch when DB/provisional ratio differs).
+            aspectRatio: loaded ? undefined : aspectRatio || undefined,
             objectPosition,
-            aspectRatio: aspectRatio || undefined,
+            transition: "opacity 0.4s ease-out",
           }}
-          onLoad={() => setLoaded(true)}
+          onLoad={(e) => handleLoad(e.currentTarget)}
           onError={() => {
             if (logSrcOnError) {
               console.log("[OptimizedImage] Failed to load image src:", displaySrc);
@@ -168,7 +176,7 @@ export function OptimizedImage({
         decoding="async"
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${imageClassName}`}
         style={{ opacity: loaded ? 1 : 0, objectPosition }}
-        onLoad={() => setLoaded(true)}
+        onLoad={(e) => handleLoad(e.currentTarget)}
         onError={() => {
           if (logSrcOnError) {
             console.log("[OptimizedImage] Failed to load image src:", displaySrc);
