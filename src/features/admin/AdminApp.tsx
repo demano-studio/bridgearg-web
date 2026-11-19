@@ -57,8 +57,17 @@ function AdminLogin() {
   return (
     <div className="admin-root admin-login">
       <form onSubmit={onSubmit} className="admin-login__card">
-        <h1 className="admin-login__title">Bridgearg Admin</h1>
-        <p className="admin-login__hint">Ingresá con tu usuario de Supabase Auth.</p>
+        <div className="admin-login__brand">
+          <img
+            src="/assets/logos/BRIDGEARG - Exportacion logos-10.svg"
+            alt="bridgearg"
+            width={400}
+            height={400}
+            className="admin-login__mark"
+            decoding="async"
+          />
+          <p className="admin-login__subtitle">Panel de administración</p>
+        </div>
         <div className="space-y-4">
           <div className="admin-field space-y-2">
             <Label htmlFor="admin-email">Email</Label>
@@ -66,6 +75,7 @@ function AdminLogin() {
               id="admin-email"
               type="email"
               autoComplete="email"
+              placeholder="tu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -77,6 +87,7 @@ function AdminLogin() {
               id="admin-password"
               type="password"
               autoComplete="current-password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -114,8 +125,8 @@ export default function AdminApp() {
       <>
         <AdminPwaHead />
         <div className="admin-root admin-login">
-          <p className="max-w-md text-center text-sm text-[rgba(252,248,234,0.7)]">
-            Supabase no está configurado. Definí <code className="text-xs">VITE_SUPABASE_URL</code> y{" "}
+          <p className="max-w-md text-center text-sm text-[#5f5659]">
+            Auth no está configurado. Definí <code className="text-xs">VITE_SUPABASE_URL</code> y{" "}
             <code className="text-xs">VITE_SUPABASE_ANON_KEY</code> en <code className="text-xs">.env</code>.
           </p>
         </div>
@@ -128,7 +139,7 @@ export default function AdminApp() {
       <>
         <AdminPwaHead />
         <div className="admin-root admin-login">
-          <Loader2 className="h-8 w-8 animate-spin opacity-60 text-[#fcf8ea]" />
+          <Loader2 className="h-8 w-8 animate-spin opacity-50 text-[#1e1517]" />
         </div>
       </>
     );
@@ -159,7 +170,7 @@ function AdminShell({ pathLabel, onSignOut }: { pathLabel: string; onSignOut: ()
   if (!access.ready) {
     return (
       <div className="admin-root admin-login">
-        <Loader2 className="h-8 w-8 animate-spin opacity-60 text-[#fcf8ea]" />
+        <Loader2 className="h-8 w-8 animate-spin opacity-50 text-[#1e1517]" />
       </div>
     );
   }
@@ -169,10 +180,10 @@ function AdminShell({ pathLabel, onSignOut }: { pathLabel: string; onSignOut: ()
       <div className="admin-root admin-login">
         <div className="admin-login__card space-y-4 text-center">
           <h1 className="admin-login__title">Sin acceso</h1>
-          <p className="text-sm text-[rgba(252,248,234,0.7)]">
+          <p className="text-sm text-[#5f5659]">
             Tu cuenta no forma parte del equipo admin. Pedile al owner que te invite.
           </p>
-          <Button type="button" variant="outline" className="border-[rgba(252,248,234,0.3)] text-[#fcf8ea]" onClick={onSignOut}>
+          <Button type="button" variant="outline" className="border-[rgba(30,21,23,0.22)] text-[#1e1517]" onClick={onSignOut}>
             Cerrar sesión
           </Button>
         </div>
@@ -189,10 +200,10 @@ function AdminShell({ pathLabel, onSignOut }: { pathLabel: string; onSignOut: ()
       <div className="admin-root admin-login">
         <div className="admin-login__card space-y-4 text-center">
           <h1 className="admin-login__title">Sin acceso</h1>
-          <p className="text-sm text-[rgba(252,248,234,0.7)]">
+          <p className="text-sm text-[#5f5659]">
             Tu cuenta no tiene permisos en ninguna sección. Pedile al owner que te vuelva a habilitar el acceso.
           </p>
-          <Button type="button" variant="outline" className="border-[rgba(252,248,234,0.3)] text-[#fcf8ea]" onClick={onSignOut}>
+          <Button type="button" variant="outline" className="border-[rgba(30,21,23,0.22)] text-[#1e1517]" onClick={onSignOut}>
             Cerrar sesión
           </Button>
         </div>

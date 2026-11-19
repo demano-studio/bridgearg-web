@@ -586,18 +586,38 @@ body.admin-ui [class*="brevo-conversations"] {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(127, 178, 209, 0.18), transparent 55%),
-    var(--admin-ink);
-  color: var(--admin-cream);
+  background: var(--admin-cream);
+  color: var(--admin-ink);
 }
 
 .admin-login__card {
   width: 100%;
   max-width: 24rem;
-  border: 1px solid rgba(252, 248, 234, 0.16);
-  background: rgba(252, 248, 234, 0.04);
-  padding: 2rem 1.75rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.admin-login__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.admin-login__mark {
+  display: block;
+  height: 400px;
+  width: auto;
+  /* logos-10 viewBox leaves ~25% empty below the wordmark — pull subtitle up, leave 20px */
+  margin-bottom: calc(-400px * 74 / 300 + 20px);
+}
+
+.admin-login__subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #5f5659;
+  position: relative;
+  z-index: 1;
 }
 
 .admin-login__title {
@@ -606,46 +626,56 @@ body.admin-ui [class*="brevo-conversations"] {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.admin-login__hint {
-  margin: 0 0 1.5rem;
-  font-size: 0.875rem;
-  color: rgba(252, 248, 234, 0.55);
+  color: var(--admin-ink);
 }
 
 .admin-login .admin-field label {
-  color: rgba(252, 248, 234, 0.72);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5f5659;
 }
 
-.admin-login input {
-  border-radius: var(--admin-pill) !important;
-  border-color: rgba(252, 248, 234, 0.22) !important;
-  background: rgba(252, 248, 234, 0.06) !important;
-  color: var(--admin-cream) !important;
+.admin-root.admin-login input:not([type="checkbox"]):not([type="radio"]) {
+  height: 52px !important;
+  border-radius: 14px !important;
+  border: 1.5px solid rgba(30, 21, 23, 0.14) !important;
+  background: #ffffff !important;
+  color: var(--admin-ink) !important;
+  box-shadow: none !important;
 }
 
-.admin-login input:focus-visible {
+.admin-root.admin-login input::placeholder {
+  color: #8d8488;
+}
+
+.admin-root.admin-login input:focus-visible {
   outline: none;
   border-color: var(--admin-sky) !important;
-  box-shadow: 0 0 0 1px var(--admin-sky);
+  box-shadow: none !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
 }
 
 .admin-login__error {
   margin: 0;
   font-size: 0.875rem;
-  color: rgba(252, 248, 234, 0.85);
+  color: #9b3b3b;
 }
 
 .admin-login button[type="submit"] {
-  background: var(--admin-cream) !important;
+  min-height: 54px !important;
+  border-radius: 9999px !important;
+  background: var(--admin-sky) !important;
   color: var(--admin-ink) !important;
-  border-color: var(--admin-cream) !important;
+  border-color: var(--admin-sky) !important;
+  font-weight: 700 !important;
 }
 
 .admin-login button[type="submit"]:hover:not(:disabled) {
-  background: transparent !important;
-  color: var(--admin-cream) !important;
+  background: #6ba3c6 !important;
+  border-color: #6ba3c6 !important;
+  color: var(--admin-ink) !important;
 }
 
 /* ---------- Buttons (shell language) ---------- */
