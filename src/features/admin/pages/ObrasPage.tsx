@@ -452,15 +452,15 @@ export default function ObrasPage() {
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-3">
             <h1 className="text-xl font-semibold tracking-tight">
-              {loteFilter ? (loteMeta?.nombre ? `Obras — ${loteMeta.nombre}` : "Obras del lote") : "Obras"}
+              {loteFilter ? (loteMeta?.nombre ?? "Lotes") : "Obras"}
             </h1>
             <div className="sm:hidden">{viewToggle}</div>
           </div>
           <p className="text-sm text-muted-foreground">
             {loteFilter
-              ? loteMeta?.fecha
-                ? `Filtradas por lote #${loteFilter} · ${loteMeta.fecha}`
-                : `Filtradas por lote #${loteFilter}.`
+              ? `Grupos de obras organizados para envíos, muestras o ferias.${
+                  loteMeta?.fecha ? ` · ${loteMeta.fecha}` : ""
+                }`
               : "Catálogo completo y CRM."}
             {` · ${filtered.length} visible${filtered.length === 1 ? "" : "s"}`}
           </p>

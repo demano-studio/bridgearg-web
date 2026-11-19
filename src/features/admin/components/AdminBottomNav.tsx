@@ -54,28 +54,52 @@ const PRIMARY: TabDef[] = [
   },
 ];
 
-const MORE_ORDER: TabDef[] = [
-  { key: "trade", label: "Trade", to: "/admin/trade", section: "trade", icon: Handshake },
-  { key: "mensajes", label: "Mensajes", to: "/admin/mensajes", section: "mensajes", icon: MessageSquare },
-  { key: "artistas", label: "Artistas", to: "/admin/artistas", section: "artistas", icon: Users },
-  { key: "lotes", label: "Lotes", to: "/admin/obras", section: "lotes", icon: Layers },
+const MORE_GROUPS: Array<{ id: string; label: string | null; items: TabDef[] }> = [
   {
-    key: "suscriptores",
-    label: "Suscriptores",
-    to: "/admin/suscriptores",
-    section: "suscriptores",
-    icon: Mail,
+    id: "catalogo",
+    label: "Catálogo",
+    items: [
+      { key: "artistas", label: "Artistas", to: "/admin/artistas", section: "artistas", icon: Users },
+      { key: "lotes", label: "Lotes", to: "/admin/obras", section: "lotes", icon: Layers },
+    ],
   },
-  { key: "papelera", label: "Papelera", to: "/admin/papelera", section: "papelera", icon: Trash2 },
-  { key: "equipo", label: "Equipo", to: "/admin/equipo", section: "equipo", icon: UsersRound },
   {
-    key: "configuracion",
-    label: "Configuración",
-    to: "/admin/configuracion",
-    section: "configuracion",
-    icon: Settings,
+    id: "ventas",
+    label: "Ventas",
+    items: [{ key: "trade", label: "Trade", to: "/admin/trade", section: "trade", icon: Handshake }],
+  },
+  {
+    id: "crm",
+    label: "CRM",
+    items: [
+      { key: "mensajes", label: "Mensajes", to: "/admin/mensajes", section: "mensajes", icon: MessageSquare },
+      {
+        key: "suscriptores",
+        label: "Suscriptores",
+        to: "/admin/suscriptores",
+        section: "suscriptores",
+        icon: Mail,
+      },
+    ],
+  },
+  {
+    id: "sistema",
+    label: null,
+    items: [
+      { key: "papelera", label: "Papelera", to: "/admin/papelera", section: "papelera", icon: Trash2 },
+      { key: "equipo", label: "Equipo", to: "/admin/equipo", section: "equipo", icon: UsersRound },
+      {
+        key: "configuracion",
+        label: "Configuración",
+        to: "/admin/configuracion",
+        section: "configuracion",
+        icon: Settings,
+      },
+    ],
   },
 ];
+
+const MORE_ORDER: TabDef[] = MORE_GROUPS.flatMap((g) => g.items);
 
 function canAccess(
   access: ReturnType<typeof useAdminAccess>,
@@ -108,7 +132,7 @@ export function AdminBottomNav() {
       const sb = getSupabase();
       const [tradePending, mensajesOpen, papeleraObras, papeleraLotes, pedidosOpen] = await Promise.all([
         sb.from("trade_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        sb.from("contact_messages").select("id", { count: "exact", head: true }).neq("status", "responded"),
+        sb.from("contact_messages").select("id", { count: "exact", head: true }).eq("status", "new"),
         sb.from("artworks").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
         sb.from("lotes").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
         sb.from("purchases").select("id", { count: "exact", head: true }).neq("shipping_status", "delivered"),
@@ -225,32 +249,44 @@ export function AdminBottomNav() {
           <SheetHeader className="px-5 pb-2 text-left">
             <SheetTitle>Más</SheetTitle>
           </SheetHeader>
-          <ul className="admin-more-sheet__list">
-            {moreItems.map((item) => {
-              const Icon = item.icon;
-              const active = tabActive(item, location.pathname);
-              const badge = badgeFor(item.key);
-              const to = resolveTo(item);
+          <div className="admin-more-sheet__groups">
+            {MORE_GROUPS.map((group, groupIndex) => {
+              const visible = group.items.filter((item) => moreItems.some((m) => m.key === item.key));
+              if (visible.length === 0) return null;
+              const showSep = group.label == null && groupIndex > 0;
               return (
-                <li key={item.key}>
-                  <button
-                    type="button"
-                    className={`admin-more-sheet__item${active ? " is-active" : ""}`}
-                    onClick={() => {
-                      setMoreOpen(false);
-                      navigate(to);
-                    }}
-                  >
-                    <Icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {badge != null && badge > 0 ? (
-                      <span className="admin-more-sheet__badge">{badge > 99 ? "99+" : badge}</span>
-                    ) : null}
-                  </button>
-                </li>
+                <div key={group.id} className={`admin-more-sheet__group${showSep ? " is-sep" : ""}`}>
+                  {group.label ? <div className="admin-more-sheet__group-label">{group.label}</div> : null}
+                  <ul className="admin-more-sheet__list">
+                    {visible.map((item) => {
+                      const Icon = item.icon;
+                      const active = tabActive(item, location.pathname);
+                      const badge = badgeFor(item.key);
+                      const to = resolveTo(item);
+                      return (
+                        <li key={item.key}>
+                          <button
+                            type="button"
+                            className={`admin-more-sheet__item${active ? " is-active" : ""}`}
+                            onClick={() => {
+                              setMoreOpen(false);
+                              navigate(to);
+                            }}
+                          >
+                            <Icon className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+                            <span className="flex-1 text-left">{item.label}</span>
+                            {badge != null && badge > 0 ? (
+                              <span className="admin-more-sheet__badge">{badge > 99 ? "99+" : badge}</span>
+                            ) : null}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               );
             })}
-          </ul>
+          </div>
         </SheetContent>
       </Sheet>
     </>

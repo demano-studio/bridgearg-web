@@ -77,6 +77,47 @@ export type AdminContactMessageRow = {
   created_at: string;
 };
 
+export type AdminContactReplyRow = {
+  id: number;
+  thread_email: string;
+  body: string;
+  sent_by_email: string | null;
+  resend_id: string | null;
+  created_at: string;
+};
+
+export type ContactChatBubble =
+  | {
+      kind: "inbound";
+      id: string;
+      created_at: string;
+      body: string;
+      subject: string;
+      status: AdminMessageStatus;
+      messageId: number;
+    }
+  | {
+      kind: "outbound";
+      id: string;
+      created_at: string;
+      body: string;
+      sent_by_email: string | null;
+      replyId: number | "optimistic";
+      pending?: boolean;
+      failed?: boolean;
+    };
+
+export type ContactThread = {
+  threadEmail: string;
+  displayName: string;
+  displayEmail: string;
+  preview: string;
+  lastAt: string;
+  unreadCount: number;
+  messages: AdminContactMessageRow[];
+  replies: AdminContactReplyRow[];
+};
+
 export type AdminSubscriberRow = {
   id: number;
   email: string;

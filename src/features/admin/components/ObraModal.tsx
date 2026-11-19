@@ -10,6 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -374,421 +380,440 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
           </div>
         ) : (
           <form onSubmit={(e) => void onSubmit(e)} className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="admin-dialog-body min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-6 py-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label>Nombre</Label>
-                    <Input
-                      value={form.title}
-                      onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                      required
-                      className="border-bridge-black/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Artista</Label>
-                    <Select
-                      value={form.artist_id || "__pick"}
-                      onValueChange={(v) => setForm((f) => ({ ...f, artist_id: v === "__pick" ? "" : v }))}
-                    >
-                      <SelectTrigger className="border-bridge-black/20">
-                        <SelectValue placeholder="Elegir…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__pick" disabled>
-                          Elegí artista
-                        </SelectItem>
-                        {artistList.map((a) => (
-                          <SelectItem key={a.id} value={String(a.id)}>
-                            {a.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Lote</Label>
-                    <Select value={form.lote_id || "__none"} onValueChange={(v) => setForm((f) => ({ ...f, lote_id: v === "__none" ? "" : v }))}>
-                      <SelectTrigger className="border-bridge-black/20">
-                        <SelectValue placeholder="Sin lote" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none">Sin lote</SelectItem>
-                        {loteList.map((l) => (
-                          <SelectItem key={l.id} value={String(l.id)}>
-                            {l.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Tipo</Label>
-                    <Select value={form.tipo} onValueChange={(v) => setForm((f) => ({ ...f, tipo: v }))}>
-                      <SelectTrigger className="border-bridge-black/20">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Cuadro">Cuadro</SelectItem>
-                        <SelectItem value="Escultura">Escultura</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Enmarcado</Label>
-                    <Input
-                      value={form.enmarque}
-                      onChange={(e) => setForm((f) => ({ ...f, enmarque: e.target.value }))}
-                      className="border-bridge-black/20"
-                    />
-                  </div>
-                  <div className="flex items-center gap-6 pt-6">
-                    <label className="flex items-center gap-2 text-sm">
-                      <Checkbox checked={form.certificado} onCheckedChange={(c) => setForm((f) => ({ ...f, certificado: Boolean(c) }))} />
-                      Certificado
-                    </label>
-                    <label className="flex items-center gap-2 text-sm">
-                      <Checkbox checked={form.es_conjunto} onCheckedChange={(c) => setForm((f) => ({ ...f, es_conjunto: Boolean(c) }))} />
-                      Es conjunto
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Dimensiones (cm / kg)</div>
-                  <div className="grid gap-3 sm:grid-cols-4">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Ancho</Label>
-                      <Input
-                        value={form.ancho}
-                        onChange={(e) => setForm((f) => ({ ...f, ancho: e.target.value }))}
-                        className="border-bridge-black/20"
-                        inputMode="decimal"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Largo / alto</Label>
-                      <Input
-                        value={form.largo}
-                        onChange={(e) => setForm((f) => ({ ...f, largo: e.target.value }))}
-                        className="border-bridge-black/20"
-                        inputMode="decimal"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Profundidad</Label>
-                      <Input
-                        value={form.profundidad}
-                        onChange={(e) => setForm((f) => ({ ...f, profundidad: e.target.value }))}
-                        className="border-bridge-black/20"
-                        inputMode="decimal"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Peso (kg)</Label>
-                      <Input
-                        value={form.peso}
-                        onChange={(e) => setForm((f) => ({ ...f, peso: e.target.value }))}
-                        className="border-bridge-black/20"
-                        inputMode="decimal"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Técnica</Label>
-                    <Input
-                      value={form.medium}
-                      onChange={(e) => setForm((f) => ({ ...f, medium: e.target.value }))}
-                      className="border-bridge-black/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Materiales</Label>
-                    <Input
-                      value={form.materiales}
-                      onChange={(e) => setForm((f) => ({ ...f, materiales: e.target.value }))}
-                      className="border-bridge-black/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Año</Label>
-                    <Input
-                      value={form.year}
-                      onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
-                      className="border-bridge-black/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Precio referencia U$D</Label>
-                    <Input
-                      value={form.price_ref_usd}
-                      onChange={(e) => setForm((f) => ({ ...f, price_ref_usd: e.target.value }))}
-                      className="border-bridge-black/20"
-                      inputMode="decimal"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Precio publicado U$D</Label>
-                    <Input
-                      value={form.price_usd}
-                      onChange={(e) => setForm((f) => ({ ...f, price_usd: e.target.value }))}
-                      className="border-bridge-black/20"
-                      inputMode="decimal"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Estado</Label>
-                    <Select value={form.estadoVenta} onValueChange={(v) => setForm((f) => ({ ...f, estadoVenta: v }))}>
-                      <SelectTrigger className="border-bridge-black/20">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Stock">Stock</SelectItem>
-                        <SelectItem value="Vendida">Vendida</SelectItem>
-                        <SelectItem value="Reservada">Reservada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Ubicación</Label>
-                    <Select value={form.ubicacion} onValueChange={(v) => setForm((f) => ({ ...f, ubicacion: v }))}>
-                      <SelectTrigger className="border-bridge-black/20">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="En Galería">En Galería</SelectItem>
-                        <SelectItem value="En Tránsito">En Tránsito</SelectItem>
-                        <SelectItem value="Entregada">Entregada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Estado de pago</Label>
-                    <Select value={form.estado_pago} onValueChange={(v) => setForm((f) => ({ ...f, estado_pago: v }))}>
-                      <SelectTrigger className="border-bridge-black/20">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pendiente">Pendiente</SelectItem>
-                        <SelectItem value="Señada">Señada</SelectItem>
-                        <SelectItem value="Pagada">Pagada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Comprador</Label>
-                    <Input
-                      value={form.comprador}
-                      onChange={(e) => setForm((f) => ({ ...f, comprador: e.target.value }))}
-                      className="border-bridge-black/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Contacto comprador</Label>
-                    <Input
-                      value={form.comprador_contacto}
-                      onChange={(e) => setForm((f) => ({ ...f, comprador_contacto: e.target.value }))}
-                      placeholder="Teléfono o email"
-                      className="border-bridge-black/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Fecha de venta</Label>
-                    <Input
-                      type="date"
-                      value={form.fecha_venta}
-                      onChange={(e) => setForm((f) => ({ ...f, fecha_venta: e.target.value }))}
-                      className="border-bridge-black/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Notas</Label>
-                  <Textarea
-                    value={form.notas}
-                    onChange={(e) => setForm((f) => ({ ...f, notas: e.target.value }))}
-                    rows={3}
-                    className="border-bridge-black/20"
-                  />
-                </div>
-
-                {form.es_conjunto ? (
-                  <div className="space-y-3 border border-bridge-black/15 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Piezas del conjunto</span>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setForm((f) => ({ ...f, piezas: [...f.piezas, emptyPieza()] }))}
-                      >
-                        <Plus className="h-4 w-4" />
-                        Agregar pieza
-                      </Button>
-                    </div>
-                    {form.piezas.map((p, i) => (
-                      <div key={i} className="grid gap-2 border border-bridge-black/10 p-3 sm:grid-cols-6">
+            <div className="admin-dialog-body min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-2">
+              <Accordion type="single" collapsible defaultValue="general" className="admin-obra-accordion w-full">
+                <AccordionItem value="general" className="border-bridge-black/15">
+                  <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                    Datos generales
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pb-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label>Nombre</Label>
                         <Input
-                          placeholder="Nombre"
-                          value={p.nombre}
-                          onChange={(e) => updatePieza(i, { nombre: e.target.value })}
-                          className="sm:col-span-2"
+                          value={form.title}
+                          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                          required
+                          className="border-bridge-black/20"
                         />
-                        <Input
-                          placeholder="Largo"
-                          value={p.largo ?? ""}
-                          onChange={(e) => updatePieza(i, { largo: e.target.value || null })}
-                        />
-                        <Input
-                          placeholder="Ancho"
-                          value={p.ancho ?? ""}
-                          onChange={(e) => updatePieza(i, { ancho: e.target.value || null })}
-                        />
-                        <Input
-                          placeholder="Prof."
-                          value={p.profundidad ?? ""}
-                          onChange={(e) => updatePieza(i, { profundidad: e.target.value || null })}
-                        />
-                        <Input
-                          placeholder="Peso"
-                          value={p.peso ?? ""}
-                          onChange={(e) => updatePieza(i, { peso: e.target.value || null })}
-                        />
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          disabled={form.piezas.length <= 1}
-                          onClick={() => setForm((f) => ({ ...f, piezas: f.piezas.filter((_, j) => j !== i) }))}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Artista</Label>
+                        <Select
+                          value={form.artist_id || "__pick"}
+                          onValueChange={(v) => setForm((f) => ({ ...f, artist_id: v === "__pick" ? "" : v }))}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                          <SelectTrigger className="border-bridge-black/20">
+                            <SelectValue placeholder="Elegir…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__pick" disabled>
+                              Elegí artista
+                            </SelectItem>
+                            {artistList.map((a) => (
+                              <SelectItem key={a.id} value={String(a.id)}>
+                                {a.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    ))}
-                  </div>
-                ) : null}
-
-                <div className="admin-modal-section space-y-4">
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Imágenes
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Principal del catálogo y galería extra. Podés reemplazar o promover desde acá.
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Imagen principal</Label>
-                  </div>
-                  <div className="flex flex-wrap items-start gap-4">
-                    <div className="h-36 w-36 shrink-0 border border-bridge-black/15 bg-muted/20">
-                      {pendingHeroPreview || resolveAdminImageSrc(heroPath) ? (
-                        <img
-                          src={pendingHeroPreview || resolveAdminImageSrc(heroPath) || ""}
-                          alt=""
-                          className="h-full w-full object-cover"
+                      <div className="space-y-2">
+                        <Label>Lote</Label>
+                        <Select
+                          value={form.lote_id || "__none"}
+                          onValueChange={(v) => setForm((f) => ({ ...f, lote_id: v === "__none" ? "" : v }))}
+                        >
+                          <SelectTrigger className="border-bridge-black/20">
+                            <SelectValue placeholder="Sin lote" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none">Sin lote</SelectItem>
+                            {loteList.map((l) => (
+                              <SelectItem key={l.id} value={String(l.id)}>
+                                {l.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tipo</Label>
+                        <Select value={form.tipo} onValueChange={(v) => setForm((f) => ({ ...f, tipo: v }))}>
+                          <SelectTrigger className="border-bridge-black/20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Cuadro">Cuadro</SelectItem>
+                            <SelectItem value="Escultura">Escultura</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Enmarcado</Label>
+                        <Input
+                          value={form.enmarque}
+                          onChange={(e) => setForm((f) => ({ ...f, enmarque: e.target.value }))}
+                          className="border-bridge-black/20"
                         />
-                      ) : (
-                        <div className="flex h-full items-center justify-center px-2 text-center text-[10px] uppercase tracking-wider text-muted-foreground">
-                          Sin foto
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex min-w-[12rem] flex-1 flex-col gap-2">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        className="border-bridge-black/20"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0] ?? null;
-                          setPendingHeroFile(f);
-                          e.target.value = "";
-                        }}
-                      />
-                      {pendingHeroFile ? (
-                        <p className="text-xs text-muted-foreground">
-                          Nueva principal lista al guardar: {pendingHeroFile.name}
-                        </p>
-                      ) : null}
-                      <div className="flex flex-wrap gap-2">
-                        {pendingHeroFile ? (
-                          <Button type="button" size="sm" variant="outline" onClick={() => setPendingHeroFile(null)}>
-                            Cancelar cambio
-                          </Button>
-                        ) : null}
-                        {heroPath || pendingHeroFile ? (
-                          <Button type="button" size="sm" variant="outline" onClick={() => clearHero()}>
-                            Quitar principal
-                          </Button>
-                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-6 pt-6 sm:col-span-2">
+                        <label className="flex items-center gap-2 text-sm">
+                          <Checkbox
+                            checked={form.certificado}
+                            onCheckedChange={(c) => setForm((f) => ({ ...f, certificado: Boolean(c) }))}
+                          />
+                          Certificado
+                        </label>
+                        <label className="flex items-center gap-2 text-sm">
+                          <Checkbox
+                            checked={form.es_conjunto}
+                            onCheckedChange={(c) => setForm((f) => ({ ...f, es_conjunto: Boolean(c) }))}
+                          />
+                          Es conjunto
+                        </label>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Técnica</Label>
+                        <Input
+                          value={form.medium}
+                          onChange={(e) => setForm((f) => ({ ...f, medium: e.target.value }))}
+                          className="border-bridge-black/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Materiales</Label>
+                        <Input
+                          value={form.materiales}
+                          onChange={(e) => setForm((f) => ({ ...f, materiales: e.target.value }))}
+                          className="border-bridge-black/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Año</Label>
+                        <Input
+                          value={form.year}
+                          onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
+                          className="border-bridge-black/20"
+                        />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2 border-t border-bridge-black/10 pt-4">
-                    <Label>Galería</Label>
-                    {extraPaths.length === 0 && pendingExtraPreviews.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Sin imágenes extra todavía.</p>
-                    ) : (
-                      <div className="flex flex-wrap gap-3">
-                        {extraPaths.map((path) => {
-                          const src = resolveAdminImageSrc(path);
-                          return (
-                            <div key={path} className="w-28 space-y-1">
-                              <div className="h-28 w-28 border border-bridge-black/15 bg-muted/20">
-                                {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : null}
-                              </div>
-                              <div className="flex flex-col gap-1">
-                                <Button type="button" size="sm" variant="outline" onClick={() => promoteExtraToHero(path)}>
-                                  Principal
-                                </Button>
-                                <Button type="button" size="sm" variant="outline" onClick={() => removeExtra(path)}>
-                                  Quitar
-                                </Button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {pendingExtraPreviews.map((src, i) => (
-                          <div key={`pending-${i}`} className="w-28 space-y-1">
-                            <div className="h-28 w-28 border border-dashed border-bridge-black/25 bg-muted/10">
-                              <img src={src} alt="" className="h-full w-full object-cover opacity-80" />
-                            </div>
-                            <p className="text-[10px] text-muted-foreground">Pendiente</p>
+                    {form.es_conjunto ? (
+                      <div className="space-y-3 border border-bridge-black/15 p-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Piezas del conjunto
+                          </span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setForm((f) => ({ ...f, piezas: [...f.piezas, emptyPieza()] }))}
+                          >
+                            <Plus className="h-4 w-4" />
+                            Agregar pieza
+                          </Button>
+                        </div>
+                        {form.piezas.map((p, i) => (
+                          <div key={i} className="grid gap-2 border border-bridge-black/10 p-3 sm:grid-cols-6">
+                            <Input
+                              placeholder="Nombre"
+                              value={p.nombre}
+                              onChange={(e) => updatePieza(i, { nombre: e.target.value })}
+                              className="sm:col-span-2"
+                            />
+                            <Input
+                              placeholder="Largo"
+                              value={p.largo ?? ""}
+                              onChange={(e) => updatePieza(i, { largo: e.target.value || null })}
+                            />
+                            <Input
+                              placeholder="Ancho"
+                              value={p.ancho ?? ""}
+                              onChange={(e) => updatePieza(i, { ancho: e.target.value || null })}
+                            />
+                            <Input
+                              placeholder="Prof."
+                              value={p.profundidad ?? ""}
+                              onChange={(e) => updatePieza(i, { profundidad: e.target.value || null })}
+                            />
+                            <Input
+                              placeholder="Peso"
+                              value={p.peso ?? ""}
+                              onChange={(e) => updatePieza(i, { peso: e.target.value || null })}
+                            />
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              disabled={form.piezas.length <= 1}
+                              onClick={() => setForm((f) => ({ ...f, piezas: f.piezas.filter((_, j) => j !== i) }))}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         ))}
                       </div>
-                    )}
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="border-bridge-black/20"
-                      onChange={(e) => {
-                        const list = Array.from(e.target.files ?? []);
-                        if (list.length) setPendingExtraFiles((prev) => [...prev, ...list]);
-                        e.target.value = "";
-                      }}
-                    />
-                    {pendingExtraFiles.length > 0 ? (
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs text-muted-foreground">
-                          {pendingExtraFiles.length} archivo(s) se suman a la galería al guardar.
-                        </p>
-                        <Button type="button" size="sm" variant="outline" onClick={() => setPendingExtraFiles([])}>
-                          Limpiar pendientes
-                        </Button>
-                      </div>
                     ) : null}
-                  </div>
-                </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="dims" className="border-bridge-black/15">
+                  <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                    Dimensiones y precio
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pb-4">
+                    <div className="grid gap-3 sm:grid-cols-4">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Ancho</Label>
+                        <Input
+                          value={form.ancho}
+                          onChange={(e) => setForm((f) => ({ ...f, ancho: e.target.value }))}
+                          className="border-bridge-black/20"
+                          inputMode="decimal"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Largo / alto</Label>
+                        <Input
+                          value={form.largo}
+                          onChange={(e) => setForm((f) => ({ ...f, largo: e.target.value }))}
+                          className="border-bridge-black/20"
+                          inputMode="decimal"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Profundidad</Label>
+                        <Input
+                          value={form.profundidad}
+                          onChange={(e) => setForm((f) => ({ ...f, profundidad: e.target.value }))}
+                          className="border-bridge-black/20"
+                          inputMode="decimal"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Peso (kg)</Label>
+                        <Input
+                          value={form.peso}
+                          onChange={(e) => setForm((f) => ({ ...f, peso: e.target.value }))}
+                          className="border-bridge-black/20"
+                          inputMode="decimal"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Precio referencia U$D</Label>
+                        <Input
+                          value={form.price_ref_usd}
+                          onChange={(e) => setForm((f) => ({ ...f, price_ref_usd: e.target.value }))}
+                          className="border-bridge-black/20"
+                          inputMode="decimal"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Precio publicado U$D</Label>
+                        <Input
+                          value={form.price_usd}
+                          onChange={(e) => setForm((f) => ({ ...f, price_usd: e.target.value }))}
+                          className="border-bridge-black/20"
+                          inputMode="decimal"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Estado</Label>
+                        <Select value={form.estadoVenta} onValueChange={(v) => setForm((f) => ({ ...f, estadoVenta: v }))}>
+                          <SelectTrigger className="border-bridge-black/20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Stock">Stock</SelectItem>
+                            <SelectItem value="Vendida">Vendida</SelectItem>
+                            <SelectItem value="Reservada">Reservada</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Ubicación</Label>
+                        <Select value={form.ubicacion} onValueChange={(v) => setForm((f) => ({ ...f, ubicacion: v }))}>
+                          <SelectTrigger className="border-bridge-black/20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="En Galería">En Galería</SelectItem>
+                            <SelectItem value="En Tránsito">En Tránsito</SelectItem>
+                            <SelectItem value="Entregada">Entregada</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Estado de pago</Label>
+                        <Select value={form.estado_pago} onValueChange={(v) => setForm((f) => ({ ...f, estado_pago: v }))}>
+                          <SelectTrigger className="border-bridge-black/20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pendiente">Pendiente</SelectItem>
+                            <SelectItem value="Señada">Señada</SelectItem>
+                            <SelectItem value="Pagada">Pagada</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Comprador</Label>
+                        <Input
+                          value={form.comprador}
+                          onChange={(e) => setForm((f) => ({ ...f, comprador: e.target.value }))}
+                          className="border-bridge-black/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Contacto comprador</Label>
+                        <Input
+                          value={form.comprador_contacto}
+                          onChange={(e) => setForm((f) => ({ ...f, comprador_contacto: e.target.value }))}
+                          placeholder="Teléfono o email"
+                          className="border-bridge-black/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Fecha de venta</Label>
+                        <Input
+                          type="date"
+                          value={form.fecha_venta}
+                          onChange={(e) => setForm((f) => ({ ...f, fecha_venta: e.target.value }))}
+                          className="border-bridge-black/20"
+                        />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label>Notas</Label>
+                        <Textarea
+                          value={form.notas}
+                          onChange={(e) => setForm((f) => ({ ...f, notas: e.target.value }))}
+                          rows={3}
+                          className="border-bridge-black/20"
+                        />
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="images" className="border-b-0 border-bridge-black/15">
+                  <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline">
+                    Imágenes
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-4 pb-4">
+                    <p className="text-xs text-muted-foreground">
+                      Principal del catálogo y galería extra. Podés reemplazar o promover desde acá.
+                    </p>
+                    <div>
+                      <Label>Imagen principal</Label>
+                    </div>
+                    <div className="flex flex-wrap items-start gap-4">
+                      <div className="h-36 w-36 shrink-0 border border-bridge-black/15 bg-muted/20">
+                        {pendingHeroPreview || resolveAdminImageSrc(heroPath) ? (
+                          <img
+                            src={pendingHeroPreview || resolveAdminImageSrc(heroPath) || ""}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center px-2 text-center text-[10px] uppercase tracking-wider text-muted-foreground">
+                            Sin foto
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex min-w-[12rem] flex-1 flex-col gap-2">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          className="border-bridge-black/20"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0] ?? null;
+                            setPendingHeroFile(f);
+                            e.target.value = "";
+                          }}
+                        />
+                        {pendingHeroFile ? (
+                          <p className="text-xs text-muted-foreground">
+                            Nueva principal lista al guardar: {pendingHeroFile.name}
+                          </p>
+                        ) : null}
+                        <div className="flex flex-wrap gap-2">
+                          {pendingHeroFile ? (
+                            <Button type="button" size="sm" variant="outline" onClick={() => setPendingHeroFile(null)}>
+                              Cancelar cambio
+                            </Button>
+                          ) : null}
+                          {heroPath || pendingHeroFile ? (
+                            <Button type="button" size="sm" variant="outline" onClick={() => clearHero()}>
+                              Quitar principal
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 border-t border-bridge-black/10 pt-4">
+                      <Label>Galería</Label>
+                      {extraPaths.length === 0 && pendingExtraPreviews.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Sin imágenes extra todavía.</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-3">
+                          {extraPaths.map((path) => {
+                            const src = resolveAdminImageSrc(path);
+                            return (
+                              <div key={path} className="w-28 space-y-1">
+                                <div className="h-28 w-28 border border-bridge-black/15 bg-muted/20">
+                                  {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : null}
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <Button type="button" size="sm" variant="outline" onClick={() => promoteExtraToHero(path)}>
+                                    Principal
+                                  </Button>
+                                  <Button type="button" size="sm" variant="outline" onClick={() => removeExtra(path)}>
+                                    Quitar
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {pendingExtraPreviews.map((src, i) => (
+                            <div key={`pending-${i}`} className="w-28 space-y-1">
+                              <div className="h-28 w-28 border border-dashed border-bridge-black/25 bg-muted/10">
+                                <img src={src} alt="" className="h-full w-full object-cover opacity-80" />
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">Pendiente</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="border-bridge-black/20"
+                        onChange={(e) => {
+                          const list = Array.from(e.target.files ?? []);
+                          if (list.length) setPendingExtraFiles((prev) => [...prev, ...list]);
+                          e.target.value = "";
+                        }}
+                      />
+                      {pendingExtraFiles.length > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            {pendingExtraFiles.length} archivo(s) se suman a la galería al guardar.
+                          </p>
+                          <Button type="button" size="sm" variant="outline" onClick={() => setPendingExtraFiles([])}>
+                            Limpiar pendientes
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
             <DialogFooter className="shrink-0 border-t border-[rgba(30,21,23,0.12)] bg-[var(--admin-cream,#fcf8ea)] px-6 py-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

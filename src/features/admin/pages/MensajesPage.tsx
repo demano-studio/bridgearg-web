@@ -1,185 +1,315 @@
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Send } from "lucide-react";
 import { getSupabase } from "@/lib/supabaseClient";
 import { adminWrite } from "@/lib/api";
+import { useAdminAccess } from "@/features/admin/AdminAccessContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import type { AdminContactMessageRow, AdminMessageStatus } from "@/features/admin/types";
-import { adminMessageStatusLabel } from "@/features/admin/adminUtils";
+import type {
+  AdminContactMessageRow,
+  AdminContactReplyRow,
+  ContactChatBubble,
+  ContactThread,
+} from "@/features/admin/types";
 
-const STATUS_FILTERS: Array<{ value: string; label: string }> = [
-  { value: "__open", label: "Sin responder" },
-  { value: "__all", label: "Todos" },
-  { value: "new", label: "Nuevos" },
-  { value: "read", label: "Leídos" },
-  { value: "responded", label: "Respondidos" },
-];
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
 
-export default function MensajesPage() {
-  const qc = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const openId = searchParams.get("id");
-  const [statusFilter, setStatusFilter] = React.useState("__open");
-  const [q, setQ] = React.useState("");
-  const deferredQ = React.useDeferredValue(q);
-  const [detail, setDetail] = React.useState<AdminContactMessageRow | null>(null);
-  const [deleteTarget, setDeleteTarget] = React.useState<AdminContactMessageRow | null>(null);
-  const openedFromSearch = React.useRef<number | null>(null);
+function buildThreads(
+  messages: AdminContactMessageRow[],
+  replies: AdminContactReplyRow[],
+): ContactThread[] {
+  const byEmail = new Map<string, ContactThread>();
 
-  const { data: rows = [], isLoading, isError, error } = useQuery({
-    queryKey: ["admin", "contact-messages"],
-    queryFn: async () => {
-      const sb = getSupabase();
-      const { data, error: qErr } = await sb
-        .from("contact_messages")
-        .select("id,full_name,email,subject,message,status,marketing_consent,read_at,responded_at,created_at")
-        .order("created_at", { ascending: false });
-      if (qErr) throw new Error(qErr.message);
-      return (data ?? []) as AdminContactMessageRow[];
-    },
-  });
-
-  const openCount = React.useMemo(() => rows.filter((r) => r.status !== "responded").length, [rows]);
-
-  const filtered = React.useMemo(() => {
-    const needle = deferredQ.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (statusFilter === "__open" && r.status === "responded") return false;
-      if (statusFilter !== "__all" && statusFilter !== "__open" && r.status !== statusFilter) return false;
-      if (!needle) return true;
-      const hay = [r.full_name, r.email, r.subject, r.message].join(" ").toLowerCase();
-      return hay.includes(needle);
-    });
-  }, [rows, statusFilter, deferredQ]);
-
-  const updateStatus = useMutation({
-    mutationFn: async (input: { id: number; status: AdminMessageStatus }) =>
-      adminWrite("message.updateStatus", input) as Promise<AdminContactMessageRow>,
-    onSuccess: (data, vars) => {
-      void qc.invalidateQueries({ queryKey: ["admin", "contact-messages"] });
-      void qc.invalidateQueries({ queryKey: ["admin", "resumen"] });
-      void qc.invalidateQueries({ queryKey: ["admin", "sidebar", "counts"] });
-      toast({ title: "Estado actualizado", description: adminMessageStatusLabel(vars.status) });
-      setDetail((prev) => (prev && prev.id === vars.id ? { ...prev, ...data } : prev));
-    },
-    onError: (e: Error) => {
-      toast({ title: "No se pudo actualizar", description: e.message, variant: "destructive" });
-    },
-  });
-
-  const deleteMessage = useMutation({
-    mutationFn: async (id: number) => adminWrite("message.delete", { id }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["admin", "contact-messages"] });
-      void qc.invalidateQueries({ queryKey: ["admin", "resumen"] });
-      void qc.invalidateQueries({ queryKey: ["admin", "sidebar", "counts"] });
-      toast({
-        title: "Mensaje eliminado",
-        description: deleteTarget ? `${deleteTarget.full_name} · ${deleteTarget.subject}` : undefined,
-      });
-      if (detail && deleteTarget && detail.id === deleteTarget.id) setDetail(null);
-      setDeleteTarget(null);
-    },
-    onError: (e: Error) => {
-      toast({ title: "No se pudo eliminar", description: e.message, variant: "destructive" });
-    },
-  });
-
-  async function openDetail(row: AdminContactMessageRow) {
-    setDetail(row);
-    if (row.status === "new") {
-      try {
-        const updated = (await adminWrite("message.updateStatus", {
-          id: row.id,
-          status: "read",
-        })) as AdminContactMessageRow;
-        setDetail(updated);
-        void qc.invalidateQueries({ queryKey: ["admin", "contact-messages"] });
-        void qc.invalidateQueries({ queryKey: ["admin", "resumen"] });
-        void qc.invalidateQueries({ queryKey: ["admin", "sidebar", "counts"] });
-      } catch {
-        /* keep row as-is if mark-read fails */
-      }
+  for (const msg of messages) {
+    const key = normalizeEmail(msg.email);
+    let thread = byEmail.get(key);
+    if (!thread) {
+      thread = {
+        threadEmail: key,
+        displayName: msg.full_name,
+        displayEmail: msg.email,
+        preview: "",
+        lastAt: msg.created_at,
+        unreadCount: 0,
+        messages: [],
+        replies: [],
+      };
+      byEmail.set(key, thread);
+    }
+    thread.messages.push(msg);
+    if (msg.status === "new") thread.unreadCount += 1;
+    if (new Date(msg.created_at) >= new Date(thread.lastAt)) {
+      thread.lastAt = msg.created_at;
+      thread.displayName = msg.full_name;
+      thread.displayEmail = msg.email;
+      thread.preview = msg.message;
     }
   }
 
+  for (const reply of replies) {
+    const key = normalizeEmail(reply.thread_email);
+    let thread = byEmail.get(key);
+    if (!thread) {
+      thread = {
+        threadEmail: key,
+        displayName: reply.thread_email,
+        displayEmail: reply.thread_email,
+        preview: "",
+        lastAt: reply.created_at,
+        unreadCount: 0,
+        messages: [],
+        replies: [],
+      };
+      byEmail.set(key, thread);
+    }
+    thread.replies.push(reply);
+    if (new Date(reply.created_at) >= new Date(thread.lastAt)) {
+      thread.lastAt = reply.created_at;
+      thread.preview = reply.body;
+    }
+  }
+
+  return Array.from(byEmail.values()).sort(
+    (a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime(),
+  );
+}
+
+function bubblesForThread(
+  thread: ContactThread,
+  optimistic: ContactChatBubble[],
+): ContactChatBubble[] {
+  const inbound: ContactChatBubble[] = thread.messages.map((m) => ({
+    kind: "inbound",
+    id: `in-${m.id}`,
+    created_at: m.created_at,
+    body: m.message,
+    subject: m.subject,
+    status: m.status,
+    messageId: m.id,
+  }));
+  const outbound: ContactChatBubble[] = thread.replies.map((r) => ({
+    kind: "outbound",
+    id: `out-${r.id}`,
+    created_at: r.created_at,
+    body: r.body,
+    sent_by_email: r.sent_by_email,
+    replyId: r.id,
+  }));
+  return [...inbound, ...outbound, ...optimistic].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+}
+
+function fmtThreadTime(iso: string): string {
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    const sameDay =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    if (sameDay) {
+      return d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+    }
+    return d.toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
+  } catch {
+    return iso;
+  }
+}
+
+function fmtBubbleTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return iso;
+  }
+}
+
+export default function MensajesPage() {
+  const qc = useQueryClient();
+  const access = useAdminAccess();
+  const canEdit = access.canEdit("mensajes");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openId = searchParams.get("id");
+
+  const [selectedEmail, setSelectedEmail] = React.useState<string | null>(null);
+  const [mobileShowChat, setMobileShowChat] = React.useState(false);
+  const [q, setQ] = React.useState("");
+  const deferredQ = React.useDeferredValue(q);
+  const [draft, setDraft] = React.useState("");
+  const [optimistic, setOptimistic] = React.useState<ContactChatBubble[]>([]);
+  const chatEndRef = React.useRef<HTMLDivElement | null>(null);
+  const composerRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const openedFromSearch = React.useRef<number | null>(null);
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["admin", "contact-messages"],
+    queryFn: async () => {
+      const sb = getSupabase();
+      const [{ data: messages, error: mErr }, { data: replies, error: rErr }] = await Promise.all([
+        sb
+          .from("contact_messages")
+          .select("id,full_name,email,subject,message,status,marketing_consent,read_at,responded_at,created_at")
+          .order("created_at", { ascending: false }),
+        sb
+          .from("contact_message_replies")
+          .select("id,thread_email,body,sent_by_email,resend_id,created_at")
+          .order("created_at", { ascending: true }),
+      ]);
+      if (mErr) throw new Error(mErr.message);
+      if (rErr) throw new Error(rErr.message);
+      return {
+        messages: (messages ?? []) as AdminContactMessageRow[],
+        replies: (replies ?? []) as AdminContactReplyRow[],
+      };
+    },
+  });
+
+  const threads = React.useMemo(
+    () => buildThreads(data?.messages ?? [], data?.replies ?? []),
+    [data],
+  );
+
+  const filteredThreads = React.useMemo(() => {
+    const needle = deferredQ.trim().toLowerCase();
+    if (!needle) return threads;
+    return threads.filter((t) => {
+      const hay = [t.displayName, t.displayEmail, t.preview].join(" ").toLowerCase();
+      return hay.includes(needle);
+    });
+  }, [threads, deferredQ]);
+
+  const selectedThread =
+    selectedEmail != null
+      ? (threads.find((t) => t.threadEmail === selectedEmail) ?? null)
+      : null;
+
+  const threadOptimistic = React.useMemo(
+    () =>
+      selectedEmail
+        ? optimistic.filter(
+            (b) =>
+              b.kind === "outbound" &&
+              // optimistic bubbles are scoped by selected email via id prefix
+              b.id.startsWith(`opt-${selectedEmail}-`),
+          )
+        : [],
+    [optimistic, selectedEmail],
+  );
+
+  const bubbles = selectedThread ? bubblesForThread(selectedThread, threadOptimistic) : [];
+
+  const invalidateInbox = React.useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ["admin", "contact-messages"] });
+    void qc.invalidateQueries({ queryKey: ["admin", "resumen"] });
+    void qc.invalidateQueries({ queryKey: ["admin", "sidebar"] });
+  }, [qc]);
+
+  const markRead = useMutation({
+    mutationFn: async (threadEmail: string) =>
+      adminWrite("message.markThreadRead", { thread_email: threadEmail }),
+    onSuccess: () => invalidateInbox(),
+  });
+
+  const replyMut = useMutation({
+    mutationFn: async (input: { thread_email: string; body: string; tempId: string }) => {
+      const result = (await adminWrite("message.reply", {
+        thread_email: input.thread_email,
+        body: input.body,
+      })) as { reply: AdminContactReplyRow; thread_email: string };
+      return { ...result, tempId: input.tempId };
+    },
+    onSuccess: (result) => {
+      setOptimistic((prev) => prev.filter((b) => b.id !== result.tempId));
+      invalidateInbox();
+      toast({ title: "Respuesta enviada" });
+    },
+    onError: (e: Error, vars) => {
+      setOptimistic((prev) =>
+        prev.map((b) => (b.id === vars.tempId ? { ...b, pending: false, failed: true } : b)),
+      );
+      toast({
+        title: "No se pudo enviar",
+        description: e.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  function openThread(thread: ContactThread) {
+    setSelectedEmail(thread.threadEmail);
+    setMobileShowChat(true);
+    setDraft("");
+    setOptimistic((prev) => prev.filter((b) => !b.failed));
+    if (thread.unreadCount > 0) {
+      markRead.mutate(thread.threadEmail);
+    }
+  }
+
+  function closeMobileChat() {
+    setMobileShowChat(false);
+  }
+
+  function sendReply() {
+    if (!selectedThread || !canEdit) return;
+    const body = draft.trim();
+    if (!body || replyMut.isPending) return;
+
+    const tempId = `opt-${selectedThread.threadEmail}-${Date.now()}`;
+    const bubble: ContactChatBubble = {
+      kind: "outbound",
+      id: tempId,
+      created_at: new Date().toISOString(),
+      body,
+      sent_by_email: access.email,
+      replyId: "optimistic",
+      pending: true,
+    };
+    setOptimistic((prev) => [...prev, bubble]);
+    setDraft("");
+    replyMut.mutate({
+      thread_email: selectedThread.threadEmail,
+      body,
+      tempId,
+    });
+  }
+
   React.useEffect(() => {
-    if (!openId || !/^\d+$/.test(openId) || rows.length === 0) return;
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [bubbles.length, selectedEmail, mobileShowChat]);
+
+  React.useEffect(() => {
+    if (!openId || !/^\d+$/.test(openId) || !data?.messages.length) return;
     const id = Number(openId);
     if (openedFromSearch.current === id) return;
-    const row = rows.find((r) => r.id === id);
+    const row = data.messages.find((m) => m.id === id);
     if (!row) return;
     openedFromSearch.current = id;
-    setStatusFilter("__all");
-    void openDetail(row);
+    const thread = threads.find((t) => t.threadEmail === normalizeEmail(row.email));
+    if (thread) openThread(thread);
     const next = new URLSearchParams(searchParams);
     next.delete("id");
     setSearchParams(next, { replace: true });
-  }, [openId, rows, searchParams, setSearchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open once from deep link
+  }, [openId, data?.messages, threads]);
+
+  const unreadTotal = threads.reduce((n, t) => n + t.unreadCount, 0);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Mensajes</h1>
-        <p className="text-sm text-muted-foreground">
-          Inbox del formulario de contact
-          {rows.length > 0 ? ` · ${openCount} sin responder` : ""}.
-        </p>
-      </div>
-
-      <div className="admin-filters grid gap-3 sm:grid-cols-[minmax(0,1fr)_14rem]">
-        <div className="space-y-2">
-          <Label className="text-[10px] uppercase tracking-wider">Buscar</Label>
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Nombre, email o asunto…"
-            className="border-bridge-black/20"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[10px] uppercase tracking-wider">Estado</Label>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="border-bridge-black/20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_FILTERS.map((f) => (
-                <SelectItem key={f.value} value={f.value}>
-                  {f.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="admin-chat">
+      <div className="admin-chat__header">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight">Mensajes</h1>
+          <p className="text-sm text-muted-foreground">
+            Conversaciones del formulario de contact
+            {unreadTotal > 0 ? ` · ${unreadTotal} sin leer` : ""}.
+          </p>
         </div>
       </div>
 
@@ -189,162 +319,142 @@ export default function MensajesPage() {
         <p className="border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive" role="alert">
           No se pudieron cargar los mensajes{error instanceof Error && error.message ? `: ${error.message}` : "."}
         </p>
-      ) : filtered.length === 0 ? (
-        <p className="border-t border-[rgba(30,21,23,0.14)] py-8 text-sm text-muted-foreground">
-          {rows.length === 0
-            ? "Todavía no hay mensajes. Aparecen acá cuando alguien envía el formulario de contact."
-            : "No hay mensajes con este filtro."}
-        </p>
       ) : (
-        <div className="admin-table-wrap">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Fecha</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Asunto</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((r) => (
-                <TableRow key={r.id} className={r.status === "new" ? "bg-[rgba(127,178,209,0.06)]" : undefined}>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                    {fmtDate(r.created_at)}
-                  </TableCell>
-                  <TableCell className="font-medium">{r.full_name}</TableCell>
-                  <TableCell className="text-sm">
-                    <a href={`mailto:${r.email}`} className="underline-offset-2 hover:underline">
-                      {r.email}
-                    </a>
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-[18rem] truncate">{r.subject}</div>
-                  </TableCell>
-                  <TableCell>
-                    <span className={statusClass(r.status)}>{adminMessageStatusLabel(r.status)}</span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button type="button" size="sm" variant="outline" onClick={() => void openDetail(r)}>
-                        Ver
-                      </Button>
-                      {r.status !== "responded" ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={updateStatus.isPending}
-                          onClick={() => updateStatus.mutate({ id: r.id, status: "responded" })}
-                        >
-                          Marcar respondido
-                        </Button>
+        <div className={`admin-chat__shell${mobileShowChat ? " is-mobile-chat" : ""}`}>
+          {/* Thread list */}
+          <aside className="admin-chat__list">
+            <div className="admin-chat__list-search">
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Buscar nombre o email…"
+                className="border-bridge-black/20"
+              />
+            </div>
+            {filteredThreads.length === 0 ? (
+              <p className="px-4 py-8 text-sm text-muted-foreground">
+                {threads.length === 0
+                  ? "Todavía no hay mensajes."
+                  : "No hay conversaciones con este filtro."}
+              </p>
+            ) : (
+              <ul className="admin-chat__thread-list">
+                {filteredThreads.map((thread) => {
+                  const active = selectedEmail === thread.threadEmail;
+                  return (
+                    <li key={thread.threadEmail}>
+                      <button
+                        type="button"
+                        className={`admin-chat__thread${active ? " is-active" : ""}${
+                          thread.unreadCount > 0 ? " is-unread" : ""
+                        }`}
+                        onClick={() => openThread(thread)}
+                      >
+                        <div className="admin-chat__thread-top">
+                          <span className="admin-chat__thread-name">{thread.displayName}</span>
+                          <span className="admin-chat__thread-time">{fmtThreadTime(thread.lastAt)}</span>
+                        </div>
+                        <div className="admin-chat__thread-bottom">
+                          <span className="admin-chat__thread-preview">{thread.preview || "—"}</span>
+                          {thread.unreadCount > 0 ? (
+                            <span className="admin-chat__thread-dot" aria-label={`${thread.unreadCount} sin leer`} />
+                          ) : null}
+                        </div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </aside>
+
+          {/* Conversation */}
+          <section className="admin-chat__pane" aria-live="polite">
+            {!selectedThread ? (
+              <div className="admin-chat__empty">
+                <p className="text-sm text-muted-foreground">Elegí una conversación para ver el hilo.</p>
+              </div>
+            ) : (
+              <>
+                <header className="admin-chat__pane-header">
+                  <button
+                    type="button"
+                    className="admin-chat__back"
+                    onClick={closeMobileChat}
+                    aria-label="Volver a la lista"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </button>
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold">{selectedThread.displayName}</div>
+                    <div className="truncate text-xs text-muted-foreground">{selectedThread.displayEmail}</div>
+                  </div>
+                </header>
+
+                <div className="admin-chat__bubbles">
+                  {bubbles.map((b) => (
+                    <div
+                      key={b.id}
+                      className={`admin-chat__bubble admin-chat__bubble--${b.kind}${
+                        b.kind === "outbound" && b.pending ? " is-pending" : ""
+                      }${b.kind === "outbound" && b.failed ? " is-failed" : ""}`}
+                    >
+                      {b.kind === "inbound" ? (
+                        <div className="admin-chat__bubble-subject">{b.subject}</div>
                       ) : null}
-                      <Button type="button" size="sm" variant="outline" onClick={() => setDeleteTarget(r)}>
-                        Eliminar
-                      </Button>
+                      <div className="admin-chat__bubble-body">{b.body}</div>
+                      <div className="admin-chat__bubble-meta">
+                        {fmtBubbleTime(b.created_at)}
+                        {b.kind === "outbound" && b.pending ? " · Enviando…" : null}
+                        {b.kind === "outbound" && b.failed ? " · Error al enviar" : null}
+                      </div>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  ))}
+                  <div ref={chatEndRef} />
+                </div>
+
+                <form
+                  className="admin-chat__composer"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    sendReply();
+                  }}
+                >
+                  {canEdit ? (
+                    <>
+                      <Textarea
+                        ref={composerRef}
+                        value={draft}
+                        onChange={(e) => setDraft(e.target.value)}
+                        placeholder="Escribí una respuesta…"
+                        rows={2}
+                        className="admin-chat__composer-input border-bridge-black/20"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            sendReply();
+                          }
+                        }}
+                      />
+                      <Button
+                        type="submit"
+                        className="admin-chat__composer-send bg-bridge-black text-[#fcf8ea]"
+                        disabled={!draft.trim() || replyMut.isPending}
+                        aria-label="Enviar respuesta"
+                      >
+                        <Send className="h-4 w-4" />
+                        <span className="hidden sm:inline">Enviar</span>
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="px-1 text-sm text-muted-foreground">Solo lectura — no podés responder.</p>
+                  )}
+                </form>
+              </>
+            )}
+          </section>
         </div>
       )}
-
-      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
-        <DialogContent className="max-w-lg border-bridge-black/20">
-          <DialogHeader>
-            <DialogTitle>{detail?.subject ?? "Mensaje"}</DialogTitle>
-            <DialogDescription>
-              {detail ? `${detail.full_name} · ${detail.email} · ${fmtDate(detail.created_at)}` : ""}
-            </DialogDescription>
-          </DialogHeader>
-          {detail ? (
-            <div className="space-y-4 text-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={statusClass(detail.status)}>{adminMessageStatusLabel(detail.status)}</span>
-                {detail.marketing_consent ? (
-                  <span className="admin-status admin-status--muted">Consentimiento marketing</span>
-                ) : null}
-              </div>
-              <div className="whitespace-pre-wrap border-t border-[rgba(30,21,23,0.12)] pt-4 leading-relaxed text-[rgba(30,21,23,0.88)]">
-                {detail.message}
-              </div>
-            </div>
-          ) : null}
-          <DialogFooter className="gap-2 sm:justify-between">
-            <Button type="button" variant="outline" onClick={() => setDetail(null)}>
-              Cerrar
-            </Button>
-            <div className="flex flex-wrap gap-2">
-              {detail ? (
-                <Button type="button" variant="outline" asChild>
-                  <a
-                    href={`mailto:${detail.email}?subject=${encodeURIComponent(`Re: ${detail.subject}`)}`}
-                  >
-                    Responder por email
-                  </a>
-                </Button>
-              ) : null}
-              {detail ? (
-                <Button type="button" variant="outline" onClick={() => setDeleteTarget(detail)}>
-                  Eliminar
-                </Button>
-              ) : null}
-              {detail && detail.status !== "responded" ? (
-                <Button
-                  type="button"
-                  disabled={updateStatus.isPending}
-                  onClick={() => updateStatus.mutate({ id: detail.id, status: "responded" })}
-                >
-                  Marcar respondido
-                </Button>
-              ) : null}
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialogContent className="border-bridge-black/20">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar mensaje</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Eliminar el mensaje de <strong>{deleteTarget?.full_name}</strong> ({deleteTarget?.email}) sobre{" "}
-              <strong>{deleteTarget?.subject}</strong>? Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMessage.isPending}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-bridge-black text-[#fcf8ea]"
-              disabled={deleteMessage.isPending}
-              onClick={(e) => {
-                e.preventDefault();
-                if (deleteTarget) deleteMessage.mutate(deleteTarget.id);
-              }}
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
-}
-
-function statusClass(status: AdminMessageStatus | string): string {
-  if (status === "responded") return "admin-status admin-status--filled";
-  if (status === "new") return "admin-status";
-  return "admin-status admin-status--muted";
-}
-
-function fmtDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" });
-  } catch {
-    return iso;
-  }
 }

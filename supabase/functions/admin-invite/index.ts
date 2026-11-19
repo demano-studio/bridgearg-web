@@ -1,6 +1,11 @@
 // @ts-nocheck
 // Owner-only team ops: invite / revokeAccess / deleteUser.
-import { authorizeAdminRequest, INVITE_DEFAULT_SECTIONS } from "../_shared/adminAuth.ts";
+import {
+  authorizeAdminRequest,
+  INVITE_DEFAULT_SECTIONS,
+  INVITE_PRESETS,
+  resolveInvitePreset,
+} from "../_shared/adminAuth.ts";
 
 function normalizeOrigin(value: string): string | null {
   try {
@@ -161,6 +166,9 @@ Deno.serve(async (req) => {
     return json(req, 400, { error: "Email inválido" });
   }
 
+  const presetId = resolveInvitePreset(body.preset);
+  const presetSections = INVITE_PRESETS[presetId];
+
   const clientUrl = (Deno.env.get("CLIENT_URL") ?? "https://www.bridgearg.net").replace(/\/$/, "");
 
   const { data: invited, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
@@ -194,7 +202,7 @@ Deno.serve(async (req) => {
     if (insErr) return json(req, 500, { error: insErr.message });
 
     const { error: permErr } = await supabase.from("admin_permissions").insert(
-      INVITE_DEFAULT_SECTIONS.map((s) => ({ user_id: existing.id, ...s })),
+      presetSections.map((s) => ({ user_id: existing.id, ...s })),
     );
     if (permErr) return json(req, 500, { error: permErr.message });
 
@@ -204,6 +212,7 @@ Deno.serve(async (req) => {
       invited: false,
       user_id: existing.id,
       email,
+      preset: presetId,
     });
   }
 
@@ -222,11 +231,11 @@ Deno.serve(async (req) => {
   }
 
   const { error: permErr } = await supabase.from("admin_permissions").insert(
-    INVITE_DEFAULT_SECTIONS.map((s) => ({ user_id: userId, ...s })),
+    presetSections.map((s) => ({ user_id: userId, ...s })),
   );
   if (permErr) {
     return json(req, 500, { error: permErr.message });
   }
 
-  return json(req, 200, { ok: true, invited: true, user_id: userId, email });
+  return json(req, 200, { ok: true, invited: true, user_id: userId, email, preset: presetId });
 });

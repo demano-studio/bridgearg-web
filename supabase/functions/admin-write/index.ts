@@ -50,6 +50,19 @@ function withCors(req: Request, headers: Record<string, string> = {}): Record<st
   return { ...getCorsHeaders(req), ...headers };
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Escape % and _ so ilike acts as case-insensitive equality. */
+function escapeIlikeExact(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: getCorsHeaders(req) });
@@ -451,6 +464,139 @@ Deno.serve(async (req) => {
         .single();
       if (error) throw new Error(error.message ?? "Operation failed");
       result = data;
+    } else if (action === "message.markThreadRead") {
+      const threadEmailRaw = (payload as { thread_email?: unknown }).thread_email;
+      if (typeof threadEmailRaw !== "string" || !threadEmailRaw.trim()) {
+        return new Response(JSON.stringify({ error: "payload.thread_email required" }), {
+          status: 400,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      const threadEmail = threadEmailRaw.trim().toLowerCase();
+      const nowIso = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("contact_messages")
+        .update({ status: "read", read_at: nowIso })
+        .eq("status", "new")
+        .ilike("email", escapeIlikeExact(threadEmail))
+        .select("id");
+      if (error) throw new Error(error.message ?? "Operation failed");
+      result = { updated: (data ?? []).length, thread_email: threadEmail };
+    } else if (action === "message.reply") {
+      const threadEmailRaw = (payload as { thread_email?: unknown }).thread_email;
+      const bodyText = (payload as { body?: unknown }).body;
+      if (typeof threadEmailRaw !== "string" || !threadEmailRaw.trim()) {
+        return new Response(JSON.stringify({ error: "payload.thread_email required" }), {
+          status: 400,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      if (typeof bodyText !== "string" || !bodyText.trim() || bodyText.trim().length > 10000) {
+        return new Response(JSON.stringify({ error: "payload.body required (1–10000 chars)" }), {
+          status: 400,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      const threadEmail = threadEmailRaw.trim().toLowerCase();
+      const replyBody = bodyText.trim();
+
+      const emailPattern = escapeIlikeExact(threadEmail);
+      const { data: latestInbound, error: latestErr } = await supabase
+        .from("contact_messages")
+        .select("id,full_name,email,subject")
+        .ilike("email", emailPattern)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestErr) throw new Error(latestErr.message ?? "Operation failed");
+      if (!latestInbound) {
+        return new Response(JSON.stringify({ error: "No hay mensajes de ese contacto" }), {
+          status: 404,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+
+      const resendApiKey = Deno.env.get("RESEND_API_KEY")?.trim();
+      const fromEmail = (Deno.env.get("RESEND_FROM_EMAIL") ?? "onboarding@resend.dev").trim();
+      if (!resendApiKey) {
+        return new Response(JSON.stringify({ error: "Resend no está configurado (RESEND_API_KEY)" }), {
+          status: 500,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+
+      const toEmail = String(latestInbound.email).trim();
+      const subject = `Re: ${String(latestInbound.subject || "Your message").trim()}`;
+      const html = `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif;line-height:1.55;color:#1e1517">
+<p style="white-space:pre-wrap;margin:0">${escapeHtml(replyBody)}</p>
+<p style="margin:24px 0 0;font-size:12px;color:#888">— BridgeARG</p>
+</body></html>`;
+
+      let resendId: string | null = null;
+      try {
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${resendApiKey}`,
+          },
+          body: JSON.stringify({
+            from: fromEmail,
+            to: [toEmail],
+            subject,
+            html,
+            reply_to: fromEmail,
+          }),
+        });
+        const resBody = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg =
+            typeof (resBody as { message?: string }).message === "string"
+              ? (resBody as { message: string }).message
+              : `Resend error ${res.status}`;
+          return new Response(JSON.stringify({ error: msg }), {
+            status: 502,
+            headers: withCors(req, { "Content-Type": "application/json" }),
+          });
+        }
+        resendId =
+          typeof (resBody as { id?: string }).id === "string" ? (resBody as { id: string }).id : null;
+      } catch (e) {
+        return new Response(
+          JSON.stringify({
+            error: e instanceof Error ? e.message : "No se pudo enviar el email",
+          }),
+          {
+            status: 502,
+            headers: withCors(req, { "Content-Type": "application/json" }),
+          },
+        );
+      }
+
+      const sentBy = authResult.auth.user.email ?? null;
+      const { data: replyRow, error: insertErr } = await supabase
+        .from("contact_message_replies")
+        .insert({
+          thread_email: threadEmail,
+          body: replyBody,
+          sent_by_email: sentBy,
+          resend_id: resendId,
+        })
+        .select("id,thread_email,body,sent_by_email,resend_id,created_at")
+        .single();
+      if (insertErr) throw new Error(insertErr.message ?? "No se pudo guardar la respuesta");
+
+      const nowIso = new Date().toISOString();
+      const { error: markErr } = await supabase
+        .from("contact_messages")
+        .update({ status: "responded", responded_at: nowIso, read_at: nowIso })
+        .ilike("email", emailPattern)
+        .neq("status", "responded");
+      if (markErr) {
+        console.error("message.reply: mark responded failed", markErr.message);
+      }
+
+      result = { reply: replyRow, thread_email: threadEmail };
     } else if (action === "purchase.updateShipping") {
       const id = (payload as { id?: unknown }).id;
       const shippingStatus = (payload as { shipping_status?: unknown }).shipping_status;

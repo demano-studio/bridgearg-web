@@ -36,6 +36,26 @@ type PermRow = {
 
 const EDITABLE_SECTIONS = ADMIN_SECTIONS.filter((s) => s !== "equipo");
 
+type InvitePreset = "vendedor" | "community" | "catalogo";
+
+const INVITE_PRESET_OPTIONS: Array<{ id: InvitePreset; label: string; hint: string }> = [
+  {
+    id: "vendedor",
+    label: "Vendedor",
+    hint: "Editar Resumen, Obras y Pedidos; ver Mensajes.",
+  },
+  {
+    id: "community",
+    label: "Community / Marketing",
+    hint: "Editar Mensajes y Suscriptores; ver Resumen.",
+  },
+  {
+    id: "catalogo",
+    label: "Catálogo (solo vista)",
+    hint: "Ver Resumen, Obras, Artistas y Lotes.",
+  },
+];
+
 async function teamAction(
   action: "invite" | "revokeAccess" | "deleteUser",
   body: Record<string, unknown>,
@@ -56,6 +76,7 @@ export default function EquipoPage() {
   const qc = useQueryClient();
   const [inviteOpen, setInviteOpen] = React.useState(false);
   const [inviteEmail, setInviteEmail] = React.useState("");
+  const [invitePreset, setInvitePreset] = React.useState<InvitePreset>("catalogo");
   const [deleteTarget, setDeleteTarget] = React.useState<MemberRow | null>(null);
   const [confirmText, setConfirmText] = React.useState("");
 
@@ -83,7 +104,8 @@ export default function EquipoPage() {
   };
 
   const inviteMut = useMutation({
-    mutationFn: () => teamAction("invite", { email: inviteEmail.trim().toLowerCase() }),
+    mutationFn: () =>
+      teamAction("invite", { email: inviteEmail.trim().toLowerCase(), preset: invitePreset }),
     onSuccess: (result) => {
       toast({
         title: result.already_member
@@ -95,6 +117,7 @@ export default function EquipoPage() {
       });
       setInviteOpen(false);
       setInviteEmail("");
+      setInvitePreset("catalogo");
       invalidateEquipo();
     },
     onError: (e: Error) => toast({ title: "No se pudo invitar", description: e.message, variant: "destructive" }),
@@ -293,24 +316,61 @@ export default function EquipoPage() {
         ))}
       </div>
 
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+      <Dialog
+        open={inviteOpen}
+        onOpenChange={(open) => {
+          setInviteOpen(open);
+          if (!open) {
+            setInviteEmail("");
+            setInvitePreset("catalogo");
+          }
+        }}
+      >
         <DialogContent className="border-bridge-black/20 sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Invitar al equipo</DialogTitle>
             <DialogDescription>
-              Se envía un mail de Supabase Auth para setear contraseña. Preset: ver Resumen, Obras, Artistas y Lotes.
+              Se envía un mail de Supabase Auth para setear contraseña. El preset es un punto de partida; después lo
+              podés ajustar en la grilla.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="invite-email">Email</Label>
-            <Input
-              id="invite-email"
-              type="email"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              className="border-bridge-black/20"
-              placeholder="persona@bridgearg.net"
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="invite-email">Email</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="border-bridge-black/20"
+                placeholder="persona@bridgearg.net"
+              />
+            </div>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Preset de permisos</legend>
+              <div className="space-y-2">
+                {INVITE_PRESET_OPTIONS.map((opt) => (
+                  <label
+                    key={opt.id}
+                    className={`flex cursor-pointer gap-3 border p-3 ${
+                      invitePreset === opt.id ? "border-bridge-black/40 bg-[rgba(30,21,23,0.04)]" : "border-bridge-black/15"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="invite-preset"
+                      className="mt-1"
+                      checked={invitePreset === opt.id}
+                      onChange={() => setInvitePreset(opt.id)}
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">{opt.label}</span>
+                      <span className="block text-xs text-muted-foreground">{opt.hint}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           </div>
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>

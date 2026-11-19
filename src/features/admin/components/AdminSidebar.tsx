@@ -49,7 +49,7 @@ export function AdminSidebar() {
           sb.from("artists").select("id", { count: "exact", head: true }),
           sb.from("trade_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
           sb.from("purchases").select("id", { count: "exact", head: true }).neq("shipping_status", "delivered"),
-          sb.from("contact_messages").select("id", { count: "exact", head: true }).neq("status", "responded"),
+          sb.from("contact_messages").select("id", { count: "exact", head: true }).eq("status", "new"),
           sb.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
           sb.from("artworks").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
           sb.from("lotes").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),

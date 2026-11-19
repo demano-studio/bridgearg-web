@@ -54,6 +54,8 @@ export function actionPermission(action: string): { section: AdminSection; mode:
       return { section: "artistas", mode: "edit" };
     case "message.updateStatus":
     case "message.delete":
+    case "message.reply":
+    case "message.markThreadRead":
       return { section: "mensajes", mode: "edit" };
     case "subscriber.delete":
       return { section: "suscriptores", mode: "edit" };
@@ -181,16 +183,58 @@ export async function authorizeAdminRequest(
   return { ok: false, status: 403, error: "Forbidden" };
 }
 
-/** Invite preset: view-only resumen/obras/artistas/lotes. */
-export const INVITE_DEFAULT_SECTIONS: Array<{ section: AdminSection; can_view: boolean; can_edit: boolean }> = [
-  { section: "resumen", can_view: true, can_edit: false },
-  { section: "obras", can_view: true, can_edit: false },
-  { section: "artistas", can_view: true, can_edit: false },
-  { section: "lotes", can_view: true, can_edit: false },
-  { section: "pedidos", can_view: false, can_edit: false },
-  { section: "mensajes", can_view: false, can_edit: false },
-  { section: "suscriptores", can_view: false, can_edit: false },
-  { section: "trade", can_view: false, can_edit: false },
-  { section: "papelera", can_view: false, can_edit: false },
-  { section: "equipo", can_view: false, can_edit: false },
-];
+export type InvitePresetId = "vendedor" | "community" | "catalogo";
+
+type SectionFlags = { section: AdminSection; can_view: boolean; can_edit: boolean };
+
+function allSections(overrides: Partial<Record<AdminSection, { can_view: boolean; can_edit: boolean }>>): SectionFlags[] {
+  const zeros: AdminSection[] = [
+    "resumen",
+    "obras",
+    "artistas",
+    "lotes",
+    "pedidos",
+    "mensajes",
+    "suscriptores",
+    "trade",
+    "papelera",
+    "equipo",
+  ];
+  return zeros.map((section) => ({
+    section,
+    can_view: overrides[section]?.can_view ?? false,
+    can_edit: overrides[section]?.can_edit ?? false,
+  }));
+}
+
+/** Invite presets — starting point; owner can tweak in Equipo grid after. */
+export const INVITE_PRESETS: Record<InvitePresetId, SectionFlags[]> = {
+  /** View+edit Resumen/Obras/Pedidos; view Mensajes. */
+  vendedor: allSections({
+    resumen: { can_view: true, can_edit: true },
+    obras: { can_view: true, can_edit: true },
+    pedidos: { can_view: true, can_edit: true },
+    mensajes: { can_view: true, can_edit: false },
+  }),
+  /** View+edit Mensajes/Suscriptores; view Resumen. */
+  community: allSections({
+    resumen: { can_view: true, can_edit: false },
+    mensajes: { can_view: true, can_edit: true },
+    suscriptores: { can_view: true, can_edit: true },
+  }),
+  /** View-only Resumen/Obras/Artistas/Lotes (legacy default). */
+  catalogo: allSections({
+    resumen: { can_view: true, can_edit: false },
+    obras: { can_view: true, can_edit: false },
+    artistas: { can_view: true, can_edit: false },
+    lotes: { can_view: true, can_edit: false },
+  }),
+};
+
+/** @deprecated use INVITE_PRESETS.catalogo — kept for revokeAccess row template */
+export const INVITE_DEFAULT_SECTIONS = INVITE_PRESETS.catalogo;
+
+export function resolveInvitePreset(raw: unknown): InvitePresetId {
+  if (raw === "vendedor" || raw === "community" || raw === "catalogo") return raw;
+  return "catalogo";
+}
