@@ -1,85 +1,182 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/PageTransition";
 import { SEO } from "@/components/SEO";
-import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import TermsContent from "@/components/legal/TermsContent";
 import PrivacyContent from "@/components/legal/PrivacyContent";
+import "@/styles/legal.css";
 
-type LegalSectionId = "terms" | "privacy";
+type LegalTab = "terms" | "privacy";
 
-const NAV_ITEMS: Array<{ id: LegalSectionId; label: string }> = [
+type TocItem = {
+  id: string;
+  number: string;
+  title: string;
+};
+
+const TABS: Array<{ id: LegalTab; label: string }> = [
   { id: "terms", label: "Terms & Conditions" },
   { id: "privacy", label: "Privacy Policy" },
 ];
 
+/** Dates mirrored from TermsContent / PrivacyContent (source of truth unchanged). */
+const EFFECTIVE_DATE = "May 20, 2026";
+const LAST_UPDATED = "May 20, 2026";
+
+function parseLegalHash(hash: string): { tab: LegalTab; sectionId: string | null } | null {
+  const raw = hash.replace(/^#/, "").trim();
+  if (!raw) return null;
+  if (raw === "terms" || raw === "privacy") {
+    return { tab: raw, sectionId: null };
+  }
+  const match = /^(terms|privacy)-(\d+)$/.exec(raw);
+  if (!match) return null;
+  return { tab: match[1] as LegalTab, sectionId: raw };
+}
+
+function formatSectionNumber(id: string, headingText: string): string {
+  const fromId = id.match(/(?:terms|privacy)-(\d+)$/);
+  const n = fromId?.[1] ?? headingText.match(/^(\d+)\./)?.[1] ?? "";
+  if (!n) return "";
+  return n.padStart(2, "0");
+}
+
+function stripLeadingNumber(headingText: string): string {
+  return headingText.replace(/^\d+\.\s*/, "").trim();
+}
+
 const LegalPage = () => {
-  const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
   const location = useLocation();
-  const navRef = useRef<HTMLElement | null>(null);
-  const [activeSection, setActiveSection] = useState<LegalSectionId>("terms");
+  const docRef = useRef<HTMLDivElement | null>(null);
+  const tabsRef = useRef<HTMLElement | null>(null);
+  const [activeTab, setActiveTab] = useState<LegalTab>("terms");
+  const [tocItems, setTocItems] = useState<TocItem[]>([]);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const pendingSectionRef = useRef<string | null>(null);
 
-  const sectionIds = useMemo(() => NAV_ITEMS.map((item) => item.id), []);
+  const getStickyOffset = useCallback(() => {
+    const headerRaw = getComputedStyle(document.documentElement).getPropertyValue("--header-h");
+    const headerH = Number.parseInt(headerRaw, 10);
+    const header = Number.isFinite(headerH) ? headerH : 80;
+    const tabsH = tabsRef.current?.offsetHeight ?? 64;
+    return header + tabsH + 18;
+  }, []);
 
-  const getHeaderHeight = () => {
-    if (typeof window === "undefined") return 80;
-    const rawHeaderHeight = getComputedStyle(document.documentElement).getPropertyValue("--header-h");
-    const parsedHeaderHeight = Number.parseInt(rawHeaderHeight, 10);
-    return Number.isNaN(parsedHeaderHeight) ? 80 : parsedHeaderHeight;
-  };
+  const replaceHash = useCallback((hash: string) => {
+    const next = hash.startsWith("#") ? hash : `#${hash}`;
+    if (`${location.pathname}${location.hash}` === `/legal${next}`) return;
+    window.history.replaceState(null, "", `/legal${next}`);
+  }, [location.hash, location.pathname]);
 
-  const getScrollOffset = () => {
-    const headerHeight = getHeaderHeight();
-    const stickyNavHeight = isMobile ? 0 : (navRef.current?.offsetHeight ?? 0);
-    return headerHeight + stickyNavHeight + 18;
-  };
+  const scrollToSection = useCallback(
+    (sectionId: string, behavior: ScrollBehavior = "smooth") => {
+      const el = document.getElementById(sectionId);
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - getStickyOffset();
+      window.scrollTo({ top: Math.max(top, 0), behavior });
+      setActiveSectionId(sectionId);
+      replaceHash(sectionId);
+    },
+    [getStickyOffset, replaceHash],
+  );
 
-  const scrollToSection = (id: LegalSectionId, behavior: ScrollBehavior = "smooth") => {
-    const target = document.getElementById(id);
-    if (!target) return;
-    setActiveSection(id);
-    const targetTop = target.getBoundingClientRect().top + window.scrollY - getScrollOffset();
-    window.scrollTo({ top: Math.max(targetTop, 0), behavior });
-    window.history.replaceState(null, "", `/legal#${id}`);
-  };
+  const selectTab = useCallback(
+    (tab: LegalTab, options?: { sectionId?: string | null; updateHash?: boolean }) => {
+      const sectionId = options?.sectionId ?? null;
+      pendingSectionRef.current = sectionId;
+      setActiveTab(tab);
+      setActiveSectionId(sectionId);
+      if (options?.updateHash !== false) {
+        replaceHash(sectionId ?? tab);
+      }
+      if (!sectionId) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    },
+    [replaceHash],
+  );
 
+  // Initial / hash-driven navigation
   useEffect(() => {
-    const observerOffset = getScrollOffset();
+    const parsed = parseLegalHash(location.hash);
+    if (!parsed) {
+      if (!location.hash) replaceHash("terms");
+      return;
+    }
+    selectTab(parsed.tab, { sectionId: parsed.sectionId, updateHash: false });
+  }, [location.hash]); // eslint-disable-line react-hooks/exhaustive-deps -- respond to hash only
+
+  // Build TOC from the active document's h3[id] headings
+  useLayoutEffect(() => {
+    const root = docRef.current;
+    if (!root) {
+      setTocItems([]);
+      return;
+    }
+
+    const headings = Array.from(root.querySelectorAll<HTMLHeadingElement>("h3[id]"));
+    const items: TocItem[] = headings.map((h) => {
+      const text = (h.textContent ?? "").trim();
+      return {
+        id: h.id,
+        number: formatSectionNumber(h.id, text),
+        title: stripLeadingNumber(text),
+      };
+    });
+    setTocItems(items);
+
+    const pending = pendingSectionRef.current;
+    pendingSectionRef.current = null;
+
+    if (pending) {
+      requestAnimationFrame(() => scrollToSection(pending, "smooth"));
+      return;
+    }
+
+    if (items[0] && !activeSectionId) {
+      setActiveSectionId(items[0].id);
+    }
+  }, [activeTab, scrollToSection]); // eslint-disable-line react-hooks/exhaustive-deps -- rebuild TOC on tab change
+
+  // Scrollspy on section headings
+  useEffect(() => {
+    const root = docRef.current;
+    if (!root || tocItems.length === 0) return;
+
+    const offset = getStickyOffset();
+    const headings = tocItems
+      .map((item) => document.getElementById(item.id))
+      .filter((el): el is HTMLElement => Boolean(el));
+
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]) {
-          setActiveSection(visible[0].target.id as LegalSectionId);
+        if (visible[0]?.target.id) {
+          setActiveSectionId(visible[0].target.id);
         }
       },
       {
-        threshold: [0.15, 0.35, 0.6],
-        rootMargin: `-${observerOffset}px 0px -45% 0px`,
+        threshold: [0.1, 0.25, 0.5, 0.75],
+        rootMargin: `-${offset}px 0px -55% 0px`,
       },
     );
 
-    sectionIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
-
+    headings.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [sectionIds, isMobile]);
+  }, [tocItems, getStickyOffset]);
 
-  useEffect(() => {
-    const hash = location.hash.replace("#", "") as LegalSectionId;
-    if (!sectionIds.includes(hash)) return;
-    requestAnimationFrame(() => scrollToSection(hash, "smooth"));
-  }, [location.hash]);
+  const activeTabLabel = useMemo(
+    () => TABS.find((t) => t.id === activeTab)?.label ?? "Document",
+    [activeTab],
+  );
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#fcf8ea]">
+      <div className="legal-page">
         <SEO
           title="Terms & Privacy"
           description="Read BridgeArg legal terms and privacy policy."
@@ -87,169 +184,93 @@ const LegalPage = () => {
         />
         <Header />
         <main>
-          <section
-            style={{
-              padding: isMobile ? "44px 20px 36px" : isTablet ? "72px 32px 56px" : "80px clamp(24px, 7vw, 120px) 64px",
-              borderBottom: "1px solid rgba(30,21,23,0.16)",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "11px",
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                color: "rgba(30,21,23,0.62)",
-                marginBottom: "22px",
-                fontFamily: '"Onest", sans-serif',
-              }}
-            >
-              Legal
-            </p>
-            <h1
-              style={{
-                margin: 0,
-                fontFamily: '"Onest", sans-serif',
-                fontWeight: 700,
-                fontSize: isMobile ? "52px" : "clamp(64px, 9vw, 126px)",
-                letterSpacing: "-0.06em",
-                lineHeight: 0.9,
-                color: "#1e1517",
-              }}
-            >
-              <span style={{ display: "block" }}>Terms &</span>
-              <span
-                style={{
-                  display: "inline-block",
-                  fontFamily: '"BestDB", "Caveat", cursive',
-                  fontWeight: 400,
-                  color: "#7FB2D1",
-                  transform: "rotate(-7deg)",
-                  transformOrigin: "left center",
-                }}
-              >
-                Privacy
-              </span>
-            </h1>
-          </section>
+          <header className="legal-hero">
+            <div className="legal-wrap">
+              <p className="legal-hero__eyebrow">(Legal)</p>
+              <h1 className="legal-hero__title">
+                Terms &amp; <span className="legal-hero__script">privacy.</span>
+              </h1>
+              <ul className="legal-hero__meta">
+                <li>
+                  <strong>Effective date</strong>
+                  {EFFECTIVE_DATE}
+                </li>
+                <li>
+                  <strong>Last updated</strong>
+                  {LAST_UPDATED}
+                </li>
+              </ul>
+            </div>
+          </header>
 
-          <nav
-            ref={navRef}
-            style={{
-              position: isMobile ? "static" : "sticky",
-              top: "var(--header-h)",
-              zIndex: 20,
-              backgroundColor: "rgba(127,178,209,0.95)",
-              borderBottom: "1px solid rgba(30,21,23,0.16)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-            }}
-          >
-            <div
-              style={{
-                padding: isMobile ? "14px 20px" : "16px clamp(24px, 7vw, 120px)",
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "10px",
-              }}
-            >
-              {NAV_ITEMS.map((item) => {
-                const active = activeSection === item.id;
+          <nav className="legal-tabs" ref={tabsRef} aria-label="Legal documents">
+            <div className="legal-wrap legal-tabs__inner" role="tablist">
+              {TABS.map((tab) => {
+                const selected = activeTab === tab.id;
                 return (
                   <button
-                    key={item.id}
+                    key={tab.id}
                     type="button"
-                    onClick={() => scrollToSection(item.id, "smooth")}
-                    style={{
-                      border: "1px solid rgba(252,248,234,0.6)",
-                      backgroundColor: active ? "#fcf8ea" : "transparent",
-                      color: active ? "#7FB2D1" : "#fcf8ea",
-                      borderRadius: "var(--radius-button)",
-                      padding: "10px 24px",
-                      fontSize: "11px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.14em",
-                      fontFamily: '"Onest", sans-serif',
-                      cursor: "pointer",
-                      transition: "0.2s ease",
-                    }}
+                    role="tab"
+                    data-no-pill
+                    id={`legal-tab-${tab.id}`}
+                    aria-selected={selected}
+                    aria-controls={`legal-panel-${tab.id}`}
+                    className={`legal-tabs__btn${selected ? " is-active" : ""}`}
+                    onClick={() => selectTab(tab.id)}
                   >
-                    {item.label}
+                    {tab.label}
                   </button>
                 );
               })}
             </div>
           </nav>
 
-          <section
-            id="terms"
-            style={{
-              padding: isMobile ? "44px 20px" : isTablet ? "72px 32px" : "86px clamp(24px, 7vw, 120px)",
-              scrollMarginTop: "calc(var(--header-h) + 140px)",
-            }}
-          >
-            <div className="mx-auto max-w-3xl text-[rgba(30,21,23,0.82)]">
-              <TermsContent />
-            </div>
-          </section>
+          <div className="legal-wrap legal-body">
+            <aside className="legal-toc" aria-label={`${activeTabLabel} sections`}>
+              <p className="legal-toc__label">On this page</p>
+              <ul className="legal-toc__list">
+                {tocItems.map((item) => {
+                  const isActive = activeSectionId === item.id;
+                  return (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        data-no-pill
+                        className={`legal-toc__link${isActive ? " is-active" : ""}`}
+                        aria-current={isActive ? "true" : undefined}
+                        onClick={() => scrollToSection(item.id)}
+                      >
+                        <span className="legal-toc__num" aria-hidden="true">
+                          {item.number}
+                        </span>
+                        <span className="legal-toc__title">{item.title}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </aside>
 
-          <div
-            style={{
-              height: "1px",
-              backgroundColor: "rgba(30,21,23,0.18)",
-              margin: isMobile ? "52px 20px" : "72px clamp(24px, 7vw, 120px)",
-            }}
-          />
-
-          <section
-            id="privacy"
-            style={{
-              padding: isMobile ? "44px 20px 70px" : isTablet ? "72px 32px 84px" : "86px clamp(24px, 7vw, 120px) 100px",
-              scrollMarginTop: "calc(var(--header-h) + 140px)",
-            }}
-          >
-            <div className="mx-auto max-w-3xl text-[rgba(30,21,23,0.82)]">
-              <PrivacyContent />
-            </div>
-          </section>
-
-          <section
-            data-cursor-theme="dark"
-            style={{
-              backgroundColor: "#1e1517",
-              backgroundImage:
-                "radial-gradient(circle at 84% 22%, rgba(127,178,209,0.16), transparent 40%), linear-gradient(135deg, #1e1517 0%, #140e10 100%)",
-              color: "#fcf8ea",
-              padding: isMobile ? "56px 20px" : "80px clamp(24px, 7vw, 120px)",
-              textAlign: "center",
-            }}
-          >
-            <h2
-              style={{
-                margin: 0,
-                fontFamily: '"Onest", sans-serif',
-                fontSize: isMobile ? "36px" : "clamp(44px, 5vw, 62px)",
-                letterSpacing: "-0.05em",
-                lineHeight: 1,
-              }}
+            <div
+              className="legal-doc"
+              ref={docRef}
+              role="tabpanel"
+              id={`legal-panel-${activeTab}`}
+              aria-labelledby={`legal-tab-${activeTab}`}
             >
-              Questions about our policies?
-            </h2>
-            <Link
-              to="/contact"
-              className="inline-flex items-center border border-[#fcf8ea] text-[#fcf8ea] transition-colors duration-300 hover:bg-[#fcf8ea] hover:text-[#1e1517]"
-              style={{
-                marginTop: "30px",
-                textDecoration: "none",
-                borderRadius: "var(--radius-button)",
-                padding: "13px 24px",
-                textTransform: "uppercase",
-                letterSpacing: "0.16em",
-                fontSize: "11px",
-                fontFamily: '"Onest", sans-serif',
-              }}
-            >
-              Contact us
-            </Link>
+              {activeTab === "terms" ? <TermsContent /> : <PrivacyContent />}
+            </div>
+          </div>
+
+          <section className="legal-close" data-cursor-theme="dark">
+            <div className="legal-wrap legal-close__inner">
+              <p className="legal-close__eyebrow">(Legal)</p>
+              <h2 className="legal-close__title">Questions about our policies?</h2>
+              <Link to="/contact" className="legal-close__btn">
+                Start the conversation <span aria-hidden="true">→</span>
+              </Link>
+            </div>
           </section>
         </main>
         <Footer />

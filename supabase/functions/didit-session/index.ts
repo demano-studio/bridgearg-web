@@ -116,8 +116,9 @@ Deno.serve(async (req) => {
 
   const { data: artwork, error: artworkError } = await supabase
     .from("artworks")
-    .select("id, status")
+    .select("id, status, deleted_at")
     .eq("id", artworkId)
+    .is("deleted_at", null)
     .single();
 
   if (artworkError || !artwork) {

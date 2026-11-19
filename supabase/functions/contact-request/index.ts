@@ -5,6 +5,7 @@
 // Public form → verify_jwt = false in config.toml
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { escapeHtml, notifyTelegram } from "../_shared/telegram.ts";
 
 const SUBJECT_VALUES = [
   "Artwork inquiry",
@@ -197,10 +198,28 @@ Deno.serve(async (req) => {
       console.error("contact-request upsert_subscriber error:", subscriberError);
       return json(req, 500, { error: "Could not send your message. Please try again." });
     }
+
+    const { error: messageError } = await supabase.from("contact_messages").insert({
+      full_name: fullName,
+      email,
+      subject,
+      message,
+      status: "new",
+      marketing_consent: true,
+    });
+    if (messageError) {
+      console.error("contact-request contact_messages insert error:", messageError);
+      return json(req, 500, { error: "Could not send your message. Please try again." });
+    }
   } catch (e) {
-    console.error("contact-request upsert_subscriber failed:", e);
+    console.error("contact-request persist failed:", e);
     return json(req, 500, { error: "Could not send your message. Please try again." });
   }
+
+  // After persist: Telegram is best-effort and must not affect the user response.
+  await notifyTelegram(
+    `<b>(MENSAJE)</b>\n${escapeHtml(fullName)} — ${escapeHtml(subject)}\n${escapeHtml(email)}`,
+  );
 
   const mailOk = await sendResendEmail(
     resendToEmail,

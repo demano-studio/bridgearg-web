@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabaseClient";
@@ -18,23 +18,44 @@ import {
 import { toast } from "@/hooks/use-toast";
 import type { AdminArtistRow } from "@/features/admin/types";
 import { artistPhotoPath } from "@/features/admin/adminUtils";
-import { getArtworkImagePublicUrl } from "@/lib/supabaseStorage";
+import { resolveAdminImageSrc } from "@/lib/supabaseStorage";
 import { ArtistaModal } from "@/features/admin/components/ArtistaModal";
+import { useAdminAccess } from "@/features/admin/AdminAccessContext";
 
 export default function ArtistasPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const access = useAdminAccess();
+  const canEdit = access.canEdit("artistas");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const editParam = searchParams.get("edit");
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editingId, setEditingId] = React.useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<AdminArtistRow | null>(null);
 
-  const { data: artists = [], isLoading } = useQuery({
+  React.useEffect(() => {
+    if (!editParam || !/^\d+$/.test(editParam)) return;
+    setEditingId(Number(editParam));
+    setEditorOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("edit");
+    setSearchParams(next, { replace: true });
+  }, [editParam, searchParams, setSearchParams]);
+
+  const {
+    data: artists = [],
+    isLoading,
+    isError,
+    error: artistsError,
+  } = useQuery({
     queryKey: ["admin", "artists", "full"],
     queryFn: async () => {
       const sb = getSupabase();
       const { data, error } = await sb
         .from("artists")
-        .select("id,name,slug,bio,photo,profile_image_url,email,telefono,instagram,comision_bridge,comision_artista")
+        .select(
+          "id,name,slug,bio,statement,image_url,detail_image_url,studio_image_url,email,telefono,instagram,comision_bridge,comision_artista",
+        )
         .order("name");
       if (error) throw new Error(error.message);
       return (data ?? []) as AdminArtistRow[];
@@ -45,7 +66,10 @@ export default function ArtistasPage() {
     queryKey: ["admin", "artists", "totals"],
     queryFn: async () => {
       const sb = getSupabase();
-      const { data, error } = await sb.from("artworks").select("artist_id,price_usd,price_ref_usd");
+      const { data, error } = await sb
+        .from("artworks")
+        .select("artist_id,price_usd,price_ref_usd")
+        .is("deleted_at", null);
       if (error) throw new Error(error.message);
       const m = new Map<number, { ref: number; pub: number; count: number }>();
       for (const row of data ?? []) {
@@ -86,32 +110,40 @@ export default function ArtistasPage() {
           <h1 className="text-xl font-semibold tracking-tight">Artistas</h1>
           <p className="text-sm text-muted-foreground">Doble click en una tarjeta para filtrar obras por artista.</p>
         </div>
-        <Button
-          type="button"
-          className="rounded-none"
-          onClick={() => {
-            setEditingId(null);
-            setEditorOpen(true);
-          }}
-        >
-          Nuevo artista
-        </Button>
+        {canEdit ? (
+          <Button
+            type="button"
+            onClick={() => {
+              setEditingId(null);
+              setEditorOpen(true);
+            }}
+          >
+            Nuevo artista
+          </Button>
+        ) : null}
       </div>
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>
+      ) : isError ? (
+        <p className="border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive" role="alert">
+          No se pudieron cargar los artistas
+          {artistsError instanceof Error && artistsError.message ? `: ${artistsError.message}` : "."}
+        </p>
+      ) : artists.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No hay artistas cargados.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {artists.map((a) => {
             const photo = artistPhotoPath(a);
-            const img = photo ? (photo.startsWith("http") ? photo : getArtworkImagePublicUrl(photo)) : null;
+            const img = resolveAdminImageSrc(photo, "artists");
             const totals = priceByArtist.get(a.id);
             return (
               <div
                 key={a.id}
                 role="button"
                 tabIndex={0}
-                className="border border-bridge-black/15 bg-bridge-cream/40 p-4 text-left outline-none transition-colors hover:border-bridge-black/30 focus-visible:ring-1 focus-visible:ring-bridge-black"
+                className="admin-artist-card text-left"
                 onDoubleClick={() => navigate(`/admin/obras?artistId=${a.id}`)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") navigate(`/admin/obras?artistId=${a.id}`);
@@ -148,34 +180,36 @@ export default function ArtistasPage() {
                   <span>Bridge {Number(a.comision_bridge ?? 30)}%</span>
                   <span>Artista {Number(a.comision_artista ?? 70)}%</span>
                 </div>
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 rounded-none"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingId(a.id);
-                      setEditorOpen(true);
-                    }}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                    Editar
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="rounded-none text-destructive hover:text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteTarget(a);
-                    }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                {canEdit ? (
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingId(a.id);
+                        setEditorOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Editar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="text-muted-foreground hover:text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteTarget(a);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             );
           })}
@@ -190,16 +224,17 @@ export default function ArtistasPage() {
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialogContent className="rounded-none border-bridge-black/20">
+        <AlertDialogContent className="border-bridge-black/20">
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar artista</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Eliminar a <strong>{deleteTarget?.name}</strong>? No podrás si tiene obras vinculadas (FK).
+              ¿Eliminar al artista <strong>{deleteTarget?.name}</strong>? Esta acción no se puede deshacer. Si tiene
+              obras vinculadas, la eliminación fallará.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-none">Cancelar</AlertDialogCancel>
-            <AlertDialogAction className="rounded-none bg-destructive text-destructive-foreground" onClick={() => void confirmDelete()}>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-bridge-black text-[#fcf8ea]" onClick={() => void confirmDelete()}>
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>

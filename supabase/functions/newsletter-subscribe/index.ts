@@ -3,6 +3,7 @@
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CLIENT_URL
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { escapeHtml, notifyTelegram } from "../_shared/telegram.ts";
 
 function normalizeOrigin(value: string): string | null {
   try {
@@ -94,6 +95,17 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceRole);
 
+  // Distinguish first-time subscribe from repeat upserts (no Telegram on revisits).
+  const { data: existing, error: existingError } = await supabase
+    .from("newsletter_subscribers")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+  if (existingError) {
+    console.error("newsletter-subscribe existing check error:", existingError);
+  }
+  const isNew = !existing;
+
   const { error } = await supabase.rpc("upsert_subscriber", {
     p_email: email,
     p_source: source,
@@ -106,6 +118,10 @@ Deno.serve(async (req) => {
       status: 500,
       headers: withCors(req, { "Content-Type": "application/json" }),
     });
+  }
+
+  if (isNew) {
+    await notifyTelegram(`<b>(SUSCRIPTOR)</b>\n${escapeHtml(email)}`);
   }
 
   return new Response(JSON.stringify({ ok: true }), {

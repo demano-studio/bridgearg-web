@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -20,9 +19,10 @@ import {
 import { toast } from "@/hooks/use-toast";
 import type { AdminArtworkRow } from "@/features/admin/types";
 import { adminStatusFromLabel } from "@/features/admin/adminUtils";
+import { resolveAdminImageSrc } from "@/lib/supabaseStorage";
 
 const selectOne =
-  "id,title,image_url,status,price_usd,price_ref_usd,ubicacion,estado_pago,comprador,fecha_venta,certificado,notas,es_conjunto,piezas,lote_id,dimensions,weight_kg,width_cm,height_cm,depth_cm,artist_id,year,medium,tipo,enmarque,materiales,extra_image_paths";
+  "id,title,image_url,status,price_usd,price_ref_usd,ubicacion,estado_pago,comprador,comprador_contacto,fecha_venta,certificado,notas,es_conjunto,piezas,lote_id,dimensions,weight_kg,width_cm,height_cm,depth_cm,artist_id,year,medium,tipo,enmarque,materiales,extra_image_paths";
 
 type Form = {
   title: string;
@@ -45,6 +45,7 @@ type Form = {
   ubicacion: string;
   estado_pago: string;
   comprador: string;
+  comprador_contacto: string;
   fecha_venta: string;
   notas: string;
   piezas: PiezaConjunto[];
@@ -80,6 +81,7 @@ function emptyForm(loteId?: number | null): Form {
     ubicacion: "En Galería",
     estado_pago: "Pendiente",
     comprador: "",
+    comprador_contacto: "",
     fecha_venta: "",
     notas: "",
     piezas: [emptyPieza()],
@@ -112,6 +114,7 @@ function rowToForm(row: AdminArtworkRow): Form {
     ubicacion: row.ubicacion ?? "En Galería",
     estado_pago: row.estado_pago ?? "Pendiente",
     comprador: row.comprador ?? "",
+    comprador_contacto: row.comprador_contacto ?? "",
     fecha_venta: row.fecha_venta ?? "",
     notas: row.notas ?? "",
     piezas,
@@ -132,10 +135,31 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
   const [form, setForm] = React.useState<Form>(() => emptyForm(initialLoteId ?? undefined));
   const [heroPath, setHeroPath] = React.useState("");
   const [extraPaths, setExtraPaths] = React.useState<string[]>([]);
-  const [files, setFiles] = React.useState<File[]>([]);
+  const [pendingHeroFile, setPendingHeroFile] = React.useState<File | null>(null);
+  const [pendingExtraFiles, setPendingExtraFiles] = React.useState<File[]>([]);
+  const [pendingHeroPreview, setPendingHeroPreview] = React.useState<string | null>(null);
+  const [pendingExtraPreviews, setPendingExtraPreviews] = React.useState<string[]>([]);
 
   const [artistList, setArtistList] = React.useState<{ id: number; name: string }[]>([]);
   const [loteList, setLoteList] = React.useState<{ id: number; nombre: string }[]>([]);
+
+  React.useEffect(() => {
+    if (!pendingHeroFile) {
+      setPendingHeroPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(pendingHeroFile);
+    setPendingHeroPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingHeroFile]);
+
+  React.useEffect(() => {
+    const urls = pendingExtraFiles.map((f) => URL.createObjectURL(f));
+    setPendingExtraPreviews(urls);
+    return () => {
+      for (const u of urls) URL.revokeObjectURL(u);
+    };
+  }, [pendingExtraFiles]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -143,7 +167,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
       const sb = getSupabase();
       const [a, l] = await Promise.all([
         sb.from("artists").select("id,name").order("name"),
-        sb.from("lotes").select("id,nombre").order("id"),
+        sb.from("lotes").select("id,nombre").is("deleted_at", null).order("id"),
       ]);
       if (!a.error) setArtistList((a.data ?? []) as { id: number; name: string }[]);
       if (!l.error) setLoteList((l.data ?? []) as { id: number; nombre: string }[]);
@@ -152,27 +176,35 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
 
   React.useEffect(() => {
     if (!open) {
-      setFiles([]);
+      setPendingHeroFile(null);
+      setPendingExtraFiles([]);
       return;
     }
     if (!artworkId) {
       setForm(emptyForm(initialLoteId ?? undefined));
       setHeroPath("");
       setExtraPaths([]);
-      setFiles([]);
+      setPendingHeroFile(null);
+      setPendingExtraFiles([]);
       return;
     }
     setLoading(true);
     void (async () => {
       try {
         const sb = getSupabase();
-        const { data, error } = await sb.from("artworks").select(selectOne).eq("id", artworkId).single();
+        const { data, error } = await sb
+          .from("artworks")
+          .select(selectOne)
+          .eq("id", artworkId)
+          .is("deleted_at", null)
+          .single();
         if (error) throw new Error(error.message);
         const row = data as AdminArtworkRow;
         setForm(rowToForm(row));
         setHeroPath(row.image_url ?? "");
         setExtraPaths(Array.isArray(row.extra_image_paths) ? (row.extra_image_paths as string[]) : []);
-        setFiles([]);
+        setPendingHeroFile(null);
+        setPendingExtraFiles([]);
       } catch (e) {
         toast({
           title: "No se pudo cargar la obra",
@@ -185,36 +217,56 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
     })();
   }, [open, artworkId, initialLoteId]);
 
-  async function uploadNewFiles(prefix: string): Promise<string[]> {
-    if (files.length === 0) return [];
+  async function uploadOneFile(file: File, prefix: string): Promise<string> {
     const sb = getSupabase();
-    const out: string[] = [];
-    for (const file of files) {
-      let fileToUpload: File = file;
-      try {
-        fileToUpload = await imageCompression(file, {
-          maxWidthOrHeight: 2000,
-          initialQuality: 0.82,
-          useWebWorker: true,
-          fileType: "image/jpeg",
-        });
-      } catch (compressionError) {
-        console.error("Image compression failed, uploading original file:", compressionError);
-      }
-      const safe = file.name.replace(/[^\w.-]+/g, "_");
-      const path = `${prefix}/${crypto.randomUUID()}-${safe}`;
-      const signed = await adminWrite("storage.signUpload", { path }) as {
-        token?: string;
-      };
-      const token = signed.token;
-      if (!token) throw new Error("Could not sign upload URL");
-      const { error } = await sb.storage.from("artworks").uploadToSignedUrl(path, token, fileToUpload, {
-        upsert: false,
+    let fileToUpload: File = file;
+    try {
+      fileToUpload = await imageCompression(file, {
+        maxWidthOrHeight: 2000,
+        initialQuality: 0.82,
+        useWebWorker: true,
+        fileType: "image/jpeg",
       });
-      if (error) throw new Error(error.message);
-      out.push(path);
+    } catch (compressionError) {
+      console.error("Image compression failed, uploading original file:", compressionError);
     }
-    return out;
+    const safe = file.name.replace(/[^\w.-]+/g, "_");
+    const path = `${prefix}/${crypto.randomUUID()}-${safe}`;
+    const signed = (await adminWrite("storage.signUpload", { path, bucket: "artworks" })) as {
+      token?: string;
+    };
+    const token = signed.token;
+    if (!token) throw new Error("Could not sign upload URL");
+    const { error } = await sb.storage.from("artworks").uploadToSignedUrl(path, token, fileToUpload, {
+      upsert: false,
+    });
+    if (error) throw new Error(error.message);
+    return path;
+  }
+
+  function promoteExtraToHero(path: string) {
+    setExtraPaths((prev) => {
+      const rest = prev.filter((p) => p !== path);
+      if (heroPath) rest.unshift(heroPath);
+      return rest;
+    });
+    setHeroPath(path);
+    setPendingHeroFile(null);
+  }
+
+  function removeExtra(path: string) {
+    setExtraPaths((prev) => prev.filter((p) => p !== path));
+  }
+
+  function clearHero() {
+    if (extraPaths.length > 0) {
+      const [next, ...rest] = extraPaths;
+      setHeroPath(next);
+      setExtraPaths(rest);
+    } else {
+      setHeroPath("");
+    }
+    setPendingHeroFile(null);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -226,12 +278,17 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
     const prefix = artworkId != null ? `admin/${artworkId}` : `admin/nuevo/${Date.now()}`;
     setSaving(true);
     try {
-      const newPaths = await uploadNewFiles(prefix);
       let finalHero = heroPath;
       let finalExtras = [...extraPaths];
-      if (newPaths.length > 0) {
-        finalHero = newPaths[0];
-        finalExtras = [...finalExtras, ...newPaths.slice(1)];
+      if (pendingHeroFile) {
+        finalHero = await uploadOneFile(pendingHeroFile, prefix);
+      }
+      if (pendingExtraFiles.length > 0) {
+        const uploaded: string[] = [];
+        for (const file of pendingExtraFiles) {
+          uploaded.push(await uploadOneFile(file, prefix));
+        }
+        finalExtras = [...finalExtras, ...uploaded];
       }
       if (!finalHero) {
         toast({ title: "Falta imagen principal", description: "Subí al menos una foto.", variant: "destructive" });
@@ -266,6 +323,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
         ubicacion: form.ubicacion,
         estado_pago: form.estado_pago,
         comprador: form.comprador.trim() || null,
+        comprador_contacto: form.comprador_contacto.trim() || null,
         fecha_venta: form.fecha_venta.trim() || null,
         certificado: form.certificado,
         notas: form.notas.trim() || null,
@@ -306,8 +364,8 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[92svh] max-w-3xl flex-col rounded-none border-bridge-black/20 p-0 font-display">
-        <DialogHeader className="shrink-0 border-b border-bridge-black/10 px-6 py-4">
+      <DialogContent className="admin-dialog--sheet !flex max-h-[85vh] max-w-3xl flex-col gap-0 overflow-hidden border-bridge-black/20 p-0">
+        <DialogHeader className="shrink-0 border-b border-[rgba(30,21,23,0.12)] px-6 py-4 pr-12">
           <DialogTitle>{artworkId ? "Editar obra" : "Nueva obra"}</DialogTitle>
         </DialogHeader>
         {loading ? (
@@ -315,9 +373,8 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
             <Loader2 className="h-8 w-8 animate-spin opacity-50" />
           </div>
         ) : (
-          <form onSubmit={(e) => void onSubmit(e)} className="flex min-h-0 flex-1 flex-col">
-            <ScrollArea className="min-h-0 flex-1 px-6">
-              <div className="space-y-6 py-4 pr-3">
+          <form onSubmit={(e) => void onSubmit(e)} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="admin-dialog-body min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-6 py-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2 sm:col-span-2">
                     <Label>Nombre</Label>
@@ -325,7 +382,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                       value={form.title}
                       onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                       required
-                      className="rounded-none border-bridge-black/20"
+                      className="border-bridge-black/20"
                     />
                   </div>
                   <div className="space-y-2">
@@ -334,10 +391,10 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                       value={form.artist_id || "__pick"}
                       onValueChange={(v) => setForm((f) => ({ ...f, artist_id: v === "__pick" ? "" : v }))}
                     >
-                      <SelectTrigger className="rounded-none border-bridge-black/20">
+                      <SelectTrigger className="border-bridge-black/20">
                         <SelectValue placeholder="Elegir…" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-none">
+                      <SelectContent>
                         <SelectItem value="__pick" disabled>
                           Elegí artista
                         </SelectItem>
@@ -352,10 +409,10 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                   <div className="space-y-2">
                     <Label>Lote</Label>
                     <Select value={form.lote_id || "__none"} onValueChange={(v) => setForm((f) => ({ ...f, lote_id: v === "__none" ? "" : v }))}>
-                      <SelectTrigger className="rounded-none border-bridge-black/20">
+                      <SelectTrigger className="border-bridge-black/20">
                         <SelectValue placeholder="Sin lote" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-none">
+                      <SelectContent>
                         <SelectItem value="__none">Sin lote</SelectItem>
                         {loteList.map((l) => (
                           <SelectItem key={l.id} value={String(l.id)}>
@@ -368,10 +425,10 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                   <div className="space-y-2">
                     <Label>Tipo</Label>
                     <Select value={form.tipo} onValueChange={(v) => setForm((f) => ({ ...f, tipo: v }))}>
-                      <SelectTrigger className="rounded-none border-bridge-black/20">
+                      <SelectTrigger className="border-bridge-black/20">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-none">
+                      <SelectContent>
                         <SelectItem value="Cuadro">Cuadro</SelectItem>
                         <SelectItem value="Escultura">Escultura</SelectItem>
                       </SelectContent>
@@ -382,7 +439,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                     <Input
                       value={form.enmarque}
                       onChange={(e) => setForm((f) => ({ ...f, enmarque: e.target.value }))}
-                      className="rounded-none border-bridge-black/20"
+                      className="border-bridge-black/20"
                     />
                   </div>
                   <div className="flex items-center gap-6 pt-6">
@@ -405,7 +462,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                       <Input
                         value={form.ancho}
                         onChange={(e) => setForm((f) => ({ ...f, ancho: e.target.value }))}
-                        className="rounded-none border-bridge-black/20"
+                        className="border-bridge-black/20"
                         inputMode="decimal"
                       />
                     </div>
@@ -414,7 +471,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                       <Input
                         value={form.largo}
                         onChange={(e) => setForm((f) => ({ ...f, largo: e.target.value }))}
-                        className="rounded-none border-bridge-black/20"
+                        className="border-bridge-black/20"
                         inputMode="decimal"
                       />
                     </div>
@@ -423,7 +480,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                       <Input
                         value={form.profundidad}
                         onChange={(e) => setForm((f) => ({ ...f, profundidad: e.target.value }))}
-                        className="rounded-none border-bridge-black/20"
+                        className="border-bridge-black/20"
                         inputMode="decimal"
                       />
                     </div>
@@ -432,7 +489,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                       <Input
                         value={form.peso}
                         onChange={(e) => setForm((f) => ({ ...f, peso: e.target.value }))}
-                        className="rounded-none border-bridge-black/20"
+                        className="border-bridge-black/20"
                         inputMode="decimal"
                       />
                     </div>
@@ -445,7 +502,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                     <Input
                       value={form.medium}
                       onChange={(e) => setForm((f) => ({ ...f, medium: e.target.value }))}
-                      className="rounded-none border-bridge-black/20"
+                      className="border-bridge-black/20"
                     />
                   </div>
                   <div className="space-y-2">
@@ -453,7 +510,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                     <Input
                       value={form.materiales}
                       onChange={(e) => setForm((f) => ({ ...f, materiales: e.target.value }))}
-                      className="rounded-none border-bridge-black/20"
+                      className="border-bridge-black/20"
                     />
                   </div>
                   <div className="space-y-2">
@@ -461,7 +518,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                     <Input
                       value={form.year}
                       onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
-                      className="rounded-none border-bridge-black/20"
+                      className="border-bridge-black/20"
                     />
                   </div>
                 </div>
@@ -472,7 +529,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                     <Input
                       value={form.price_ref_usd}
                       onChange={(e) => setForm((f) => ({ ...f, price_ref_usd: e.target.value }))}
-                      className="rounded-none border-bridge-black/20"
+                      className="border-bridge-black/20"
                       inputMode="decimal"
                     />
                   </div>
@@ -481,17 +538,17 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                     <Input
                       value={form.price_usd}
                       onChange={(e) => setForm((f) => ({ ...f, price_usd: e.target.value }))}
-                      className="rounded-none border-bridge-black/20"
+                      className="border-bridge-black/20"
                       inputMode="decimal"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Estado</Label>
                     <Select value={form.estadoVenta} onValueChange={(v) => setForm((f) => ({ ...f, estadoVenta: v }))}>
-                      <SelectTrigger className="rounded-none border-bridge-black/20">
+                      <SelectTrigger className="border-bridge-black/20">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-none">
+                      <SelectContent>
                         <SelectItem value="Stock">Stock</SelectItem>
                         <SelectItem value="Vendida">Vendida</SelectItem>
                         <SelectItem value="Reservada">Reservada</SelectItem>
@@ -501,10 +558,10 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                   <div className="space-y-2">
                     <Label>Ubicación</Label>
                     <Select value={form.ubicacion} onValueChange={(v) => setForm((f) => ({ ...f, ubicacion: v }))}>
-                      <SelectTrigger className="rounded-none border-bridge-black/20">
+                      <SelectTrigger className="border-bridge-black/20">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-none">
+                      <SelectContent>
                         <SelectItem value="En Galería">En Galería</SelectItem>
                         <SelectItem value="En Tránsito">En Tránsito</SelectItem>
                         <SelectItem value="Entregada">Entregada</SelectItem>
@@ -514,10 +571,10 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                   <div className="space-y-2">
                     <Label>Estado de pago</Label>
                     <Select value={form.estado_pago} onValueChange={(v) => setForm((f) => ({ ...f, estado_pago: v }))}>
-                      <SelectTrigger className="rounded-none border-bridge-black/20">
+                      <SelectTrigger className="border-bridge-black/20">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-none">
+                      <SelectContent>
                         <SelectItem value="Pendiente">Pendiente</SelectItem>
                         <SelectItem value="Señada">Señada</SelectItem>
                         <SelectItem value="Pagada">Pagada</SelectItem>
@@ -529,7 +586,16 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                     <Input
                       value={form.comprador}
                       onChange={(e) => setForm((f) => ({ ...f, comprador: e.target.value }))}
-                      className="rounded-none border-bridge-black/20"
+                      className="border-bridge-black/20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Contacto comprador</Label>
+                    <Input
+                      value={form.comprador_contacto}
+                      onChange={(e) => setForm((f) => ({ ...f, comprador_contacto: e.target.value }))}
+                      placeholder="Teléfono o email"
+                      className="border-bridge-black/20"
                     />
                   </div>
                   <div className="space-y-2">
@@ -538,7 +604,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                       type="date"
                       value={form.fecha_venta}
                       onChange={(e) => setForm((f) => ({ ...f, fecha_venta: e.target.value }))}
-                      className="rounded-none border-bridge-black/20"
+                      className="border-bridge-black/20"
                     />
                   </div>
                 </div>
@@ -549,7 +615,7 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                     value={form.notas}
                     onChange={(e) => setForm((f) => ({ ...f, notas: e.target.value }))}
                     rows={3}
-                    className="rounded-none border-bridge-black/20"
+                    className="border-bridge-black/20"
                   />
                 </div>
 
@@ -561,7 +627,6 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="rounded-none"
                         onClick={() => setForm((f) => ({ ...f, piezas: [...f.piezas, emptyPieza()] }))}
                       >
                         <Plus className="h-4 w-4" />
@@ -574,37 +639,32 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                           placeholder="Nombre"
                           value={p.nombre}
                           onChange={(e) => updatePieza(i, { nombre: e.target.value })}
-                          className="rounded-none sm:col-span-2"
+                          className="sm:col-span-2"
                         />
                         <Input
                           placeholder="Largo"
                           value={p.largo ?? ""}
                           onChange={(e) => updatePieza(i, { largo: e.target.value || null })}
-                          className="rounded-none"
                         />
                         <Input
                           placeholder="Ancho"
                           value={p.ancho ?? ""}
                           onChange={(e) => updatePieza(i, { ancho: e.target.value || null })}
-                          className="rounded-none"
                         />
                         <Input
                           placeholder="Prof."
                           value={p.profundidad ?? ""}
                           onChange={(e) => updatePieza(i, { profundidad: e.target.value || null })}
-                          className="rounded-none"
                         />
                         <Input
                           placeholder="Peso"
                           value={p.peso ?? ""}
                           onChange={(e) => updatePieza(i, { peso: e.target.value || null })}
-                          className="rounded-none"
                         />
                         <Button
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="rounded-none"
                           disabled={form.piezas.length <= 1}
                           onClick={() => setForm((f) => ({ ...f, piezas: f.piezas.filter((_, j) => j !== i) }))}
                         >
@@ -615,29 +675,126 @@ export function ObraModal({ open, onOpenChange, artworkId, onSaved, initialLoteI
                   </div>
                 ) : null}
 
-                <div className="space-y-2 border border-bridge-black/15 p-4">
-                  <Label>Fotos (la primera queda como imagen principal en catálogo)</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Ruta actual principal: {heroPath || "—"}. Subí archivos para reemplazar o completar la galería.
-                  </p>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="rounded-none border-bridge-black/20"
-                    onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-                  />
-                  {files.length > 0 ? (
-                    <p className="text-xs">{files.length} archivo(s) listos para subir al guardar.</p>
-                  ) : null}
+                <div className="admin-modal-section space-y-4">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                      Imágenes
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Principal del catálogo y galería extra. Podés reemplazar o promover desde acá.
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Imagen principal</Label>
+                  </div>
+                  <div className="flex flex-wrap items-start gap-4">
+                    <div className="h-36 w-36 shrink-0 border border-bridge-black/15 bg-muted/20">
+                      {pendingHeroPreview || resolveAdminImageSrc(heroPath) ? (
+                        <img
+                          src={pendingHeroPreview || resolveAdminImageSrc(heroPath) || ""}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center px-2 text-center text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Sin foto
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex min-w-[12rem] flex-1 flex-col gap-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="border-bridge-black/20"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] ?? null;
+                          setPendingHeroFile(f);
+                          e.target.value = "";
+                        }}
+                      />
+                      {pendingHeroFile ? (
+                        <p className="text-xs text-muted-foreground">
+                          Nueva principal lista al guardar: {pendingHeroFile.name}
+                        </p>
+                      ) : null}
+                      <div className="flex flex-wrap gap-2">
+                        {pendingHeroFile ? (
+                          <Button type="button" size="sm" variant="outline" onClick={() => setPendingHeroFile(null)}>
+                            Cancelar cambio
+                          </Button>
+                        ) : null}
+                        {heroPath || pendingHeroFile ? (
+                          <Button type="button" size="sm" variant="outline" onClick={() => clearHero()}>
+                            Quitar principal
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 border-t border-bridge-black/10 pt-4">
+                    <Label>Galería</Label>
+                    {extraPaths.length === 0 && pendingExtraPreviews.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Sin imágenes extra todavía.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-3">
+                        {extraPaths.map((path) => {
+                          const src = resolveAdminImageSrc(path);
+                          return (
+                            <div key={path} className="w-28 space-y-1">
+                              <div className="h-28 w-28 border border-bridge-black/15 bg-muted/20">
+                                {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : null}
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <Button type="button" size="sm" variant="outline" onClick={() => promoteExtraToHero(path)}>
+                                  Principal
+                                </Button>
+                                <Button type="button" size="sm" variant="outline" onClick={() => removeExtra(path)}>
+                                  Quitar
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {pendingExtraPreviews.map((src, i) => (
+                          <div key={`pending-${i}`} className="w-28 space-y-1">
+                            <div className="h-28 w-28 border border-dashed border-bridge-black/25 bg-muted/10">
+                              <img src={src} alt="" className="h-full w-full object-cover opacity-80" />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">Pendiente</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="border-bridge-black/20"
+                      onChange={(e) => {
+                        const list = Array.from(e.target.files ?? []);
+                        if (list.length) setPendingExtraFiles((prev) => [...prev, ...list]);
+                        e.target.value = "";
+                      }}
+                    />
+                    {pendingExtraFiles.length > 0 ? (
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          {pendingExtraFiles.length} archivo(s) se suman a la galería al guardar.
+                        </p>
+                        <Button type="button" size="sm" variant="outline" onClick={() => setPendingExtraFiles([])}>
+                          Limpiar pendientes
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            </ScrollArea>
-            <DialogFooter className="shrink-0 border-t border-bridge-black/10 px-6 py-4">
-              <Button type="button" variant="outline" className="rounded-none" onClick={() => onOpenChange(false)}>
+            </div>
+            <DialogFooter className="shrink-0 border-t border-[rgba(30,21,23,0.12)] bg-[var(--admin-cream,#fcf8ea)] px-6 py-4">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={saving} className="rounded-none">
+              <Button type="submit" disabled={saving}>
                 {saving ? <Loader2 className="animate-spin" /> : "Guardar"}
               </Button>
             </DialogFooter>

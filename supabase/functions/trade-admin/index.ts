@@ -5,6 +5,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
+import { escapeHtml, notifyTelegram } from "../_shared/telegram.ts";
+import { actionPermission, authorizeAdminRequest } from "../_shared/adminAuth.ts";
 
 const ROLE_VALUES = [
   "interior_designer",
@@ -32,8 +34,11 @@ function normalizeOrigin(value: string): string | null {
   }
 }
 
+/** Dev: any localhost / 127.0.0.1 port. Prod hosts come from CLIENT_URL + CORS_ORIGIN. */
+const LOCAL_DEV_ORIGIN_RE = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 function getAllowedOrigins(): string[] {
-  const origins = new Set<string>();
+  const origins = new Set<string>(["https://www.bridgearg.net", "https://bridgearg.net"]);
   const configuredOrigins = [Deno.env.get("CLIENT_URL") ?? "", ...(Deno.env.get("CORS_ORIGIN") ?? "").split(",")];
   for (const candidate of configuredOrigins) {
     const normalized = normalizeOrigin(candidate.trim());
@@ -42,17 +47,25 @@ function getAllowedOrigins(): string[] {
   return Array.from(origins);
 }
 
+function isAllowedOrigin(origin: string): boolean {
+  if (!origin) return false;
+  if (LOCAL_DEV_ORIGIN_RE.test(origin)) return true;
+  return getAllowedOrigins().includes(origin);
+}
+
 function getCorsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("Origin") ?? "";
-  const allowed = getAllowedOrigins();
-  const allowOrigin = allowed.includes(origin) ? origin : (allowed[0] ?? "*");
-  return {
-    "Access-Control-Allow-Origin": allowOrigin,
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
+  // Reflect exact Origin when allowed. Never return a different origin (breaks preflight).
+  if (isAllowedOrigin(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+  }
+  return headers;
 }
 
 function withCors(req: Request, headers: Record<string, string> = {}): Record<string, string> {
@@ -73,14 +86,6 @@ function parseAdminEmails(raw: string): Set<string> {
       .map((item) => item.trim().toLowerCase())
       .filter(Boolean),
   );
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 function humanStripeError(err: unknown): string {
@@ -463,34 +468,7 @@ Deno.serve(async (req) => {
     return json(req, 405, { error: "Method not allowed" });
   }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const adminEmailsRaw = Deno.env.get("ADMIN_EMAILS");
   const couponId = Deno.env.get("TRADE_COUPON_ID")?.trim();
-
-  if (!supabaseUrl || !supabaseServiceRole || !supabaseAnonKey || !adminEmailsRaw) {
-    return json(req, 500, { error: "Server configuration error" });
-  }
-
-  const authHeader = req.headers.get("Authorization") ?? req.headers.get("authorization");
-  if (!authHeader?.toLowerCase().startsWith("bearer ")) {
-    return json(req, 401, { error: "Unauthorized" });
-  }
-  const token = authHeader.slice(7).trim();
-  if (!token) return json(req, 401, { error: "Unauthorized" });
-
-  const anonClient = createClient(supabaseUrl, supabaseAnonKey);
-  const { data: authData, error: authError } = await anonClient.auth.getUser(token);
-  if (authError || !authData?.user) {
-    return json(req, 401, { error: "Unauthorized" });
-  }
-
-  const email = authData.user.email?.trim().toLowerCase() ?? "";
-  const adminEmails = parseAdminEmails(adminEmailsRaw);
-  if (!email || !adminEmails.has(email)) {
-    return json(req, 403, { error: "Forbidden" });
-  }
 
   let body: Record<string, unknown>;
   try {
@@ -502,7 +480,14 @@ Deno.serve(async (req) => {
   const action = typeof body.action === "string" ? body.action.trim() : "";
   if (!action) return json(req, 400, { error: "Missing action" });
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRole);
+  const perm = actionPermission(action);
+  const authResult = await authorizeAdminRequest(req, {
+    requiredPermission: perm ?? { section: "trade", mode: "edit" },
+  });
+  if (!authResult.ok) {
+    return json(req, authResult.status, { error: authResult.error });
+  }
+  const { supabase } = authResult.auth;
 
   if (action === "list") {
     const status = typeof body.status === "string" ? body.status.trim() : "";
@@ -528,8 +513,13 @@ Deno.serve(async (req) => {
     const { data: row, error } = await supabase.from("trade_applications").select("*").eq("id", id).maybeSingle();
     if (error || !row) return json(req, 404, { error: "Application not found." });
 
-    const result = await approveApplication(supabase, row as TradeRow, couponId);
+    const app = row as TradeRow;
+    const wasAlreadyApproved = app.status === "approved";
+    const result = await approveApplication(supabase, app, couponId);
     if (!result.ok) return json(req, 400, { error: result.error });
+    if (!wasAlreadyApproved) {
+      await notifyTelegram(`<b>(TRADE)</b> ${escapeHtml(result.row.full_name)} → APROBADO`);
+    }
     return json(req, 200, { ok: true, application: result.row });
   }
 
@@ -564,6 +554,7 @@ Deno.serve(async (req) => {
       console.error("trade-admin reject error:", updateError);
       return json(req, 500, { error: "Could not reject the application." });
     }
+    await notifyTelegram(`<b>(TRADE)</b> ${escapeHtml((updated as TradeRow).full_name)} → RECHAZADO`);
     const rejectEmail = (updated as TradeRow)?.email?.trim();
     if (rejectEmail) {
       try {
@@ -723,6 +714,8 @@ Deno.serve(async (req) => {
         application: inserted,
       });
     }
+    // Manual create → approve: notify APROBADO only (not "nueva").
+    await notifyTelegram(`<b>(TRADE)</b> ${escapeHtml(result.row.full_name)} → APROBADO`);
     return json(req, 200, { ok: true, application: result.row });
   }
 

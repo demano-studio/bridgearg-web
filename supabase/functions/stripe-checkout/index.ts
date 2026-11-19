@@ -112,8 +112,9 @@ Deno.serve(async (req) => {
 
   const { data: artwork, error: fetchError } = await supabase
     .from("artworks")
-    .select("id, title, image_url, status, price_usd, year, medium, artists(name)")
+    .select("id, title, image_url, status, price_usd, year, medium, deleted_at, artists(name)")
     .eq("id", artworkId)
+    .is("deleted_at", null)
     .single();
 
   if (fetchError || !artwork) {

@@ -7,6 +7,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AdminSidebar } from "@/features/admin/components/AdminSidebar";
+import { AdminBottomNav } from "@/features/admin/components/AdminBottomNav";
+import { AdminGlobalSearch } from "@/features/admin/components/AdminGlobalSearch";
+import { AdminAccessProvider, useAdminAccess } from "@/features/admin/AdminAccessContext";
+import { AdminPwaHead } from "@/features/admin/AdminPwaHead";
+import { useAdminPwa } from "@/features/admin/useAdminPwa";
+import "@/styles/admin.css";
+
+function adminPathLabel(pathname: string) {
+  const rest = pathname.replace(/^\/admin\/?/, "") || "resumen";
+  if (rest === "resumen") return "Resumen";
+  if (rest === "obras") return "Obras";
+  if (rest === "artistas") return "Artistas";
+  if (rest === "pedidos") return "Pedidos";
+  if (rest === "mensajes") return "Mensajes";
+  if (rest === "suscriptores") return "Suscriptores";
+  if (rest === "trade") return "Trade";
+  if (rest === "papelera") return "Papelera";
+  if (rest === "equipo") return "Equipo";
+  if (rest === "configuracion") return "Configuración";
+  if (rest === "sin-acceso") return "Sin acceso";
+  const lote = rest.match(/^lotes\/(\d+)$/);
+  if (lote) return `Lote ${lote[1]}`;
+  return rest;
+}
 
 function AdminLogin() {
   const [email, setEmail] = React.useState("");
@@ -30,16 +54,12 @@ function AdminLogin() {
   }
 
   return (
-    <div className="admin-root flex min-h-screen items-center justify-center bg-[#faf9ef] px-4 font-display text-bridge-black">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-md border border-bridge-black/20 bg-bridge-cream/40 p-8 shadow-none"
-        style={{ borderRadius: 0 }}
-      >
-        <h1 className="mb-1 text-lg font-semibold tracking-wide">Bridgearg Admin</h1>
-        <p className="mb-6 text-sm text-muted-foreground">Ingresá con tu usuario de Supabase Auth.</p>
+    <div className="admin-root admin-login">
+      <form onSubmit={onSubmit} className="admin-login__card">
+        <h1 className="admin-login__title">Bridgearg Admin</h1>
+        <p className="admin-login__hint">Ingresá con tu usuario de Supabase Auth.</p>
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="admin-field space-y-2">
             <Label htmlFor="admin-email">Email</Label>
             <Input
               id="admin-email"
@@ -48,10 +68,9 @@ function AdminLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="rounded-none border-bridge-black/25"
             />
           </div>
-          <div className="space-y-2">
+          <div className="admin-field space-y-2">
             <Label htmlFor="admin-password">Contraseña</Label>
             <Input
               id="admin-password"
@@ -60,11 +79,10 @@ function AdminLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="rounded-none border-bridge-black/25"
             />
           </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button type="submit" disabled={busy} className="w-full rounded-none">
+          {error ? <p className="admin-login__error">{error}</p> : null}
+          <Button type="submit" disabled={busy} className="w-full">
             {busy ? (
               <>
                 <Loader2 className="animate-spin" />
@@ -83,54 +101,127 @@ function AdminLogin() {
 export default function AdminApp() {
   const { user, loading, isConfigured, signOut } = useAuth();
   const location = useLocation();
+  useAdminPwa();
+
+  React.useEffect(() => {
+    document.body.classList.add("admin-ui");
+    return () => document.body.classList.remove("admin-ui");
+  }, []);
 
   if (!isConfigured) {
     return (
-      <div className="admin-root flex min-h-screen items-center justify-center bg-[#faf9ef] p-6 font-display text-bridge-black">
-        <p className="max-w-md text-center text-sm">
-          Supabase no está configurado. Definí <code className="text-xs">VITE_SUPABASE_URL</code> y{" "}
-          <code className="text-xs">VITE_SUPABASE_ANON_KEY</code> en <code className="text-xs">.env</code>.
-        </p>
-      </div>
+      <>
+        <AdminPwaHead />
+        <div className="admin-root admin-login">
+          <p className="max-w-md text-center text-sm text-[rgba(252,248,234,0.7)]">
+            Supabase no está configurado. Definí <code className="text-xs">VITE_SUPABASE_URL</code> y{" "}
+            <code className="text-xs">VITE_SUPABASE_ANON_KEY</code> en <code className="text-xs">.env</code>.
+          </p>
+        </div>
+      </>
     );
   }
 
   if (loading) {
     return (
-      <div className="admin-root flex min-h-screen items-center justify-center bg-[#faf9ef] font-display text-bridge-black">
-        <Loader2 className="h-8 w-8 animate-spin opacity-60" />
-      </div>
+      <>
+        <AdminPwaHead />
+        <div className="admin-root admin-login">
+          <Loader2 className="h-8 w-8 animate-spin opacity-60 text-[#fcf8ea]" />
+        </div>
+      </>
     );
   }
 
   if (!user) {
-    return <AdminLogin />;
+    return (
+      <>
+        <AdminPwaHead />
+        <AdminLogin />
+      </>
+    );
   }
 
   return (
-    <div className="admin-root flex min-h-screen bg-[#faf9ef] font-display text-bridge-black">
+    <>
+      <AdminPwaHead />
+      <AdminAccessProvider>
+        <AdminShell pathLabel={adminPathLabel(location.pathname)} onSignOut={() => void signOut()} />
+      </AdminAccessProvider>
+    </>
+  );
+}
+
+function AdminShell({ pathLabel, onSignOut }: { pathLabel: string; onSignOut: () => void }) {
+  const access = useAdminAccess();
+
+  if (!access.ready) {
+    return (
+      <div className="admin-root admin-login">
+        <Loader2 className="h-8 w-8 animate-spin opacity-60 text-[#fcf8ea]" />
+      </div>
+    );
+  }
+
+  if (!access.isMember && !access.isOwner) {
+    return (
+      <div className="admin-root admin-login">
+        <div className="admin-login__card space-y-4 text-center">
+          <h1 className="admin-login__title">Sin acceso</h1>
+          <p className="text-sm text-[rgba(252,248,234,0.7)]">
+            Tu cuenta no forma parte del equipo admin. Pedile al owner que te invite.
+          </p>
+          <Button type="button" variant="outline" className="border-[rgba(252,248,234,0.3)] text-[#fcf8ea]" onClick={onSignOut}>
+            Cerrar sesión
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Member with all permissions revoked — keep Auth session, block every section.
+  const hasAnySection =
+    access.isOwner ||
+    access.firstAllowedPath() !== "/admin/sin-acceso";
+  if (!hasAnySection) {
+    return (
+      <div className="admin-root admin-login">
+        <div className="admin-login__card space-y-4 text-center">
+          <h1 className="admin-login__title">Sin acceso</h1>
+          <p className="text-sm text-[rgba(252,248,234,0.7)]">
+            Tu cuenta no tiene permisos en ninguna sección. Pedile al owner que te vuelva a habilitar el acceso.
+          </p>
+          <Button type="button" variant="outline" className="border-[rgba(252,248,234,0.3)] text-[#fcf8ea]" onClick={onSignOut}>
+            Cerrar sesión
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-root admin-shell">
       <AdminSidebar />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col md:border-l md:border-bridge-black/15">
-        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-bridge-black/15 px-4 py-3 pl-14 md:pl-4">
-          <div className="min-w-0 truncate text-xs uppercase tracking-[0.12em] text-muted-foreground">
-            {location.pathname.replace(/^\/admin\/?/, "") || "obras"}
-          </div>
-          <div className="flex items-center gap-3">
+      <div className="admin-main">
+        <header className="admin-topbar">
+          <div className="admin-topbar__path">{pathLabel}</div>
+          <AdminGlobalSearch />
+          <div className="admin-topbar__actions">
             <Button
               type="button"
               variant="outline"
-              className="rounded-none border-bridge-black/30 text-[10px] uppercase tracking-wider"
-              onClick={() => {
-                void signOut();
-              }}
+              size="sm"
+              className="hidden border-[rgba(30,21,23,0.28)] text-[10px] uppercase tracking-wider md:inline-flex"
+              onClick={onSignOut}
             >
               Cerrar sesión
             </Button>
           </div>
         </header>
-        <main className="min-h-0 flex-1 overflow-auto p-4 md:p-6">
+        <main className="admin-content">
           <Outlet />
         </main>
+        <AdminBottomNav />
       </div>
     </div>
   );

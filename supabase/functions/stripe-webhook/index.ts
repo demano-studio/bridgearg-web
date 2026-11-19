@@ -5,6 +5,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
+import { escapeHtml, notifyTelegram } from "../_shared/telegram.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2025-02-24.acacia",
@@ -199,12 +200,24 @@ Deno.serve(async (req) => {
     amount_usd: amountUsd,
     currency: session.currency ?? "usd",
     payment_status: estado_pago,
+    shipping_status: "paid",
   });
 
   if (purchaseInsertError) {
     console.error("Failed to insert purchase record:", purchaseInsertError);
   } else {
     console.log(`Purchase recorded for session ${session.id}.`);
+    const obraLabel = title.trim() || `Obra #${artworkId}`;
+    const montoLabel =
+      amountUsd != null && Number.isFinite(amountUsd)
+        ? amountUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })
+        : priceUsd != null
+          ? priceUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })
+          : "—";
+    const buyerEmailLabel = (customerEmail ?? "").trim() || "—";
+    await notifyTelegram(
+      `<b>(PEDIDO)</b>\n${escapeHtml(obraLabel)} — U$D ${escapeHtml(montoLabel)}\n${escapeHtml(buyerEmailLabel)}`,
+    );
   }
 
   // Recién ahora (pago confirmado) se consume la verificación de identidad.
@@ -528,6 +541,7 @@ async function handleDoubleSale(supabase: any, session: Stripe.Checkout.Session,
     amount_usd: (session.amount_total ?? 0) / 100,
     currency: session.currency ?? "usd",
     payment_status: session.payment_status ?? "paid",
+    shipping_status: "paid",
   });
   if (error) console.error("DOUBLE SALE: failed to record purchase:", error);
 

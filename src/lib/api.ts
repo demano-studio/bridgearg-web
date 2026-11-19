@@ -257,7 +257,7 @@ async function fetchWorksFromArtworks(sb: import("@supabase/supabase-js").Supaba
   const select = artistSlug
     ? "id,title,image_url,gallery_urls,status,price_usd,artist_id,year,medium,dimensions,weight_kg,width_cm,height_cm,depth_cm,artists!inner(name,slug)"
     : "id,title,image_url,gallery_urls,status,price_usd,artist_id,year,medium,dimensions,weight_kg,width_cm,height_cm,depth_cm,artists(name,slug)";
-  let query = sb.from("artworks").select(select).order("id", { ascending: true });
+  let query = sb.from("artworks").select(select).is("deleted_at", null).order("id", { ascending: true });
   if (artistSlug) query = query.eq("artists.slug", artistSlug);
   const { data, error } = await query;
   if (error) throw new Error(error.message ?? "Could not load works from artworks");
@@ -268,7 +268,7 @@ async function fetchWorksFromArtworks(sb: import("@supabase/supabase-js").Supaba
 async function fetchWorkFromArtworks(sb: import("@supabase/supabase-js").SupabaseClient, id: number): Promise<WorkFromApi | null> {
   const select =
     "id,title,image_url,gallery_urls,status,price_usd,artist_id,year,medium,dimensions,weight_kg,width_cm,height_cm,depth_cm,artists(name,slug)";
-  const { data, error } = await sb.from("artworks").select(select).eq("id", id).single();
+  const { data, error } = await sb.from("artworks").select(select).eq("id", id).is("deleted_at", null).single();
   if (error) {
     if (error.code === "PGRST116") return null;
     throw new Error(error.message ?? "Could not load work from artworks");
@@ -283,7 +283,7 @@ export async function getArtworks(artistId?: number): Promise<ArtworkFromApi[]> 
   if (!isSupabaseConfigured || !supabase) return [];
   const select =
     "id,title,image_url,status,price_usd,price_ref_usd,ubicacion,estado_pago,comprador,fecha_venta,certificado,notas,es_conjunto,piezas,lote_id,artist_id,year,medium,artists(name,bio,image_url)";
-  let query = supabase.from("artworks").select(select).order("id", { ascending: true });
+  let query = supabase.from("artworks").select(select).is("deleted_at", null).order("id", { ascending: true });
   if (artistId != null) query = query.eq("artist_id", artistId);
   const { data, error } = await query;
   if (error) throw new Error(error.message ?? "Could not load artworks");
@@ -301,7 +301,11 @@ export async function getArtists(): Promise<ArtistFromApi[]> {
 export async function getLotes(): Promise<LoteRow[]> {
   const { supabase, isSupabaseConfigured } = await import("@/lib/supabaseClient");
   if (!isSupabaseConfigured || !supabase) return [];
-  const { data, error } = await supabase.from("lotes").select("id,nombre,fecha,created_at").order("id", { ascending: true });
+  const { data, error } = await supabase
+    .from("lotes")
+    .select("id,nombre,fecha,created_at")
+    .is("deleted_at", null)
+    .order("id", { ascending: true });
   if (error) throw new Error(error.message ?? "Could not load lotes");
   return (data ?? []) as LoteRow[];
 }
@@ -313,7 +317,8 @@ export async function getAvailableCount(): Promise<number> {
   const { count, error } = await supabase
     .from("artworks")
     .select("id", { count: "exact", head: true })
-    .eq("status", "available");
+    .eq("status", "available")
+    .is("deleted_at", null);
 
   if (error) throw new Error(error.message ?? "Could not load available artworks count");
   return count ?? 0;
@@ -336,7 +341,8 @@ export async function getWorksTotalCount(): Promise<number | null> {
   if (!isSupabaseConfigured || !supabase) return null;
   const { count, error } = await supabase
     .from("artworks")
-    .select("id", { count: "exact", head: true });
+    .select("id", { count: "exact", head: true })
+    .is("deleted_at", null);
   if (error) return null;
   return count ?? null;
 }
@@ -356,6 +362,7 @@ export async function getLatestWorks(limit = 20): Promise<WorkFromApi[]> {
     .select(
       "id,title,image_url,gallery_urls,status,price_usd,artist_id,year,medium,dimensions,weight_kg,width_cm,height_cm,depth_cm,artists(name,slug)"
     )
+    .is("deleted_at", null)
     .order("id", { ascending: false })
     .limit(limit);
 

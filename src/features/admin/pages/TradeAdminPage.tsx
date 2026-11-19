@@ -68,72 +68,56 @@ function hasActiveCode(row: TradeApplicationAdminRow): boolean {
 
 function StatusBadge({ row }: { row: TradeApplicationAdminRow }) {
   if (row.status === "approved" && row.deactivated_at) {
-    return (
-      <span className="inline-flex border border-bridge-black/25 bg-bridge-black/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-bridge-black/70">
-        Deactivated
-      </span>
-    );
+    return <span className="admin-status admin-status--muted">Desactivado</span>;
   }
   if (row.status === "approved") {
-    return (
-      <span className="inline-flex border border-emerald-700/30 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-800">
-        Approved
-      </span>
-    );
+    return <span className="admin-status admin-status--filled">Aprobado</span>;
   }
   if (row.status === "rejected") {
-    return (
-      <span className="inline-flex border border-red-700/25 bg-red-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-800">
-        Rejected
-      </span>
-    );
+    return <span className="admin-status admin-status--muted">Rechazado</span>;
   }
-  return (
-    <span className="inline-flex border border-amber-700/30 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-900">
-      Pending
-    </span>
-  );
+  return <span className="admin-status">Pendiente</span>;
 }
 
 function confirmCopy(kind: ConfirmKind, row: TradeApplicationAdminRow | null): { title: string; body: string; action: string } {
-  const name = row?.full_name ?? "this client";
+  const name = row?.full_name ?? "este cliente";
   const code = row?.promo_code ? ` (${row.promo_code})` : "";
   switch (kind) {
     case "approve":
       return {
-        title: "Approve this application?",
-        body: `We'll issue a Trade discount code for ${name} and email it to ${row?.email ?? "the applicant"}.`,
-        action: "Approve",
+        title: "¿Aprobar esta solicitud?",
+        body: `Se emitirá un código Trade para ${name} y se enviará a ${row?.email ?? "el solicitante"}.`,
+        action: "Aprobar",
       };
     case "reject":
       return {
-        title: "Reject this application?",
+        title: "¿Rechazar esta solicitud?",
         body: hasActiveCode(row!)
-          ? "This will deactivate the client's discount code. Continue?"
-          : `Reject ${name}? They will not receive a Trade discount code.`,
-        action: "Reject",
+          ? "Se desactivará el código de descuento del cliente. ¿Continuar?"
+          : `¿Rechazar a ${name}? No recibirá código Trade.`,
+        action: "Rechazar",
       };
     case "deactivate":
       return {
-        title: "Deactivate this code?",
-        body: `This will deactivate the client's discount code${code}. Continue?`,
-        action: "Deactivate",
+        title: "¿Desactivar este código?",
+        body: `Se desactivará el código de descuento${code}. ¿Continuar?`,
+        action: "Desactivar",
       };
     case "reopen":
       return {
-        title: "Reopen this application?",
+        title: "¿Reabrir esta solicitud?",
         body: hasActiveCode(row!)
-          ? "This will deactivate the client's discount code and move the application back to Pending. Continue?"
-          : `Move ${name} back to Pending so you can review it again?`,
-        action: "Reopen",
+          ? "Se desactivará el código y la solicitud volverá a Pendiente. ¿Continuar?"
+          : `¿Volver a poner a ${name} en Pendiente para revisarla otra vez?`,
+        action: "Reabrir",
       };
     case "delete":
       return {
-        title: "Delete this application?",
+        title: "¿Eliminar esta solicitud?",
         body: hasActiveCode(row!)
-          ? "This will deactivate the client's discount code and permanently delete the application. This cannot be undone."
-          : `Permanently delete ${name}'s application. This cannot be undone.`,
-        action: "Delete",
+          ? "Se desactivará el código y se eliminará la solicitud de forma permanente. No se puede deshacer."
+          : `¿Eliminar permanentemente la solicitud de ${name}? No se puede deshacer.`,
+        action: "Eliminar",
       };
   }
 }
@@ -217,7 +201,7 @@ export default function TradeAdminPage() {
   function rowActions(row: TradeApplicationAdminRow) {
     const rowBusy = busyId === row.id;
     const disabled = rowBusy || actionMutation.isPending;
-    const btn = "h-7 rounded-none border-bridge-black/30 px-2 text-[10px] uppercase tracking-wider";
+    const btn = "h-7 border-bridge-black/30 px-2 text-[10px] uppercase tracking-wider";
 
     if (row.status === "pending") {
       return (
@@ -288,75 +272,74 @@ export default function TradeAdminPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Trade Program</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Trade</h1>
           <p className="text-sm text-muted-foreground">
-            Review applications, issue 15% codes, and add clients manually.
+            Solicitudes, códigos 15% y altas manuales.
           </p>
         </div>
-        <Button type="button" className="rounded-none" onClick={() => setAddOpen(true)}>
+        <Button type="button" onClick={() => setAddOpen(true)}>
           <Plus className="h-4 w-4" />
-          Add client
+          Agregar cliente
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-end gap-4 border border-bridge-black/15 bg-bridge-cream/30 p-4">
+      <div className="admin-filters grid gap-3 sm:grid-cols-[14rem_auto] sm:items-end">
         <div className="space-y-2">
-          <Label className="text-[10px] uppercase tracking-wider">Status</Label>
+          <Label className="text-[10px] uppercase tracking-wider">Estado</Label>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-            <SelectTrigger className="w-[200px] rounded-none border-bridge-black/25">
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-none">
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="pending">Pendientes</SelectItem>
+              <SelectItem value="approved">Aprobados</SelectItem>
+              <SelectItem value="rejected">Rechazados</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          className="rounded-none border-bridge-black/30"
-          disabled={isFetching}
-          onClick={() => void refetch()}
-        >
+        <Button type="button" variant="outline" disabled={isFetching} onClick={() => void refetch()}>
           {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Refresh
+          Actualizar
         </Button>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16 text-muted-foreground">
           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Loading applications…
+          Cargando solicitudes…
         </div>
       ) : isError ? (
-        <div className="border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-          {error instanceof Error ? error.message : "Could not load Trade applications."}
+        <div className="border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive" role="alert">
+          {error instanceof Error ? error.message : "No se pudieron cargar las solicitudes Trade."}
         </div>
       ) : rows.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">No applications in this filter.</p>
+        <p className="border-t border-[rgba(30,21,23,0.14)] py-8 text-sm text-muted-foreground">
+          No hay solicitudes con este filtro.
+        </p>
       ) : (
-        <div className="overflow-x-auto border border-bridge-black/15">
+        <div className="admin-table-wrap">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-[10px] uppercase tracking-wider">Name</TableHead>
-                <TableHead className="text-[10px] uppercase tracking-wider">Company</TableHead>
-                <TableHead className="text-[10px] uppercase tracking-wider">Role</TableHead>
-                <TableHead className="text-[10px] uppercase tracking-wider">Email</TableHead>
-                <TableHead className="text-[10px] uppercase tracking-wider">Date</TableHead>
-                <TableHead className="text-[10px] uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-[10px] uppercase tracking-wider">Code</TableHead>
-                <TableHead className="text-[10px] uppercase tracking-wider">Actions</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Empresa</TableHead>
+                <TableHead>Rol</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className={cn("cursor-pointer", detail?.id === row.id && "bg-bridge-cream/50")}
+                  className={cn(
+                    "cursor-pointer",
+                    detail?.id === row.id && "bg-[rgba(127,178,209,0.08)]",
+                  )}
                   onClick={() => setDetail(row)}
                 >
                   <TableCell className="font-medium">
@@ -384,27 +367,27 @@ export default function TradeAdminPage() {
       )}
 
       <Dialog open={Boolean(detail)} onOpenChange={(open) => !open && setDetail(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto rounded-none sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="admin-dialog--sheet !flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
+          <DialogHeader className="shrink-0 border-b border-bridge-black/10 px-6 py-4 pr-12">
             <DialogTitle>{detail?.full_name}</DialogTitle>
             <DialogDescription>
               {detail ? `${detail.company} · ${roleLabel(detail.role)}` : ""}
             </DialogDescription>
           </DialogHeader>
           {detail ? (
-            <div className="space-y-3 text-sm">
+            <div className="admin-dialog-body min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-6 py-4 text-sm">
               <DetailRow label="Email" value={detail.email} />
-              <DetailRow label="Website / Instagram" value={detail.website || "—"} />
-              <DetailRow label="Project type" value={detail.project_type || "—"} />
-              <DetailRow label="Source" value={detail.source} />
-              <DetailRow label="Code" value={detail.promo_code || "—"} />
+              <DetailRow label="Web / Instagram" value={detail.website || "—"} />
+              <DetailRow label="Tipo de proyecto" value={detail.project_type || "—"} />
+              <DetailRow label="Origen" value={detail.source} />
+              <DetailRow label="Código" value={detail.promo_code || "—"} />
               <div>
-                <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Message</p>
-                <p className="whitespace-pre-wrap text-bridge-black/80">{detail.message || "—"}</p>
+                <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Mensaje</p>
+                <p className="whitespace-pre-wrap text-[rgba(30,21,23,0.85)]">{detail.message || "—"}</p>
               </div>
               <div>
-                <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Notes</p>
-                <p className="whitespace-pre-wrap text-bridge-black/80">{detail.notes || "—"}</p>
+                <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Notas</p>
+                <p className="whitespace-pre-wrap text-[rgba(30,21,23,0.85)]">{detail.notes || "—"}</p>
               </div>
             </div>
           ) : null}
@@ -412,29 +395,30 @@ export default function TradeAdminPage() {
       </Dialog>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="rounded-none sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Trade client</DialogTitle>
+        <DialogContent className="admin-dialog--sheet !flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
+          <DialogHeader className="shrink-0 border-b border-bridge-black/10 px-6 py-4 pr-12">
+            <DialogTitle>Agregar cliente Trade</DialogTitle>
             <DialogDescription>
-              Creates the client and issues a 15% promotion code immediately.
+              Crea el cliente y emite un código de promoción 15% de inmediato.
             </DialogDescription>
           </DialogHeader>
           <form
-            className="space-y-4"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
             onSubmit={(e) => {
               e.preventDefault();
               createMutation.mutate();
             }}
           >
+            <div className="admin-dialog-body min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-4">
             <div className="space-y-2">
-              <Label htmlFor="trade-add-name">Full name</Label>
+              <Label htmlFor="trade-add-name">Nombre completo</Label>
               <Input
                 id="trade-add-name"
                 required
                 maxLength={120}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="rounded-none border-bridge-black/25"
+                className="border-bridge-black/25"
               />
             </div>
             <div className="space-y-2">
@@ -446,27 +430,27 @@ export default function TradeAdminPage() {
                 maxLength={254}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="rounded-none border-bridge-black/25"
+                className="border-bridge-black/25"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="trade-add-company">Studio or company</Label>
+              <Label htmlFor="trade-add-company">Estudio o empresa</Label>
               <Input
                 id="trade-add-company"
                 required
                 maxLength={160}
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                className="rounded-none border-bridge-black/25"
+                className="border-bridge-black/25"
               />
             </div>
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label>Rol</Label>
               <Select value={role} onValueChange={(v) => setRole(v as TradeRole)}>
-                <SelectTrigger className="rounded-none border-bridge-black/25">
-                  <SelectValue placeholder="Select role" />
+                <SelectTrigger className="border-bridge-black/25">
+                  <SelectValue placeholder="Elegir rol" />
                 </SelectTrigger>
-                <SelectContent className="rounded-none">
+                <SelectContent>
                   {ROLE_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
@@ -476,33 +460,33 @@ export default function TradeAdminPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="trade-add-notes">Notes</Label>
+              <Label htmlFor="trade-add-notes">Notas</Label>
               <Textarea
                 id="trade-add-notes"
                 maxLength={2000}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[90px] rounded-none border-bridge-black/25"
+                className="min-h-[90px] border-bridge-black/25"
               />
             </div>
-            <DialogFooter className="gap-2 sm:gap-0">
+            </div>
+            <DialogFooter className="shrink-0 gap-2 border-t border-bridge-black/10 bg-[var(--admin-cream,#fcf8ea)] px-6 py-4 sm:gap-0">
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-none"
                 onClick={() => setAddOpen(false)}
                 disabled={createMutation.isPending}
               >
-                Cancel
+                Cancelar
               </Button>
-              <Button type="submit" className="rounded-none" disabled={createMutation.isPending || !role}>
+              <Button type="submit" disabled={createMutation.isPending || !role}>
                 {createMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Creating…
+                    Creando…
                   </>
                 ) : (
-                  "Create & approve"
+                  "Crear y aprobar"
                 )}
               </Button>
             </DialogFooter>
@@ -511,18 +495,15 @@ export default function TradeAdminPage() {
       </Dialog>
 
       <AlertDialog open={Boolean(confirm)} onOpenChange={(open) => !open && setConfirm(null)}>
-        <AlertDialogContent className="rounded-none">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{copy.title}</AlertDialogTitle>
             <AlertDialogDescription>{copy.body}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className={cn(
-                "rounded-none",
-                confirmDestructive && "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-              )}
+              className={cn(confirmDestructive && "bg-bridge-black text-[#fcf8ea] hover:bg-bridge-black/90")}
               disabled={actionMutation.isPending}
               onClick={(e) => {
                 e.preventDefault();
@@ -530,7 +511,7 @@ export default function TradeAdminPage() {
                 actionMutation.mutate({ action: confirm.kind, id: confirm.row.id });
               }}
             >
-              {actionMutation.isPending ? "Working…" : copy.action}
+              {actionMutation.isPending ? "Procesando…" : copy.action}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

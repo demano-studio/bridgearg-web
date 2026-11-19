@@ -1,0 +1,33 @@
+{
+  "name": "bridgearg",
+  "short_name": "bridgearg",
+  "description": "Panel de administración BridgeARG",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "/admin/",
+  "scope": "/admin/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1e1517",
+  "background_color": "#fcf8ea",
+  "icons": [
+    {
+      "src": "/admin/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/admin/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/admin/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

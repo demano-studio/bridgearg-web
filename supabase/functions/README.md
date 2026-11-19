@@ -66,12 +66,26 @@ supabase secrets set RESEND_FROM_EMAIL=notifications@tudominio.com
 supabase secrets set CLIENT_URL=https://tu-app.com
 supabase secrets set TRADE_COUPON_ID=coupon_...
 supabase secrets set ADMIN_EMAILS=admin@bridgearg.net
+supabase secrets set TELEGRAM_BOT_TOKEN=123456:ABC...
+supabase secrets set TELEGRAM_CHAT_ID=9010972015
 
 # Desplegar funciones
 supabase functions deploy stripe-checkout
 supabase functions deploy stripe-webhook
+supabase functions deploy contact-request
+supabase functions deploy newsletter-subscribe
+supabase functions deploy trade-apply
 supabase functions deploy trade-admin
 ```
+
+### Telegram (admin alerts)
+
+| Variable | Descripción |
+|----------|-------------|
+| `TELEGRAM_BOT_TOKEN` | Token del bot (BotFather). Nunca hardcodear. |
+| `TELEGRAM_CHAT_ID` | Chat destino de las alertas. |
+
+Util compartida: `_shared/telegram.ts` (`notifyTelegram`). Eventos: pedido (stripe-webhook), mensaje (contact-request), suscriptor nuevo (newsletter-subscribe), trade nueva (trade-apply), trade APROBADO/RECHAZADO (trade-admin). Fallos de Telegram no bloquean la operación principal.
 
 ## trade-admin
 

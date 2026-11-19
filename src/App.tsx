@@ -12,11 +12,51 @@ import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
 import LegalPage from "@/pages/LegalPage";
 import { Loader2 } from "lucide-react";
 
+import { withSection } from "@/features/admin/withSection";
+
 const AdminApp = lazy(() => import("@/features/admin/AdminApp"));
-const AdminObrasPage = lazy(() => import("@/features/admin/pages/ObrasPage"));
-const AdminArtistasPage = lazy(() => import("@/features/admin/pages/ArtistasPage"));
-const AdminResumenPage = lazy(() => import("@/features/admin/pages/ResumenPage"));
-const AdminTradePage = lazy(() => import("@/features/admin/pages/TradeAdminPage"));
+const AdminObrasPage = withSection(
+  "obras",
+  lazy(() => import("@/features/admin/pages/ObrasPage")),
+);
+const AdminLotesPage = withSection(
+  "lotes",
+  lazy(() => import("@/features/admin/pages/ObrasPage")),
+);
+const AdminArtistasPage = withSection(
+  "artistas",
+  lazy(() => import("@/features/admin/pages/ArtistasPage")),
+);
+const AdminResumenPage = withSection(
+  "resumen",
+  lazy(() => import("@/features/admin/pages/ResumenPage")),
+);
+const AdminPedidosPage = withSection(
+  "pedidos",
+  lazy(() => import("@/features/admin/pages/PedidosPage")),
+);
+const AdminMensajesPage = withSection(
+  "mensajes",
+  lazy(() => import("@/features/admin/pages/MensajesPage")),
+);
+const AdminSuscriptoresPage = withSection(
+  "suscriptores",
+  lazy(() => import("@/features/admin/pages/SuscriptoresPage")),
+);
+const AdminTradePage = withSection(
+  "trade",
+  lazy(() => import("@/features/admin/pages/TradeAdminPage")),
+);
+const AdminPapeleraPage = withSection(
+  "papelera",
+  lazy(() => import("@/features/admin/pages/PapeleraPage")),
+);
+const AdminEquipoPage = withSection(
+  "equipo",
+  lazy(() => import("@/features/admin/pages/EquipoPage")),
+);
+const AdminConfiguracionPage = lazy(() => import("@/features/admin/pages/ConfiguracionPage"));
+const AdminSinAccesoPage = lazy(() => import("@/features/admin/pages/SinAccesoPage"));
 
 const queryClient = new QueryClient();
 
@@ -53,13 +93,20 @@ const App = () => (
                 </Suspense>
               }
             >
-              <Route index element={<Navigate to="obras" replace />} />
+              <Route index element={<Navigate to="resumen" replace />} />
               <Route path="obras" element={<AdminObrasPage />} />
               <Route path="artistas" element={<AdminArtistasPage />} />
-              <Route path="lotes/:id" element={<AdminObrasPage />} />
+              <Route path="lotes/:id" element={<AdminLotesPage />} />
               <Route path="resumen" element={<AdminResumenPage />} />
+              <Route path="pedidos" element={<AdminPedidosPage />} />
+              <Route path="mensajes" element={<AdminMensajesPage />} />
+              <Route path="suscriptores" element={<AdminSuscriptoresPage />} />
               <Route path="trade" element={<AdminTradePage />} />
-              <Route path="*" element={<Navigate to="obras" replace />} />
+              <Route path="papelera" element={<AdminPapeleraPage />} />
+              <Route path="equipo" element={<AdminEquipoPage />} />
+              <Route path="configuracion" element={<AdminConfiguracionPage />} />
+              <Route path="sin-acceso" element={<AdminSinAccesoPage />} />
+              <Route path="*" element={<Navigate to="resumen" replace />} />
             </Route>
             <Route path="/legal" element={<LegalPage />} />
             <Route path="/*" element={<AnimatedRoutes />} />
