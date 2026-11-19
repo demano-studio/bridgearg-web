@@ -2,6 +2,7 @@ import * as React from "react";
 
 const MANIFEST_HREF = "/admin/manifest.webmanifest";
 const SW_URL = "/admin/sw.js";
+/** Must stay under the SW script directory (/admin/). */
 const SW_SCOPE = "/admin/";
 
 /**

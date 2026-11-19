@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1e1517" />
+    <title>bridgearg</title>
+    <!--
+      Vercel serves this file for /admin and /admin/ because public/admin/ is a
+      static directory (rewrites never run for directory indexes). Bounce into a
+      path that the SPA rewrite covers.
+    -->
+    <script>
+      location.replace("/admin/resumen" + location.search + location.hash);
+    </script>
+    <meta http-equiv="refresh" content="0;url=/admin/resumen" />
+  </head>
+  <body></body>
+</html>

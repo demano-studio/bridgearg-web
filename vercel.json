@@ -6,7 +6,12 @@
     { "source": "/contacto", "destination": "/contact", "permanent": true },
     { "source": "/artistas/:slug", "destination": "/artists/:slug", "permanent": true },
     { "source": "/artistas", "destination": "/artists", "permanent": true },
-    { "source": "/works", "destination": "/artworks", "permanent": true }
+    { "source": "/works", "destination": "/artworks", "permanent": true },
+    {
+      "source": "/admin/",
+      "destination": "/admin/resumen",
+      "permanent": false
+    }
   ],
   "rewrites": [
     { "source": "/miami", "destination": "/miami/index.html" },
@@ -16,6 +21,7 @@
     { "source": "/trade", "destination": "/index.html" },
     { "source": "/trade/:path*", "destination": "/index.html" },
     { "source": "/legal", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" },
     { "source": "/admin/:path*", "destination": "/index.html" }
   ],
   "headers": [

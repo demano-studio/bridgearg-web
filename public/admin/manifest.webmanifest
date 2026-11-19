@@ -4,7 +4,7 @@
   "description": "Panel de administración BridgeARG",
   "lang": "es",
   "dir": "ltr",
-  "start_url": "/admin/",
+  "start_url": "/admin/resumen",
   "scope": "/admin/",
   "display": "standalone",
   "orientation": "portrait-primary",
