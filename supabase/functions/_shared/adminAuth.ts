@@ -57,6 +57,10 @@ export function actionPermission(action: string): { section: AdminSection; mode:
     case "message.reply":
     case "message.markThreadRead":
       return { section: "mensajes", mode: "edit" };
+    case "push.subscribe":
+    case "push.unsubscribe":
+      // Any admin with at least one view permission (checked via requiredAny in admin-write).
+      return { section: "resumen", mode: "view" };
     case "subscriber.delete":
       return { section: "suscriptores", mode: "edit" };
     case "purchase.updateShipping":

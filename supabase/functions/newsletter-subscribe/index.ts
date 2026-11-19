@@ -3,7 +3,7 @@
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CLIENT_URL
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { escapeHtml, notifyTelegram } from "../_shared/telegram.ts";
+import { escapeHtml, notifyAdmins } from "../_shared/notifyAdmins.ts";
 
 function normalizeOrigin(value: string): string | null {
   try {
@@ -121,7 +121,12 @@ Deno.serve(async (req) => {
   }
 
   if (isNew) {
-    await notifyTelegram(`<b>(SUSCRIPTOR)</b>\n${escapeHtml(email)}`);
+    await notifyAdmins("suscriptores", {
+      telegramHtml: `<b>(SUSCRIPTOR)</b>\n${escapeHtml(email)}`,
+      title: "Nuevo suscriptor",
+      body: email,
+      url: "/admin/suscriptores",
+    });
   }
 
   return new Response(JSON.stringify({ ok: true }), {

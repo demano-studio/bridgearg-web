@@ -9,16 +9,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 
 export type SoldBuyerValues = {
   comprador: string;
@@ -158,18 +158,18 @@ export function SoldBuyerPrompt({ open, artworkTitle, submitting, onOpenChange, 
 
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="rounded-t-xl border-bridge-black/20 px-5 pb-8 pt-4">
-          <SheetHeader className="mb-4 text-left">
-            <SheetTitle>Registrar venta</SheetTitle>
-            <SheetDescription>
+      <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+        <DrawerContent className="border-bridge-black/20 px-5 pb-8">
+          <DrawerHeader className="mb-2 px-0 text-left">
+            <DrawerTitle>Registrar venta</DrawerTitle>
+            <DrawerDescription>
               {artworkTitle} — pedimos nombre y contacto antes de marcarla como Vendida.
-            </SheetDescription>
-          </SheetHeader>
+            </DrawerDescription>
+          </DrawerHeader>
           {body}
-          <SheetFooter className="mt-6 flex-row gap-2 sm:space-x-0">{actions}</SheetFooter>
-        </SheetContent>
-      </Sheet>
+          <DrawerFooter className="mt-6 flex-row gap-2 p-0 sm:space-x-0">{actions}</DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     );
   }
 

@@ -93,8 +93,9 @@ Deno.serve(async (req) => {
     });
   }
 
+  const isPushAction = action === "push.subscribe" || action === "push.unsubscribe";
   const perm =
-    action === "storage.signUpload"
+    action === "storage.signUpload" || isPushAction
       ? null
       : actionPermission(action);
 
@@ -106,7 +107,19 @@ Deno.serve(async (req) => {
             { section: "obras", mode: "edit" },
             { section: "artistas", mode: "edit" },
           ]
-        : undefined,
+        : isPushAction
+          ? [
+              { section: "resumen", mode: "view" },
+              { section: "obras", mode: "view" },
+              { section: "artistas", mode: "view" },
+              { section: "lotes", mode: "view" },
+              { section: "pedidos", mode: "view" },
+              { section: "mensajes", mode: "view" },
+              { section: "suscriptores", mode: "view" },
+              { section: "trade", mode: "view" },
+              { section: "papelera", mode: "view" },
+            ]
+          : undefined,
   });
   if (!authResult.ok) {
     return new Response(JSON.stringify({ error: authResult.error }), {
@@ -597,6 +610,54 @@ Deno.serve(async (req) => {
       }
 
       result = { reply: replyRow, thread_email: threadEmail };
+    } else if (action === "push.subscribe") {
+      const endpoint = (payload as { endpoint?: unknown }).endpoint;
+      const p256dh = (payload as { p256dh?: unknown }).p256dh;
+      const authKey = (payload as { auth?: unknown }).auth;
+      const userAgent = (payload as { user_agent?: unknown }).user_agent;
+      if (typeof endpoint !== "string" || !endpoint.startsWith("https://") || endpoint.length > 2048) {
+        return new Response(JSON.stringify({ error: "payload.endpoint inválido" }), {
+          status: 400,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      if (typeof p256dh !== "string" || !p256dh.trim() || typeof authKey !== "string" || !authKey.trim()) {
+        return new Response(JSON.stringify({ error: "payload.p256dh y payload.auth required" }), {
+          status: 400,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      const { data, error } = await supabase
+        .from("push_subscriptions")
+        .upsert(
+          {
+            user_id: user.id,
+            endpoint: endpoint.trim(),
+            p256dh: p256dh.trim(),
+            auth: authKey.trim(),
+            user_agent: typeof userAgent === "string" ? userAgent.slice(0, 500) : null,
+          },
+          { onConflict: "endpoint" },
+        )
+        .select("id,endpoint,created_at")
+        .single();
+      if (error) throw new Error(error.message ?? "No se pudo guardar la suscripción");
+      result = data;
+    } else if (action === "push.unsubscribe") {
+      const endpoint = (payload as { endpoint?: unknown }).endpoint;
+      if (typeof endpoint !== "string" || !endpoint.trim()) {
+        return new Response(JSON.stringify({ error: "payload.endpoint required" }), {
+          status: 400,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      const { error } = await supabase
+        .from("push_subscriptions")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("endpoint", endpoint.trim());
+      if (error) throw new Error(error.message ?? "No se pudo eliminar la suscripción");
+      result = { ok: true };
     } else if (action === "purchase.updateShipping") {
       const id = (payload as { id?: unknown }).id;
       const shippingStatus = (payload as { shipping_status?: unknown }).shipping_status;

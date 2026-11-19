@@ -3,7 +3,7 @@
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CLIENT_URL, RESEND_*, BREVO_API_KEY, BREVO_TRADE_LIST_ID
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { escapeHtml, notifyTelegram } from "../_shared/telegram.ts";
+import { escapeHtml, notifyAdmins } from "../_shared/notifyAdmins.ts";
 
 const ROLE_VALUES = [
   "interior_designer",
@@ -389,9 +389,12 @@ Deno.serve(async (req) => {
   }
   console.log("trade-apply: inserted application", { hasEmail: Boolean(email) });
 
-  await notifyTelegram(
-    `<b>(TRADE)</b>\n${escapeHtml(fullName)} — ${escapeHtml(company)} — ${escapeHtml(role)}\n${escapeHtml(email)}`,
-  );
+  await notifyAdmins("trade", {
+    telegramHtml: `<b>(TRADE)</b>\n${escapeHtml(fullName)} — ${escapeHtml(company)} — ${escapeHtml(role)}\n${escapeHtml(email)}`,
+    title: "Nueva solicitud Trade",
+    body: `${fullName} — ${company}`,
+    url: "/admin/trade",
+  });
 
   const { error: subscriberError } = await supabase.rpc("upsert_subscriber", {
     p_email: email,

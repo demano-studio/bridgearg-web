@@ -85,7 +85,16 @@ supabase functions deploy trade-admin
 | `TELEGRAM_BOT_TOKEN` | Token del bot (BotFather). Nunca hardcodear. |
 | `TELEGRAM_CHAT_ID` | Chat destino de las alertas. |
 
-Util compartida: `_shared/telegram.ts` (`notifyTelegram`). Eventos: pedido (stripe-webhook), mensaje (contact-request), suscriptor nuevo (newsletter-subscribe), trade nueva (trade-apply), trade APROBADO/RECHAZADO (trade-admin). Fallos de Telegram no bloquean la operación principal.
+Util compartida: `_shared/notifyAdmins.ts` (`notifyAdmins`) — Telegram + Web Push en paralelo. Eventos: pedido (stripe-webhook), mensaje (contact-request), suscriptor nuevo (newsletter-subscribe), trade nueva (trade-apply), trade APROBADO/RECHAZADO (trade-admin). Fallos de notify no bloquean la operación principal.
+
+### Web Push (PWA admin)
+
+| Variable | Descripción |
+|----------|-------------|
+| `VAPID_SUBJECT` | Contacto VAPID, ej. `mailto:ignacio.concioni@bridgearg.net` |
+| `VAPID_PRIVATE_KEY` | JSON JWK `{ publicKey, privateKey }` (formato `jsr:@negrel/webpush`) |
+
+La VAPID pública (applicationServerKey) vive en el frontend (`VITE_VAPID_PUBLIC_KEY` / `src/features/admin/pushConfig.ts`). Suscripciones en `push_subscriptions`; el SW `/admin/sw.js` muestra el push y abre la sección al toque.
 
 ## trade-admin
 

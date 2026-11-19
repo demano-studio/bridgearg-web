@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { getSupabase } from "@/lib/supabaseClient";
@@ -11,6 +11,7 @@ import { AdminBottomNav } from "@/features/admin/components/AdminBottomNav";
 import { AdminGlobalSearch } from "@/features/admin/components/AdminGlobalSearch";
 import { AdminAccessProvider, useAdminAccess } from "@/features/admin/AdminAccessContext";
 import { AdminPwaHead } from "@/features/admin/AdminPwaHead";
+import { AdminSectionTransition } from "@/features/admin/AdminSectionTransition";
 import { useAdminPwa } from "@/features/admin/useAdminPwa";
 import "@/styles/admin.css";
 
@@ -219,7 +220,7 @@ function AdminShell({ pathLabel, onSignOut }: { pathLabel: string; onSignOut: ()
           </div>
         </header>
         <main className="admin-content">
-          <Outlet />
+          <AdminSectionTransition />
         </main>
         <AdminBottomNav />
       </div>

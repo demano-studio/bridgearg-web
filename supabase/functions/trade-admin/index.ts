@@ -5,7 +5,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
-import { escapeHtml, notifyTelegram } from "../_shared/telegram.ts";
+import { escapeHtml, notifyAdmins } from "../_shared/notifyAdmins.ts";
 import { actionPermission, authorizeAdminRequest } from "../_shared/adminAuth.ts";
 
 const ROLE_VALUES = [
@@ -518,7 +518,12 @@ Deno.serve(async (req) => {
     const result = await approveApplication(supabase, app, couponId);
     if (!result.ok) return json(req, 400, { error: result.error });
     if (!wasAlreadyApproved) {
-      await notifyTelegram(`<b>(TRADE)</b> ${escapeHtml(result.row.full_name)} → APROBADO`);
+      await notifyAdmins("trade", {
+        telegramHtml: `<b>(TRADE)</b> ${escapeHtml(result.row.full_name)} → APROBADO`,
+        title: "Trade aprobado",
+        body: `${result.row.full_name} → APROBADO`,
+        url: "/admin/trade",
+      });
     }
     return json(req, 200, { ok: true, application: result.row });
   }
@@ -554,7 +559,12 @@ Deno.serve(async (req) => {
       console.error("trade-admin reject error:", updateError);
       return json(req, 500, { error: "Could not reject the application." });
     }
-    await notifyTelegram(`<b>(TRADE)</b> ${escapeHtml((updated as TradeRow).full_name)} → RECHAZADO`);
+    await notifyAdmins("trade", {
+      telegramHtml: `<b>(TRADE)</b> ${escapeHtml((updated as TradeRow).full_name)} → RECHAZADO`,
+      title: "Trade rechazado",
+      body: `${(updated as TradeRow).full_name} → RECHAZADO`,
+      url: "/admin/trade",
+    });
     const rejectEmail = (updated as TradeRow)?.email?.trim();
     if (rejectEmail) {
       try {
@@ -715,7 +725,12 @@ Deno.serve(async (req) => {
       });
     }
     // Manual create → approve: notify APROBADO only (not "nueva").
-    await notifyTelegram(`<b>(TRADE)</b> ${escapeHtml(result.row.full_name)} → APROBADO`);
+    await notifyAdmins("trade", {
+      telegramHtml: `<b>(TRADE)</b> ${escapeHtml(result.row.full_name)} → APROBADO`,
+      title: "Trade aprobado",
+      body: `${result.row.full_name} → APROBADO`,
+      url: "/admin/trade",
+    });
     return json(req, 200, { ok: true, application: result.row });
   }
 

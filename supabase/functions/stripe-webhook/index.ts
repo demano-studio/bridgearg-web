@@ -5,7 +5,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import Stripe from "https://esm.sh/stripe@17.7.0?target=denonext";
-import { escapeHtml, notifyTelegram } from "../_shared/telegram.ts";
+import { escapeHtml, notifyAdmins } from "../_shared/notifyAdmins.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2025-02-24.acacia",
@@ -215,9 +215,12 @@ Deno.serve(async (req) => {
           ? priceUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })
           : "—";
     const buyerEmailLabel = (customerEmail ?? "").trim() || "—";
-    await notifyTelegram(
-      `<b>(PEDIDO)</b>\n${escapeHtml(obraLabel)} — U$D ${escapeHtml(montoLabel)}\n${escapeHtml(buyerEmailLabel)}`,
-    );
+    await notifyAdmins("pedidos", {
+      telegramHtml: `<b>(PEDIDO)</b>\n${escapeHtml(obraLabel)} — U$D ${escapeHtml(montoLabel)}\n${escapeHtml(buyerEmailLabel)}`,
+      title: "Nuevo pedido",
+      body: `${obraLabel} — U$D ${montoLabel}`,
+      url: "/admin/pedidos",
+    });
   }
 
   // Recién ahora (pago confirmado) se consume la verificación de identidad.

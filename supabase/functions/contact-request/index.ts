@@ -5,7 +5,7 @@
 // Public form → verify_jwt = false in config.toml
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { escapeHtml, notifyTelegram } from "../_shared/telegram.ts";
+import { escapeHtml, notifyAdmins } from "../_shared/notifyAdmins.ts";
 
 const SUBJECT_VALUES = [
   "Artwork inquiry",
@@ -217,9 +217,12 @@ Deno.serve(async (req) => {
   }
 
   // After persist: Telegram is best-effort and must not affect the user response.
-  await notifyTelegram(
-    `<b>(MENSAJE)</b>\n${escapeHtml(fullName)} — ${escapeHtml(subject)}\n${escapeHtml(email)}`,
-  );
+  await notifyAdmins("mensajes", {
+    telegramHtml: `<b>(MENSAJE)</b>\n${escapeHtml(fullName)} — ${escapeHtml(subject)}\n${escapeHtml(email)}`,
+    title: "Nuevo mensaje",
+    body: `${fullName} — ${subject}`,
+    url: "/admin/mensajes",
+  });
 
   const mailOk = await sendResendEmail(
     resendToEmail,
