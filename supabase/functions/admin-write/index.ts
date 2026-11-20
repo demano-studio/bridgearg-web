@@ -434,6 +434,86 @@ Deno.serve(async (req) => {
         .single();
       if (error) throw new Error(error.message ?? "Operation failed");
       result = data;
+    } else if (action === "message.deleteThread") {
+      const threadEmailRaw = (payload as { thread_email?: unknown }).thread_email;
+      if (typeof threadEmailRaw !== "string" || !threadEmailRaw.trim()) {
+        return new Response(JSON.stringify({ error: "payload.thread_email required" }), {
+          status: 400,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      const threadEmail = threadEmailRaw.trim().toLowerCase();
+      const emailPattern = escapeIlikeExact(threadEmail);
+      const nowIso = new Date().toISOString();
+      const [{ data: msgs, error: msgErr }, { data: replies, error: replyErr }] = await Promise.all([
+        supabase
+          .from("contact_messages")
+          .update({ deleted_at: nowIso })
+          .ilike("email", emailPattern)
+          .is("deleted_at", null)
+          .select("id"),
+        supabase
+          .from("contact_message_replies")
+          .update({ deleted_at: nowIso })
+          .ilike("thread_email", emailPattern)
+          .is("deleted_at", null)
+          .select("id"),
+      ]);
+      if (msgErr) throw new Error(msgErr.message ?? "Operation failed");
+      if (replyErr) throw new Error(replyErr.message ?? "Operation failed");
+      const messagesUpdated = (msgs ?? []).length;
+      const repliesUpdated = (replies ?? []).length;
+      if (messagesUpdated === 0 && repliesUpdated === 0) {
+        return new Response(JSON.stringify({ error: "No hay conversación activa con ese email" }), {
+          status: 404,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      result = {
+        thread_email: threadEmail,
+        messages_updated: messagesUpdated,
+        replies_updated: repliesUpdated,
+        deleted_at: nowIso,
+      };
+    } else if (action === "message.restoreThread") {
+      const threadEmailRaw = (payload as { thread_email?: unknown }).thread_email;
+      if (typeof threadEmailRaw !== "string" || !threadEmailRaw.trim()) {
+        return new Response(JSON.stringify({ error: "payload.thread_email required" }), {
+          status: 400,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      const threadEmail = threadEmailRaw.trim().toLowerCase();
+      const emailPattern = escapeIlikeExact(threadEmail);
+      const [{ data: msgs, error: msgErr }, { data: replies, error: replyErr }] = await Promise.all([
+        supabase
+          .from("contact_messages")
+          .update({ deleted_at: null })
+          .ilike("email", emailPattern)
+          .not("deleted_at", "is", null)
+          .select("id"),
+        supabase
+          .from("contact_message_replies")
+          .update({ deleted_at: null })
+          .ilike("thread_email", emailPattern)
+          .not("deleted_at", "is", null)
+          .select("id"),
+      ]);
+      if (msgErr) throw new Error(msgErr.message ?? "Operation failed");
+      if (replyErr) throw new Error(replyErr.message ?? "Operation failed");
+      const messagesUpdated = (msgs ?? []).length;
+      const repliesUpdated = (replies ?? []).length;
+      if (messagesUpdated === 0 && repliesUpdated === 0) {
+        return new Response(JSON.stringify({ error: "No hay conversación en papelera con ese email" }), {
+          status: 404,
+          headers: withCors(req, { "Content-Type": "application/json" }),
+        });
+      }
+      result = {
+        thread_email: threadEmail,
+        messages_updated: messagesUpdated,
+        replies_updated: repliesUpdated,
+      };
     } else if (action === "subscriber.delete") {
       const id = (payload as { id?: unknown }).id;
       if (typeof id !== "number" || id < 1) {
@@ -491,6 +571,7 @@ Deno.serve(async (req) => {
         .from("contact_messages")
         .update({ status: "read", read_at: nowIso })
         .eq("status", "new")
+        .is("deleted_at", null)
         .ilike("email", escapeIlikeExact(threadEmail))
         .select("id");
       if (error) throw new Error(error.message ?? "Operation failed");
@@ -518,6 +599,7 @@ Deno.serve(async (req) => {
         .from("contact_messages")
         .select("id,full_name,email,subject")
         .ilike("email", emailPattern)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -604,6 +686,7 @@ Deno.serve(async (req) => {
         .from("contact_messages")
         .update({ status: "responded", responded_at: nowIso, read_at: nowIso })
         .ilike("email", emailPattern)
+        .is("deleted_at", null)
         .neq("status", "responded");
       if (markErr) {
         console.error("message.reply: mark responded failed", markErr.message);

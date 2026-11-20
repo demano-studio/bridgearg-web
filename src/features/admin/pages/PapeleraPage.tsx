@@ -30,6 +30,12 @@ type TrashLote = {
   deleted_at: string;
 };
 
+type TrashMessageThread = {
+  threadEmail: string;
+  displayName: string;
+  deleted_at: string;
+};
+
 type HardTarget =
   | { kind: "artwork"; id: number; name: string }
   | { kind: "lote"; id: number; name: string };
@@ -89,10 +95,72 @@ export default function PapeleraPage() {
     },
   });
 
+  const { data: mensajes = [], isLoading: loadingMensajes } = useQuery({
+    queryKey: ["admin", "papelera", "mensajes"],
+    queryFn: async () => {
+      const sb = getSupabase();
+      const [{ data: msgs, error: mErr }, { data: replies, error: rErr }] = await Promise.all([
+        sb
+          .from("contact_messages")
+          .select("full_name,email,deleted_at")
+          .not("deleted_at", "is", null)
+          .order("deleted_at", { ascending: false }),
+        sb
+          .from("contact_message_replies")
+          .select("thread_email,deleted_at")
+          .not("deleted_at", "is", null)
+          .order("deleted_at", { ascending: false }),
+      ]);
+      if (mErr) throw new Error(mErr.message);
+      if (rErr) throw new Error(rErr.message);
+
+      const byEmail = new Map<string, TrashMessageThread>();
+      for (const row of msgs ?? []) {
+        const email = String(row.email ?? "")
+          .trim()
+          .toLowerCase();
+        if (!email || !row.deleted_at) continue;
+        const prev = byEmail.get(email);
+        if (!prev || new Date(row.deleted_at) > new Date(prev.deleted_at)) {
+          byEmail.set(email, {
+            threadEmail: email,
+            displayName: String(row.full_name || email),
+            deleted_at: row.deleted_at,
+          });
+        } else if (!prev.displayName || prev.displayName === prev.threadEmail) {
+          byEmail.set(email, {
+            ...prev,
+            displayName: String(row.full_name || prev.displayName),
+          });
+        }
+      }
+      for (const row of replies ?? []) {
+        const email = String(row.thread_email ?? "")
+          .trim()
+          .toLowerCase();
+        if (!email || !row.deleted_at) continue;
+        const prev = byEmail.get(email);
+        if (!prev) {
+          byEmail.set(email, {
+            threadEmail: email,
+            displayName: email,
+            deleted_at: row.deleted_at,
+          });
+        } else if (new Date(row.deleted_at) > new Date(prev.deleted_at)) {
+          byEmail.set(email, { ...prev, deleted_at: row.deleted_at });
+        }
+      }
+      return Array.from(byEmail.values()).sort(
+        (a, b) => new Date(b.deleted_at).getTime() - new Date(a.deleted_at).getTime(),
+      );
+    },
+  });
+
   const invalidateAll = () => {
     void qc.invalidateQueries({ queryKey: ["admin", "papelera"] });
     void qc.invalidateQueries({ queryKey: ["admin", "artworks"] });
     void qc.invalidateQueries({ queryKey: ["admin", "lotes"] });
+    void qc.invalidateQueries({ queryKey: ["admin", "contact-messages"] });
     void qc.invalidateQueries({ queryKey: ["admin", "sidebar"] });
     void qc.invalidateQueries({ queryKey: ["admin", "resumen"] });
   };
@@ -110,6 +178,15 @@ export default function PapeleraPage() {
     mutationFn: async (id: number) => adminWrite("lote.restore", { id }),
     onSuccess: () => {
       toast({ title: "Lote restaurado" });
+      invalidateAll();
+    },
+    onError: (e: Error) => toast({ title: "No se pudo restaurar", description: e.message, variant: "destructive" }),
+  });
+
+  const restoreMensaje = useMutation({
+    mutationFn: async (threadEmail: string) => adminWrite("message.restoreThread", { thread_email: threadEmail }),
+    onSuccess: () => {
+      toast({ title: "Conversación restaurada" });
       invalidateAll();
     },
     onError: (e: Error) => toast({ title: "No se pudo restaurar", description: e.message, variant: "destructive" }),
@@ -151,6 +228,7 @@ export default function PapeleraPage() {
         <TabsList className="border border-bridge-black/15 bg-transparent">
           <TabsTrigger value="obras">Obras ({obras.length})</TabsTrigger>
           <TabsTrigger value="lotes">Lotes ({lotes.length})</TabsTrigger>
+          <TabsTrigger value="mensajes">Mensajes ({mensajes.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="obras" className="mt-4">
@@ -257,6 +335,54 @@ export default function PapeleraPage() {
                               Eliminar definitivamente
                             </Button>
                           </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Solo lectura</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="mensajes" className="mt-4">
+          {loadingMensajes ? (
+            <p className="text-sm text-muted-foreground">Cargando…</p>
+          ) : mensajes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No hay conversaciones en la papelera.</p>
+          ) : (
+            <div className="admin-table-wrap">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr>
+                    <th className="py-2 pr-4">Contacto</th>
+                    <th className="py-2 pr-4">Email</th>
+                    <th className="py-2 pr-4">Eliminada</th>
+                    <th className="py-2 pr-4">Purge</th>
+                    <th className="py-2">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mensajes.map((row) => (
+                    <tr key={row.threadEmail}>
+                      <td className="py-2.5 pr-4 font-medium">{row.displayName}</td>
+                      <td className="py-2.5 pr-4">{row.threadEmail}</td>
+                      <td className="py-2.5 pr-4 tabular-nums">{formatDeletedAt(row.deleted_at)}</td>
+                      <td className="py-2.5 pr-4 text-muted-foreground">{daysLeft(row.deleted_at)}d</td>
+                      <td className="py-2.5">
+                        {canEdit ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="border-bridge-black/20"
+                            disabled={restoreMensaje.isPending}
+                            onClick={() => restoreMensaje.mutate(row.threadEmail)}
+                          >
+                            Restaurar
+                          </Button>
                         ) : (
                           <span className="text-xs text-muted-foreground">Solo lectura</span>
                         )}

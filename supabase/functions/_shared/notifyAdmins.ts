@@ -1,11 +1,16 @@
 // @ts-nocheck
 /**
- * Best-effort admin alerts: Telegram + Web Push in parallel.
+ * Best-effort admin alerts: Web Push (Telegram disabled for now).
  * Never throws — primary business flows must not fail because of notifications.
+ *
+ * Revert Telegram: set ENABLE_TELEGRAM_NOTIFY = true below.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import * as webpush from "jsr:@negrel/webpush@0.5.0";
 import { escapeHtml, notifyTelegram } from "./telegram.ts";
+
+/** Flip to true to restore Telegram alongside Web Push. Secrets can stay set. */
+const ENABLE_TELEGRAM_NOTIFY = false;
 
 export type NotifySection =
   | "pedidos"
@@ -160,12 +165,15 @@ async function sendPushToSubs(
 }
 
 /**
- * Fire Telegram + Web Push together. Safe to await; never throws.
+ * Fire Web Push (and Telegram only if ENABLE_TELEGRAM_NOTIFY). Safe to await; never throws.
  */
 export async function notifyAdmins(section: NotifySection, payload: NotifyPayload): Promise<void> {
-  const telegramPromise = notifyTelegram(payload.telegramHtml).catch((e) => {
-    console.error("notifyAdmins: telegram unexpected", e);
-  });
+  // Telegram kept in tree for fast revert — currently off (Web Push only).
+  const telegramPromise = ENABLE_TELEGRAM_NOTIFY
+    ? notifyTelegram(payload.telegramHtml).catch((e) => {
+        console.error("notifyAdmins: telegram unexpected", e);
+      })
+    : Promise.resolve();
 
   const pushPromise = (async () => {
     const supabase = serviceClient();

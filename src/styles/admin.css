@@ -1502,6 +1502,16 @@ body.admin-ui [class*="brevo-conversations"] {
   border-bottom: 1px solid var(--admin-line);
 }
 
+.admin-chat__delete-desktop {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.admin-chat__delete-mobile {
+  display: none;
+  flex-shrink: 0;
+}
+
 .admin-chat__back {
   display: none;
   flex-shrink: 0;
@@ -1625,6 +1635,14 @@ body.admin-ui [class*="brevo-conversations"] {
   }
 
   .admin-chat__back {
+    display: inline-flex;
+  }
+
+  .admin-chat__delete-desktop {
+    display: none;
+  }
+
+  .admin-chat__delete-mobile {
     display: inline-flex;
   }
 

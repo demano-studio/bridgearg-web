@@ -94,6 +94,7 @@ export default function ResumenPage() {
         .from("contact_messages")
         .select("id,full_name,email,subject,status,created_at")
         .neq("status", "responded")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
       return (data ?? []) as {

@@ -1,13 +1,27 @@
 import * as React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, MoreVertical, Send, Trash2 } from "lucide-react";
 import { getSupabase } from "@/lib/supabaseClient";
 import { adminWrite } from "@/lib/api";
 import { useAdminAccess } from "@/features/admin/AdminAccessContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import type {
   AdminContactMessageRow,
@@ -144,6 +158,7 @@ export default function MensajesPage() {
   const deferredQ = React.useDeferredValue(q);
   const [draft, setDraft] = React.useState("");
   const [optimistic, setOptimistic] = React.useState<ContactChatBubble[]>([]);
+  const [deleteTarget, setDeleteTarget] = React.useState<ContactThread | null>(null);
   const chatEndRef = React.useRef<HTMLDivElement | null>(null);
   const composerRef = React.useRef<HTMLTextAreaElement | null>(null);
   const openedFromSearch = React.useRef<number | null>(null);
@@ -156,10 +171,12 @@ export default function MensajesPage() {
         sb
           .from("contact_messages")
           .select("id,full_name,email,subject,message,status,marketing_consent,read_at,responded_at,created_at")
+          .is("deleted_at", null)
           .order("created_at", { ascending: false }),
         sb
           .from("contact_message_replies")
           .select("id,thread_email,body,sent_by_email,resend_id,created_at")
+          .is("deleted_at", null)
           .order("created_at", { ascending: true }),
       ]);
       if (mErr) throw new Error(mErr.message);
@@ -209,12 +226,27 @@ export default function MensajesPage() {
     void qc.invalidateQueries({ queryKey: ["admin", "contact-messages"] });
     void qc.invalidateQueries({ queryKey: ["admin", "resumen"] });
     void qc.invalidateQueries({ queryKey: ["admin", "sidebar"] });
+    void qc.invalidateQueries({ queryKey: ["admin", "papelera"] });
   }, [qc]);
 
   const markRead = useMutation({
     mutationFn: async (threadEmail: string) =>
       adminWrite("message.markThreadRead", { thread_email: threadEmail }),
     onSuccess: () => invalidateInbox(),
+  });
+
+  const deleteThread = useMutation({
+    mutationFn: async (threadEmail: string) =>
+      adminWrite("message.deleteThread", { thread_email: threadEmail }),
+    onSuccess: () => {
+      toast({ title: "Conversación eliminada", description: "Se puede restaurar desde Papelera." });
+      setDeleteTarget(null);
+      setSelectedEmail(null);
+      setMobileShowChat(false);
+      invalidateInbox();
+    },
+    onError: (e: Error) =>
+      toast({ title: "No se pudo eliminar", description: e.message, variant: "destructive" }),
   });
 
   const replyMut = useMutation({
@@ -385,10 +417,46 @@ export default function MensajesPage() {
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="truncate font-semibold">{selectedThread.displayName}</div>
                     <div className="truncate text-xs text-muted-foreground">{selectedThread.displayEmail}</div>
                   </div>
+                  {canEdit ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="admin-chat__delete-desktop border-bridge-black/20 text-destructive"
+                        onClick={() => setDeleteTarget(selectedThread)}
+                      >
+                        <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                        Eliminar
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="admin-chat__delete-mobile h-9 w-9"
+                            aria-label="Opciones de la conversación"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="border-bridge-black/15">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => setDeleteTarget(selectedThread)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Eliminar conversación
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </>
+                  ) : null}
                 </header>
 
                 <div className="admin-chat__bubbles">
@@ -455,6 +523,46 @@ export default function MensajesPage() {
           </section>
         </div>
       )}
+
+      <Dialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => {
+          if (!open && !deleteThread.isPending) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent className="border-bridge-black/20 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Eliminar conversación</DialogTitle>
+            <DialogDescription>
+              ¿Eliminar esta conversación con{" "}
+              <strong>{deleteTarget?.displayName || deleteTarget?.displayEmail}</strong>
+              {deleteTarget?.displayEmail ? ` (${deleteTarget.displayEmail})` : ""}? Se puede restaurar desde
+              Papelera.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-bridge-black/20"
+              disabled={deleteThread.isPending}
+              onClick={() => setDeleteTarget(null)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteThread.isPending || !deleteTarget}
+              onClick={() => {
+                if (deleteTarget) deleteThread.mutate(deleteTarget.threadEmail);
+              }}
+            >
+              Eliminar conversación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

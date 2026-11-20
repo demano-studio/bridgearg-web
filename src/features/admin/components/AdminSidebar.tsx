@@ -41,19 +41,34 @@ export function AdminSidebar() {
 
   const { data: counts } = useQuery({
     queryKey: ["admin", "sidebar", "counts"],
+    refetchInterval: 15_000,
     queryFn: async () => {
       const sb = getSupabase();
-      const [obras, artistas, tradePending, pedidosOpen, mensajesOpen, suscriptores, papeleraObras, papeleraLotes] =
-        await Promise.all([
-          sb.from("artworks").select("id", { count: "exact", head: true }).is("deleted_at", null),
-          sb.from("artists").select("id", { count: "exact", head: true }),
-          sb.from("trade_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
-          sb.from("purchases").select("id", { count: "exact", head: true }).neq("shipping_status", "delivered"),
-          sb.from("contact_messages").select("id", { count: "exact", head: true }).eq("status", "new"),
-          sb.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
-          sb.from("artworks").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
-          sb.from("lotes").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
-        ]);
+      const [
+        obras,
+        artistas,
+        tradePending,
+        pedidosOpen,
+        mensajesOpen,
+        suscriptores,
+        papeleraObras,
+        papeleraLotes,
+        papeleraMensajes,
+      ] = await Promise.all([
+        sb.from("artworks").select("id", { count: "exact", head: true }).is("deleted_at", null),
+        sb.from("artists").select("id", { count: "exact", head: true }),
+        sb.from("trade_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        sb.from("purchases").select("id", { count: "exact", head: true }).neq("shipping_status", "delivered"),
+        sb
+          .from("contact_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "new")
+          .is("deleted_at", null),
+        sb.from("newsletter_subscribers").select("id", { count: "exact", head: true }),
+        sb.from("artworks").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
+        sb.from("lotes").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
+        sb.from("contact_messages").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
+      ]);
       return {
         obras: obras.count ?? 0,
         artistas: artistas.count ?? 0,
@@ -61,7 +76,7 @@ export function AdminSidebar() {
         pedidosOpen: pedidosOpen.error ? undefined : (pedidosOpen.count ?? 0),
         mensajesOpen: mensajesOpen.error ? undefined : (mensajesOpen.count ?? 0),
         suscriptores: suscriptores.error ? undefined : (suscriptores.count ?? 0),
-        papelera: (papeleraObras.count ?? 0) + (papeleraLotes.count ?? 0),
+        papelera: (papeleraObras.count ?? 0) + (papeleraLotes.count ?? 0) + (papeleraMensajes.count ?? 0),
       };
     },
   });

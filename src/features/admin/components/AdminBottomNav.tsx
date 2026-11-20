@@ -128,19 +128,26 @@ export function AdminBottomNav() {
 
   const { data: counts } = useQuery({
     queryKey: ["admin", "sidebar", "counts"],
+    refetchInterval: 15_000,
     queryFn: async () => {
       const sb = getSupabase();
-      const [tradePending, mensajesOpen, papeleraObras, papeleraLotes, pedidosOpen] = await Promise.all([
-        sb.from("trade_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        sb.from("contact_messages").select("id", { count: "exact", head: true }).eq("status", "new"),
-        sb.from("artworks").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
-        sb.from("lotes").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
-        sb.from("purchases").select("id", { count: "exact", head: true }).neq("shipping_status", "delivered"),
-      ]);
+      const [tradePending, mensajesOpen, papeleraObras, papeleraLotes, papeleraMensajes, pedidosOpen] =
+        await Promise.all([
+          sb.from("trade_applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
+          sb
+            .from("contact_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "new")
+            .is("deleted_at", null),
+          sb.from("artworks").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
+          sb.from("lotes").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
+          sb.from("contact_messages").select("id", { count: "exact", head: true }).not("deleted_at", "is", null),
+          sb.from("purchases").select("id", { count: "exact", head: true }).neq("shipping_status", "delivered"),
+        ]);
       return {
         tradePending: tradePending.error ? undefined : (tradePending.count ?? 0),
         mensajesOpen: mensajesOpen.error ? undefined : (mensajesOpen.count ?? 0),
-        papelera: (papeleraObras.count ?? 0) + (papeleraLotes.count ?? 0),
+        papelera: (papeleraObras.count ?? 0) + (papeleraLotes.count ?? 0) + (papeleraMensajes.count ?? 0),
         pedidosOpen: pedidosOpen.error ? undefined : (pedidosOpen.count ?? 0),
       };
     },

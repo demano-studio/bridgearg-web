@@ -52,11 +52,16 @@ export function actionPermission(action: string): { section: AdminSection; mode:
     case "artist.update":
     case "artist.delete":
       return { section: "artistas", mode: "edit" };
+    case "message.markThreadRead":
+      // Opening a thread to mark it read is not a content edit.
+      return { section: "mensajes", mode: "view" };
     case "message.updateStatus":
     case "message.delete":
+    case "message.deleteThread":
     case "message.reply":
-    case "message.markThreadRead":
       return { section: "mensajes", mode: "edit" };
+    case "message.restoreThread":
+      return { section: "papelera", mode: "edit" };
     case "push.subscribe":
     case "push.unsubscribe":
       // Any admin with at least one view permission (checked via requiredAny in admin-write).
