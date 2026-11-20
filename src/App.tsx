@@ -1,4 +1,5 @@
 import { useEffect, lazy, Suspense } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -112,6 +113,8 @@ const App = () => (
             <Route path="/*" element={<AnimatedRoutes />} />
           </Routes>
         </BrowserRouter>
+        {/* One instance for the whole SPA (public + /admin share this entry). */}
+        <Analytics />
       </TooltipProvider>
     </SupabaseAuthProvider>
   </QueryClientProvider>
